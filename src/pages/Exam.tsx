@@ -1,81 +1,34 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Clock, ChevronLeft, ChevronRight, Flag, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import QuestionCard from "@/components/exam/QuestionCard";
 import ExamHeader from "@/components/exam/ExamHeader";
 import QuestionNavigator from "@/components/exam/QuestionNavigator";
+import { useQuestions, Question } from "@/hooks/useQuestions";
 
-export interface Question {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-}
+export type { Question };
 
-const sampleQuestions: Question[] = [
-  {
-    id: 1,
-    question: "What is the capital of France?",
-    options: ["London", "Berlin", "Paris", "Madrid"],
-    correctAnswer: 2,
-  },
-  {
-    id: 2,
-    question: "Which planet is known as the Red Planet?",
-    options: ["Venus", "Mars", "Jupiter", "Saturn"],
-    correctAnswer: 1,
-  },
-  {
-    id: 3,
-    question: "What is the largest mammal in the world?",
-    options: ["African Elephant", "Blue Whale", "Giraffe", "Polar Bear"],
-    correctAnswer: 1,
-  },
-  {
-    id: 4,
-    question: "Who painted the Mona Lisa?",
-    options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
-    correctAnswer: 2,
-  },
-  {
-    id: 5,
-    question: "What is the chemical symbol for gold?",
-    options: ["Go", "Gd", "Au", "Ag"],
-    correctAnswer: 2,
-  },
-  {
-    id: 6,
-    question: "Which ocean is the largest?",
-    options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
-    correctAnswer: 3,
-  },
-  {
-    id: 7,
-    question: "What year did World War II end?",
-    options: ["1943", "1944", "1945", "1946"],
-    correctAnswer: 2,
-  },
-  {
-    id: 8,
-    question: "What is the speed of light in vacuum?",
-    options: ["300,000 km/s", "150,000 km/s", "450,000 km/s", "600,000 km/s"],
-    correctAnswer: 0,
-  },
-];
-
-const EXAM_DURATION_MINUTES = 10;
+const EXAM_DURATION_MINUTES = 30;
 
 const Exam = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const subjectId = parseInt(searchParams.get("subjectId") || "52");
+  
+  const { questions, loading, error } = useQuestions(subjectId);
+  
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_MINUTES * 60);
   const [showNavigator, setShowNavigator] = useState(false);
+  const [examStarted, setExamStarted] = useState(false);
 
   useEffect(() => {
+    if (!examStarted || loading || questions.length === 0) return;
+    
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -88,7 +41,7 @@ const Exam = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [examStarted, loading, questions.length]);
 
   const handleAnswerSelect = (questionId: number, optionIndex: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
@@ -108,7 +61,7 @@ const Exam = () => {
 
   const handleSubmit = useCallback(() => {
     let score = 0;
-    sampleQuestions.forEach((q) => {
+    questions.forEach((q) => {
       if (answers[q.id] === q.correctAnswer) {
         score++;
       }
@@ -117,26 +70,116 @@ const Exam = () => {
     navigate("/results", {
       state: {
         score,
-        total: sampleQuestions.length,
+        total: questions.length,
         answers,
-        questions: sampleQuestions,
+        questions,
       },
     });
-  }, [answers, navigate]);
+  }, [answers, navigate, questions]);
 
   const goToQuestion = (index: number) => {
     setCurrentQuestion(index);
     setShowNavigator(false);
   };
 
-  const progress = (Object.keys(answers).length / sampleQuestions.length) * 100;
-  const currentQ = sampleQuestions[currentQuestion];
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg text-muted-foreground">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md p-8">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Failed to load questions</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // No questions
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md p-8">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No questions available</h2>
+          <p className="text-muted-foreground mb-4">There are no questions for this subject.</p>
+          <Button onClick={() => navigate("/")}>Back to Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Start exam screen
+  if (!examStarted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="max-w-lg w-full mx-4 p-8 bg-card rounded-xl border shadow-elegant">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+              C Programming Exam
+            </h1>
+            <p className="text-muted-foreground">Subject ID: {subjectId}</p>
+          </div>
+          
+          <div className="space-y-4 mb-8">
+            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground">Total Questions</span>
+              <span className="font-semibold">{questions.length}</span>
+            </div>
+            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground">Duration</span>
+              <span className="font-semibold">{EXAM_DURATION_MINUTES} minutes</span>
+            </div>
+            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground">Difficulty Mix</span>
+              <span className="font-semibold">
+                {questions.filter(q => q.difficulty === "EASY").length} Easy, {" "}
+                {questions.filter(q => q.difficulty === "MEDIUM").length} Medium, {" "}
+                {questions.filter(q => q.difficulty === "HARD").length} Hard
+              </span>
+            </div>
+          </div>
+
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg mb-8">
+            <p className="text-sm text-foreground">
+              <strong>Instructions:</strong> Answer all questions. You can flag questions to review later. 
+              The exam will auto-submit when time runs out.
+            </p>
+          </div>
+
+          <Button 
+            className="w-full" 
+            size="lg" 
+            onClick={() => setExamStarted(true)}
+          >
+            Start Exam
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const progress = (Object.keys(answers).length / questions.length) * 100;
+  const currentQ = questions[currentQuestion];
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,7 +194,7 @@ const Exam = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span>Progress</span>
-            <span>{Object.keys(answers).length} of {sampleQuestions.length} answered</span>
+            <span>{Object.keys(answers).length} of {questions.length} answered</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -160,7 +203,7 @@ const Exam = () => {
         <QuestionCard
           question={currentQ}
           currentIndex={currentQuestion}
-          totalQuestions={sampleQuestions.length}
+          totalQuestions={questions.length}
           selectedAnswer={answers[currentQ.id]}
           isFlagged={flagged.has(currentQ.id)}
           onAnswerSelect={handleAnswerSelect}
@@ -179,7 +222,7 @@ const Exam = () => {
           </Button>
 
           <div className="flex gap-2">
-            {Object.keys(answers).length === sampleQuestions.length && (
+            {Object.keys(answers).length === questions.length && (
               <Button variant="success" onClick={handleSubmit}>
                 Submit Exam
               </Button>
@@ -188,8 +231,8 @@ const Exam = () => {
 
           <Button
             variant="outline"
-            onClick={() => setCurrentQuestion((prev) => Math.min(sampleQuestions.length - 1, prev + 1))}
-            disabled={currentQuestion === sampleQuestions.length - 1}
+            onClick={() => setCurrentQuestion((prev) => Math.min(questions.length - 1, prev + 1))}
+            disabled={currentQuestion === questions.length - 1}
           >
             Next
             <ChevronRight className="w-4 h-4 ml-1" />
@@ -197,12 +240,12 @@ const Exam = () => {
         </div>
 
         {/* Warning for unanswered */}
-        {Object.keys(answers).length < sampleQuestions.length && (
+        {Object.keys(answers).length < questions.length && (
           <div className="mt-8 p-4 bg-accent/20 border border-accent/40 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-accent-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {sampleQuestions.length - Object.keys(answers).length} questions unanswered
+                {questions.length - Object.keys(answers).length} questions unanswered
               </p>
               <p className="text-sm text-muted-foreground">
                 Answer all questions before submitting the exam.
@@ -215,7 +258,7 @@ const Exam = () => {
       {/* Question Navigator Sidebar */}
       {showNavigator && (
         <QuestionNavigator
-          questions={sampleQuestions}
+          questions={questions}
           answers={answers}
           flagged={flagged}
           currentQuestion={currentQuestion}
