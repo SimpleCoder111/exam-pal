@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Home, RotateCcw, Trophy, Target } from "lucide-react";
+import StrengthMap from "@/components/exam/StrengthMap";
 import type { Question } from "@/pages/Exam";
 
 interface ResultsState {
@@ -96,6 +97,9 @@ const Results = () => {
             </Link>
           </div>
         </div>
+
+        {/* Strength Map */}
+        <StrengthMap questions={questions} answers={answers} />
 
         {/* Detailed Results */}
         <div>
