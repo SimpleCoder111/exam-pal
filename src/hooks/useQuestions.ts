@@ -8,12 +8,21 @@ export interface ApiOption {
 
 export interface ApiQuestion {
   questionId: number;
-  subjectId: number;
+  chapterId: number;
+  chapter: string;
   questionType: string;
   questionContent: string;
   difficulty: "EASY" | "MEDIUM" | "HARD";
   createdBy: string;
   optionLists: ApiOption[];
+}
+
+export interface ApiResponse {
+  questionData: ApiQuestion[];
+  responseMessage: string;
+  subjectId: number;
+  responseCode: string;
+  subjectName: string;
 }
 
 export interface Question {
@@ -22,6 +31,8 @@ export interface Question {
   options: string[];
   correctAnswer: number;
   difficulty: "EASY" | "MEDIUM" | "HARD";
+  chapter: string;
+  chapterId: number;
 }
 
 export const useQuestions = (subjectId: number) => {
@@ -43,10 +54,10 @@ export const useQuestions = (subjectId: number) => {
           throw new Error("Failed to fetch questions");
         }
         
-        const apiQuestions: ApiQuestion[] = await response.json();
+        const apiResponse: ApiResponse = await response.json();
         
         // Transform API questions to exam format with real options
-        const transformedQuestions: Question[] = apiQuestions.map((q) => {
+        const transformedQuestions: Question[] = apiResponse.questionData.map((q) => {
           const options = q.optionLists.map(opt => opt.optionText);
           const correctAnswer = q.optionLists.findIndex(opt => opt.isCorrect);
           
@@ -56,6 +67,8 @@ export const useQuestions = (subjectId: number) => {
             options,
             correctAnswer: correctAnswer >= 0 ? correctAnswer : 0,
             difficulty: q.difficulty,
+            chapter: q.chapter,
+            chapterId: q.chapterId,
           };
         });
         
