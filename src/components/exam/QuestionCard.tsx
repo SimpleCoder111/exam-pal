@@ -1,5 +1,6 @@
 import { Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import type { Question } from "@/pages/Exam";
 
 interface QuestionCardProps {
@@ -11,6 +12,19 @@ interface QuestionCardProps {
   onAnswerSelect: (questionId: number, optionIndex: number) => void;
   onFlagToggle: (questionId: number) => void;
 }
+
+const getDifficultyStyles = (difficulty: string) => {
+  switch (difficulty.toUpperCase()) {
+    case "EASY":
+      return "bg-green-500/10 text-green-600 border-green-500/20";
+    case "MEDIUM":
+      return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+    case "HARD":
+      return "bg-red-500/10 text-red-600 border-red-500/20";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
 
 const QuestionCard = ({
   question,
@@ -25,9 +39,14 @@ const QuestionCard = ({
     <div className="bg-card rounded-2xl shadow-card p-8 animate-scale-in">
       {/* Question Header */}
       <div className="flex items-center justify-between mb-6">
-        <span className="text-sm font-medium text-muted-foreground">
-          Question {currentIndex + 1} of {totalQuestions}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-muted-foreground">
+            Question {currentIndex + 1} of {totalQuestions}
+          </span>
+          <Badge variant="outline" className={getDifficultyStyles(question.difficulty)}>
+            {question.difficulty}
+          </Badge>
+        </div>
         <Button
           variant={isFlagged ? "default" : "ghost"}
           size="sm"
