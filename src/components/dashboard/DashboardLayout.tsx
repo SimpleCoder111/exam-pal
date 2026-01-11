@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   BookOpen, 
@@ -8,9 +8,7 @@ import {
   User,
   ChevronDown
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
-import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
+import { ThemeToggle } from '@/components/ThemeToggle';
 interface NavItem {
   label: string;
   href: string;
@@ -65,12 +63,15 @@ const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => 
             </div>
             <span className="font-heading text-lg font-semibold">ExamFlow</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-secondary rounded-lg transition-colors"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-secondary rounded-lg transition-colors"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -84,11 +85,14 @@ const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => 
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="hidden lg:flex items-center gap-2 p-6 border-b border-border">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
+          <div className="hidden lg:flex items-center justify-between p-6 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="font-heading text-xl font-semibold">ExamFlow</span>
             </div>
-            <span className="font-heading text-xl font-semibold">ExamFlow</span>
+            <ThemeToggle />
           </div>
 
           {/* Role Badge */}
