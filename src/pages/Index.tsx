@@ -1,7 +1,7 @@
 import { BookOpen, Clock, Award, Users, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
+import { ThemeToggle } from "@/components/ThemeToggle";
 const Index = () => {
   const features = [
     {
@@ -43,9 +43,10 @@ const Index = () => {
             </div>
             <span className="font-heading text-xl font-semibold text-foreground">ExamFlow</span>
           </div>
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">About</a>
+            <ThemeToggle />
             <Link to="/login">
               <Button variant="outline" size="sm">Sign In</Button>
             </Link>
