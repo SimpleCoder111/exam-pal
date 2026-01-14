@@ -21,6 +21,16 @@ import {
   BarChart3,
   PieChart,
   Eye,
+  Lightbulb,
+  AlertTriangle,
+  CheckCircle2,
+  ArrowRight,
+  Play,
+  FileText,
+  Video,
+  Brain,
+  Flame,
+  GraduationCap,
 } from "lucide-react";
 import {
   LineChart,
@@ -174,6 +184,76 @@ const gradeDistribution = [
   { grade: "F (<60)", count: 1, color: "hsl(var(--destructive))" },
 ];
 
+// Study recommendations based on weak areas
+const studyRecommendations = [
+  {
+    id: 1,
+    subject: "Chemistry",
+    score: 65,
+    priority: "high",
+    weakTopics: [
+      { name: "Organic Chemistry Reactions", masteryLevel: 45, questionsWrong: 8 },
+      { name: "Balancing Equations", masteryLevel: 52, questionsWrong: 6 },
+      { name: "Periodic Table Trends", masteryLevel: 60, questionsWrong: 4 },
+    ],
+    resources: [
+      { type: "video", title: "Organic Chemistry Fundamentals", duration: "25 min", provider: "ExamFlow Academy" },
+      { type: "practice", title: "Balancing Equations Practice Set", questions: 30, provider: "Question Bank" },
+      { type: "article", title: "Understanding Periodic Trends", readTime: "10 min", provider: "Study Guide" },
+    ],
+    suggestedStudyTime: "3 hours/week",
+    targetScore: 80,
+    estimatedImprovement: "+15%",
+  },
+  {
+    id: 2,
+    subject: "Computer Science",
+    score: 78,
+    priority: "medium",
+    weakTopics: [
+      { name: "Tree Data Structures", masteryLevel: 65, questionsWrong: 5 },
+      { name: "Dynamic Programming", masteryLevel: 58, questionsWrong: 7 },
+      { name: "Graph Algorithms", masteryLevel: 70, questionsWrong: 3 },
+    ],
+    resources: [
+      { type: "video", title: "Binary Trees Explained", duration: "20 min", provider: "ExamFlow Academy" },
+      { type: "practice", title: "Dynamic Programming Challenges", questions: 25, provider: "Question Bank" },
+      { type: "article", title: "Graph Traversal Techniques", readTime: "15 min", provider: "Study Guide" },
+    ],
+    suggestedStudyTime: "2 hours/week",
+    targetScore: 85,
+    estimatedImprovement: "+7%",
+  },
+  {
+    id: 3,
+    subject: "Mathematics",
+    score: 85,
+    priority: "low",
+    weakTopics: [
+      { name: "Integration Techniques", masteryLevel: 75, questionsWrong: 3 },
+      { name: "Differential Equations", masteryLevel: 72, questionsWrong: 4 },
+    ],
+    resources: [
+      { type: "video", title: "Advanced Integration Methods", duration: "30 min", provider: "ExamFlow Academy" },
+      { type: "practice", title: "Differential Equations Drill", questions: 20, provider: "Question Bank" },
+    ],
+    suggestedStudyTime: "1 hour/week",
+    targetScore: 90,
+    estimatedImprovement: "+5%",
+  },
+];
+
+// Weekly study plan
+const weeklyStudyPlan = [
+  { day: "Monday", subject: "Chemistry", topic: "Organic Chemistry Reactions", duration: "45 min", completed: true },
+  { day: "Tuesday", subject: "Computer Science", topic: "Tree Data Structures", duration: "30 min", completed: true },
+  { day: "Wednesday", subject: "Chemistry", topic: "Balancing Equations", duration: "45 min", completed: false },
+  { day: "Thursday", subject: "Mathematics", topic: "Integration Techniques", duration: "30 min", completed: false },
+  { day: "Friday", subject: "Computer Science", topic: "Dynamic Programming", duration: "45 min", completed: false },
+  { day: "Saturday", subject: "Chemistry", topic: "Practice Quiz", duration: "60 min", completed: false },
+  { day: "Sunday", subject: "Review", topic: "Weekly Review Session", duration: "30 min", completed: false },
+];
+
 const chartConfig = {
   score: {
     label: "Your Score",
@@ -276,7 +356,7 @@ const StudentResults = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="history" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
             <TabsTrigger value="history" className="gap-2">
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">Exam History</span>
@@ -291,6 +371,11 @@ const StudentResults = () => {
               <PieChart className="w-4 h-4" />
               <span className="hidden sm:inline">Subject Breakdown</span>
               <span className="sm:hidden">Subjects</span>
+            </TabsTrigger>
+            <TabsTrigger value="recommendations" className="gap-2">
+              <Lightbulb className="w-4 h-4" />
+              <span className="hidden sm:inline">Study Plan</span>
+              <span className="sm:hidden">Study</span>
             </TabsTrigger>
           </TabsList>
 
@@ -735,6 +820,282 @@ const StudentResults = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Study Recommendations Tab */}
+          <TabsContent value="recommendations" className="space-y-6">
+            {/* Priority Alert */}
+            <Card className="bg-gradient-to-r from-destructive/10 via-destructive/5 to-transparent border-destructive/20">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="w-6 h-6 text-destructive" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground mb-1">Priority Focus Area: Chemistry</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Your Chemistry score (65%) is below your average. Focus on this subject to improve your overall performance by up to 15%.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="destructive" className="gap-1">
+                        <Flame className="w-3 h-3" />
+                        High Priority
+                      </Badge>
+                      <Badge variant="outline" className="gap-1">
+                        <Clock className="w-3 h-3" />
+                        3 hours/week recommended
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Subject Recommendations */}
+              <div className="lg:col-span-2 space-y-4">
+                <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-primary" />
+                  Personalized Study Recommendations
+                </h3>
+
+                {studyRecommendations.map((rec) => (
+                  <Card key={rec.id} className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            rec.priority === "high" 
+                              ? "bg-destructive/10" 
+                              : rec.priority === "medium" 
+                                ? "bg-accent/10" 
+                                : "bg-success/10"
+                          }`}>
+                            <BookOpen className={`w-5 h-5 ${
+                              rec.priority === "high" 
+                                ? "text-destructive" 
+                                : rec.priority === "medium" 
+                                  ? "text-accent-foreground" 
+                                  : "text-success"
+                            }`} />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">{rec.subject}</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              Current: {rec.score}% → Target: {rec.targetScore}%
+                            </p>
+                          </div>
+                        </div>
+                        <Badge className={
+                          rec.priority === "high" 
+                            ? "bg-destructive/10 text-destructive border-destructive/20" 
+                            : rec.priority === "medium" 
+                              ? "bg-accent/10 text-accent-foreground border-accent/20" 
+                              : "bg-success/10 text-success border-success/20"
+                        } variant="outline">
+                          {rec.priority === "high" ? "High Priority" : rec.priority === "medium" ? "Medium" : "Maintain"}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Weak Topics */}
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                          <Target className="w-4 h-4 text-muted-foreground" />
+                          Topics to Improve
+                        </h4>
+                        <div className="space-y-2">
+                          {rec.weakTopics.map((topic, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                              <div className="flex-1">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-foreground">{topic.name}</span>
+                                  <span className="text-muted-foreground">{topic.masteryLevel}%</span>
+                                </div>
+                                <Progress value={topic.masteryLevel} className="h-1.5" />
+                              </div>
+                              <span className="text-xs text-destructive whitespace-nowrap">
+                                {topic.questionsWrong} wrong
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Recommended Resources */}
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                          <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                          Recommended Resources
+                        </h4>
+                        <div className="grid gap-2">
+                          {rec.resources.map((resource, idx) => (
+                            <div 
+                              key={idx} 
+                              className="flex items-center gap-3 p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors group"
+                            >
+                              <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                                resource.type === "video" 
+                                  ? "bg-primary/10" 
+                                  : resource.type === "practice" 
+                                    ? "bg-success/10" 
+                                    : "bg-accent/10"
+                              }`}>
+                                {resource.type === "video" ? (
+                                  <Video className="w-4 h-4 text-primary" />
+                                ) : resource.type === "practice" ? (
+                                  <FileText className="w-4 h-4 text-success" />
+                                ) : (
+                                  <BookOpen className="w-4 h-4 text-accent-foreground" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                                  {resource.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {resource.type === "video" && `${resource.duration}`}
+                                  {resource.type === "practice" && `${resource.questions} questions`}
+                                  {resource.type === "article" && `${resource.readTime} read`}
+                                  {" • "}{resource.provider}
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Study Time & Expected Improvement */}
+                      <div className="flex items-center justify-between pt-3 border-t border-border">
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            {rec.suggestedStudyTime}
+                          </span>
+                          <span className="flex items-center gap-1 text-success">
+                            <TrendingUp className="w-4 h-4" />
+                            {rec.estimatedImprovement} expected
+                          </span>
+                        </div>
+                        <Button size="sm" className="gap-2">
+                          Start Learning
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Weekly Study Plan Sidebar */}
+              <div className="space-y-4">
+                <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  Weekly Study Plan
+                </h3>
+
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    {weeklyStudyPlan.map((day, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                          day.completed 
+                            ? "bg-success/10 border border-success/20" 
+                            : "bg-secondary/30 hover:bg-secondary/50"
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          day.completed ? "bg-success/20" : "bg-muted"
+                        }`}>
+                          {day.completed ? (
+                            <CheckCircle2 className="w-4 h-4 text-success" />
+                          ) : (
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {day.day.slice(0, 2)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium truncate ${
+                            day.completed ? "text-success line-through" : "text-foreground"
+                          }`}>
+                            {day.subject}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">{day.topic}</p>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {day.duration}
+                        </span>
+                      </div>
+                    ))}
+
+                    <div className="pt-3 border-t border-border">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">Weekly Progress</span>
+                        <span className="font-medium text-foreground">2/7 completed</span>
+                      </div>
+                      <Progress value={28} className="h-2" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Tips Card */}
+                <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Lightbulb className="w-5 h-5 text-primary" />
+                      Study Tips
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">
+                        Focus on your weakest topics first for maximum improvement
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">
+                        Take practice quizzes after each study session
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">
+                        Review incorrect answers to understand mistakes
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">
+                        Use spaced repetition for better retention
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Streak Card */}
+                <Card className="bg-gradient-to-br from-success/10 to-success/5 border-success/20">
+                  <CardContent className="p-4 text-center">
+                    <div className="w-14 h-14 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-3">
+                      <Flame className="w-7 h-7 text-success" />
+                    </div>
+                    <div className="text-2xl font-bold text-foreground mb-1">5 Day Streak!</div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Keep studying to maintain your streak
+                    </p>
+                    <Badge className="bg-success/20 text-success border-success/30">
+                      +50 XP bonus at 7 days
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
