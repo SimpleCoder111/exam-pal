@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, Search, MoreHorizontal, Pencil, UserX, UserCheck, Mail, Shield } from 'lucide-react';
+import { Users, Plus, Search, MoreHorizontal, Pencil, UserX, UserCheck, Mail, Shield, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -37,18 +37,7 @@ import {
 import { Label } from '@/components/ui/label';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { useToast } from '@/hooks/use-toast';
-import { LayoutDashboard, GraduationCap, BookOpen, FileText, Settings, Bell } from 'lucide-react';
-
-// Navigation items for admin dashboard
-const navItems = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Subjects', href: '/admin/subjects', icon: BookOpen },
-  { label: 'Exams', href: '/admin/exams', icon: FileText },
-  { label: 'Reports', href: '/admin/reports', icon: GraduationCap },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
-  { label: 'Notifications', href: '/admin/notifications', icon: Bell },
-];
+import { adminNavItems } from '@/config/adminNavItems';
 
 // Types
 interface User {
@@ -279,7 +268,7 @@ const AdminUsers = () => {
   };
 
   return (
-    <DashboardLayout navItems={navItems} role="admin">
+    <DashboardLayout navItems={adminNavItems} role="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
