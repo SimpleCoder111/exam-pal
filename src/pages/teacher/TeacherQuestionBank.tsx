@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   FileText, 
   Plus, 
@@ -14,7 +14,13 @@ import {
   Code,
   PenLine,
   Lock,
-  ChevronDown
+  ChevronDown,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  AlertCircle,
+  Check,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,6 +70,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { teacherNavItems } from '@/config/teacherNavItems';
 
@@ -252,6 +261,8 @@ const difficultyConfig: Record<string, { label: string; color: string }> = {
 };
 
 const TeacherQuestionBank = () => {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [questions, setQuestions] = useState<Question[]>(mockQuestions);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -261,6 +272,13 @@ const TeacherQuestionBank = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [expandedFilters, setExpandedFilters] = useState(false);
+  
+  // Bulk import state
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importStep, setImportStep] = useState<'upload' | 'preview' | 'importing'>('upload');
+  const [importedQuestions, setImportedQuestions] = useState<Question[]>([]);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [selectedImportSubject, setSelectedImportSubject] = useState<string>('');
 
   // Form state for new/edit question
   const [formData, setFormData] = useState({
@@ -410,6 +428,296 @@ const TeacherQuestionBank = () => {
     setFormData({ ...formData, options: newOptions });
   };
 
+  // Bulk Import Functions
+  const downloadCSVTemplate = () => {
+    const headers = [
+      'question_text',
+      'type',
+      'difficulty',
+      'topic',
+      'chapter',
+      'points',
+      'option_a',
+      'option_b',
+      'option_c',
+      'option_d',
+      'correct_answer'
+    ];
+    
+    const sampleRows = [
+      [
+        'What is 2 + 2?',
+        'multiple_choice',
+        'easy',
+        'Arithmetic',
+        'Algebra Basics',
+        '1',
+        '3',
+        '4',
+        '5',
+        '6',
+        'b'
+      ],
+      [
+        'The value of pi is approximately 3.14',
+        'true_false',
+        'easy',
+        'Constants',
+        'Algebra Basics',
+        '1',
+        '',
+        '',
+        '',
+        '',
+        'true'
+      ],
+      [
+        'The capital of France is ___',
+        'fill_blank',
+        'medium',
+        'Geography',
+        'Linear Equations',
+        '2',
+        '',
+        '',
+        '',
+        '',
+        'Paris'
+      ],
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      ...sampleRows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'question_bank_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = (text: string): string[][] => {
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentCell = '';
+    let insideQuotes = false;
+    
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+      
+      if (char === '"') {
+        if (insideQuotes && nextChar === '"') {
+          currentCell += '"';
+          i++;
+        } else {
+          insideQuotes = !insideQuotes;
+        }
+      } else if (char === ',' && !insideQuotes) {
+        currentRow.push(currentCell.trim());
+        currentCell = '';
+      } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !insideQuotes) {
+        currentRow.push(currentCell.trim());
+        if (currentRow.some(cell => cell !== '')) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentCell = '';
+        if (char === '\r') i++;
+      } else {
+        currentCell += char;
+      }
+    }
+    
+    // Don't forget the last cell/row
+    if (currentCell || currentRow.length > 0) {
+      currentRow.push(currentCell.trim());
+      if (currentRow.some(cell => cell !== '')) {
+        rows.push(currentRow);
+      }
+    }
+    
+    return rows;
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.csv')) {
+      setImportErrors(['Please upload a CSV file. For Excel files, save as CSV first.']);
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const rows = parseCSV(text);
+        
+        if (rows.length < 2) {
+          setImportErrors(['CSV file is empty or contains only headers.']);
+          return;
+        }
+        
+        const headers = rows[0].map(h => h.toLowerCase().trim());
+        const dataRows = rows.slice(1);
+        
+        const errors: string[] = [];
+        const parsed: Question[] = [];
+        
+        const subject = mockSubjects.find(s => s.id.toString() === selectedImportSubject);
+        if (!subject) {
+          setImportErrors(['Please select a subject first.']);
+          return;
+        }
+        
+        dataRows.forEach((row, index) => {
+          const rowNum = index + 2;
+          
+          const getValue = (header: string) => {
+            const idx = headers.indexOf(header);
+            return idx >= 0 ? row[idx] || '' : '';
+          };
+          
+          const questionText = getValue('question_text');
+          const type = getValue('type') as QuestionType;
+          const difficulty = getValue('difficulty') as 'easy' | 'medium' | 'hard';
+          const topic = getValue('topic');
+          const chapterName = getValue('chapter');
+          const points = parseInt(getValue('points')) || 1;
+          const correctAnswer = getValue('correct_answer');
+          
+          // Validation
+          if (!questionText) {
+            errors.push(`Row ${rowNum}: Missing question text`);
+            return;
+          }
+          
+          if (!['multiple_choice', 'fill_blank', 'true_false'].includes(type)) {
+            errors.push(`Row ${rowNum}: Invalid type "${type}". Use: multiple_choice, fill_blank, or true_false`);
+            return;
+          }
+          
+          if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+            errors.push(`Row ${rowNum}: Invalid difficulty "${difficulty}". Use: easy, medium, or hard`);
+            return;
+          }
+          
+          const chapter = subject.chapters.find(c => 
+            c.name.toLowerCase() === chapterName.toLowerCase()
+          );
+          
+          if (!chapter) {
+            errors.push(`Row ${rowNum}: Chapter "${chapterName}" not found in ${subject.name}`);
+            return;
+          }
+          
+          let options: QuestionOption[] | undefined;
+          if (type === 'multiple_choice') {
+            const optA = getValue('option_a');
+            const optB = getValue('option_b');
+            const optC = getValue('option_c');
+            const optD = getValue('option_d');
+            
+            if (!optA || !optB) {
+              errors.push(`Row ${rowNum}: Multiple choice questions need at least options A and B`);
+              return;
+            }
+            
+            if (!['a', 'b', 'c', 'd'].includes(correctAnswer.toLowerCase())) {
+              errors.push(`Row ${rowNum}: Correct answer for MCQ must be a, b, c, or d`);
+              return;
+            }
+            
+            options = [
+              { id: 'a', text: optA, isCorrect: correctAnswer.toLowerCase() === 'a' },
+              { id: 'b', text: optB, isCorrect: correctAnswer.toLowerCase() === 'b' },
+              { id: 'c', text: optC, isCorrect: correctAnswer.toLowerCase() === 'c' },
+              { id: 'd', text: optD, isCorrect: correctAnswer.toLowerCase() === 'd' },
+            ].filter(opt => opt.text);
+          }
+          
+          if (type === 'true_false' && !['true', 'false'].includes(correctAnswer.toLowerCase())) {
+            errors.push(`Row ${rowNum}: True/False answer must be "true" or "false"`);
+            return;
+          }
+          
+          if (type === 'fill_blank' && !correctAnswer) {
+            errors.push(`Row ${rowNum}: Fill in the blank requires a correct answer`);
+            return;
+          }
+          
+          parsed.push({
+            id: questions.length + parsed.length + 1,
+            subjectId: subject.id,
+            subjectName: subject.name,
+            chapterId: chapter.id,
+            chapterName: chapter.name,
+            topic: topic || 'General',
+            type,
+            difficulty,
+            questionText,
+            options,
+            correctAnswer: type !== 'multiple_choice' ? correctAnswer : undefined,
+            points,
+            createdAt: new Date().toISOString().split('T')[0],
+            updatedAt: new Date().toISOString().split('T')[0],
+          });
+        });
+        
+        setImportErrors(errors);
+        setImportedQuestions(parsed);
+        
+        if (parsed.length > 0) {
+          setImportStep('preview');
+        }
+      } catch (error) {
+        setImportErrors(['Failed to parse CSV file. Please check the format.']);
+      }
+    };
+    
+    reader.readAsText(file);
+    
+    // Reset the input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleConfirmImport = () => {
+    setImportStep('importing');
+    
+    // Simulate import delay
+    setTimeout(() => {
+      setQuestions([...questions, ...importedQuestions]);
+      
+      toast({
+        title: 'Import Successful',
+        description: `${importedQuestions.length} questions imported successfully.`,
+      });
+      
+      // Reset and close
+      setIsImportDialogOpen(false);
+      setImportStep('upload');
+      setImportedQuestions([]);
+      setImportErrors([]);
+      setSelectedImportSubject('');
+    }, 1000);
+  };
+
+  const resetImportDialog = () => {
+    setIsImportDialogOpen(false);
+    setImportStep('upload');
+    setImportedQuestions([]);
+    setImportErrors([]);
+    setSelectedImportSubject('');
+  };
+
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
       <div className="space-y-6">
@@ -419,10 +727,16 @@ const TeacherQuestionBank = () => {
             <h1 className="font-heading text-3xl font-semibold text-foreground">Question Bank</h1>
             <p className="text-muted-foreground mt-1">Create and manage questions for your subjects.</p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Question
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Question
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -857,6 +1171,187 @@ const TeacherQuestionBank = () => {
                 {editingQuestion ? 'Save Changes' : 'Create Question'}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Import Dialog */}
+        <Dialog open={isImportDialogOpen} onOpenChange={(open) => !open && resetImportDialog()}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5" />
+                Import Questions from CSV
+              </DialogTitle>
+            </DialogHeader>
+
+            {importStep === 'upload' && (
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <Label>Select Subject *</Label>
+                  <p className="text-sm text-muted-foreground">
+                    All imported questions will be added to this subject
+                  </p>
+                  <Select value={selectedImportSubject} onValueChange={setSelectedImportSubject}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockSubjects.map(subject => (
+                        <SelectItem key={subject.id} value={subject.id.toString()}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedImportSubject && (
+                  <>
+                    <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="csv-upload"
+                      />
+                      <label htmlFor="csv-upload" className="cursor-pointer">
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="font-medium text-foreground mb-1">Click to upload CSV file</p>
+                        <p className="text-sm text-muted-foreground">
+                          Or drag and drop your file here
+                        </p>
+                      </label>
+                    </div>
+
+                    <Button variant="outline" onClick={downloadCSVTemplate} className="w-full">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download CSV Template
+                    </Button>
+
+                    <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                      <p className="font-medium text-sm">CSV Format Guide:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>• <strong>question_text</strong>: The question (required)</li>
+                        <li>• <strong>type</strong>: multiple_choice, fill_blank, or true_false</li>
+                        <li>• <strong>difficulty</strong>: easy, medium, or hard</li>
+                        <li>• <strong>topic</strong>: Question topic</li>
+                        <li>• <strong>chapter</strong>: Must match existing chapter names</li>
+                        <li>• <strong>points</strong>: Number of points</li>
+                        <li>• <strong>option_a/b/c/d</strong>: For multiple choice only</li>
+                        <li>• <strong>correct_answer</strong>: a/b/c/d for MCQ, true/false for T/F, or text for fill blank</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+
+                {importErrors.length > 0 && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <ul className="list-disc list-inside space-y-1">
+                        {importErrors.slice(0, 5).map((err, i) => (
+                          <li key={i} className="text-sm">{err}</li>
+                        ))}
+                        {importErrors.length > 5 && (
+                          <li className="text-sm">...and {importErrors.length - 5} more errors</li>
+                        )}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+
+            {importStep === 'preview' && (
+              <div className="flex-1 overflow-hidden flex flex-col space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {importedQuestions.length} questions ready to import
+                    </p>
+                    {importErrors.length > 0 && (
+                      <p className="text-sm text-amber-600 dark:text-amber-400">
+                        {importErrors.length} rows had errors and were skipped
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <ScrollArea className="flex-1 border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40%]">Question</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Chapter</TableHead>
+                        <TableHead>Difficulty</TableHead>
+                        <TableHead>Points</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {importedQuestions.map((q, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="max-w-[200px]">
+                            <p className="truncate">{q.questionText}</p>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={questionTypeConfig[q.type].color}>
+                              {questionTypeConfig[q.type].label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">{q.chapterName}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={difficultyConfig[q.difficulty].color}>
+                              {difficultyConfig[q.difficulty].label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{q.points}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+
+                {importErrors.length > 0 && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <p className="font-medium mb-2">Skipped rows with errors:</p>
+                      <ScrollArea className="max-h-24">
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {importErrors.map((err, i) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                        </ul>
+                      </ScrollArea>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setImportStep('upload')}>
+                    <X className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                  <Button onClick={handleConfirmImport}>
+                    <Check className="w-4 h-4 mr-2" />
+                    Import {importedQuestions.length} Questions
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+
+            {importStep === 'importing' && (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="font-medium text-foreground">Importing questions...</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Please wait while we add your questions
+                </p>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
