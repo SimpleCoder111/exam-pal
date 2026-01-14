@@ -17,6 +17,7 @@ import AdminClasses from "./pages/admin/AdminClasses";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherQuestionBank from "./pages/teacher/TeacherQuestionBank";
 import TeacherClassroom from "./pages/teacher/TeacherClassroom";
+import TeacherExams from "./pages/teacher/TeacherExams";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -72,6 +73,11 @@ const App = () => (
               <Route path="/teacher/classroom" element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <TeacherClassroom />
+                </ProtectedRoute>
+              } />
+              <Route path="/teacher/exams" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherExams />
                 </ProtectedRoute>
               } />
               
