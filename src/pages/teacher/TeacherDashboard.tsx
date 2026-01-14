@@ -2,7 +2,6 @@ import {
   BookOpen, 
   FileText, 
   Users,
-  BarChart3,
   PlusCircle,
   Clock,
   CheckCircle,
@@ -12,14 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-
-const navItems = [
-  { label: 'Dashboard', href: '/teacher', icon: BarChart3 },
-  { label: 'Question Bank', href: '/teacher/questions', icon: FileText },
-  { label: 'Exams', href: '/teacher/exams', icon: BookOpen },
-  { label: 'Students', href: '/teacher/students', icon: Users },
-  { label: 'Reports', href: '/teacher/reports', icon: BarChart3 },
-];
+import { teacherNavItems } from '@/config/teacherNavItems';
 
 const mySubjects = [
   { name: 'Mathematics', questions: 150, students: 120, color: 'bg-blue-500' },
@@ -61,7 +53,7 @@ const stats = [
 
 const TeacherDashboard = () => {
   return (
-    <DashboardLayout navItems={navItems} role="teacher">
+    <DashboardLayout navItems={teacherNavItems} role="teacher">
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
