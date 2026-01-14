@@ -15,6 +15,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSubjects from "./pages/admin/AdminSubjects";
 import AdminClasses from "./pages/admin/AdminClasses";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherQuestionBank from "./pages/teacher/TeacherQuestionBank";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -60,6 +61,11 @@ const App = () => (
               <Route path="/teacher" element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <TeacherDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/teacher/questions" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherQuestionBank />
                 </ProtectedRoute>
               } />
               
