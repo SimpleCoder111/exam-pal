@@ -20,6 +20,7 @@ import TeacherClassroom from "./pages/teacher/TeacherClassroom";
 import TeacherExams from "./pages/teacher/TeacherExams";
 import TeacherReports from "./pages/teacher/TeacherReports";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentSubjects from "./pages/student/StudentSubjects";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -91,6 +92,11 @@ const App = () => (
               <Route path="/student" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/subjects" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentSubjects />
                 </ProtectedRoute>
               } />
               

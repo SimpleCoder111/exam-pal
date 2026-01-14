@@ -14,13 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Link } from 'react-router-dom';
-
-const navItems = [
-  { label: 'Dashboard', href: '/student', icon: BarChart3 },
-  { label: 'My Subjects', href: '/student/subjects', icon: BookOpen },
-  { label: 'Exams', href: '/student/exams', icon: Calendar },
-  { label: 'Results', href: '/student/results', icon: Trophy },
-];
+import { studentNavItems } from '@/config/studentNavItems';
 
 const enrolledSubjects = [
   { name: 'Mathematics', teacher: 'Mr. Smith', progress: 75, nextExam: 'Jan 15' },
@@ -61,7 +55,7 @@ const leaderboard = [
 
 const StudentDashboard = () => {
   return (
-    <DashboardLayout navItems={navItems} role="student">
+    <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
