@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import AchievementBadges from "@/components/student/AchievementBadges";
 import {
   Trophy,
   TrendingUp,
@@ -31,6 +32,7 @@ import {
   Brain,
   Flame,
   GraduationCap,
+  Medal,
 } from "lucide-react";
 import {
   LineChart,
@@ -356,7 +358,7 @@ const StudentResults = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="history" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
             <TabsTrigger value="history" className="gap-2">
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">Exam History</span>
@@ -376,6 +378,11 @@ const StudentResults = () => {
               <Lightbulb className="w-4 h-4" />
               <span className="hidden sm:inline">Study Plan</span>
               <span className="sm:hidden">Study</span>
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="gap-2">
+              <Medal className="w-4 h-4" />
+              <span className="hidden sm:inline">Achievements</span>
+              <span className="sm:hidden">Badges</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1096,6 +1103,11 @@ const StudentResults = () => {
                 </Card>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Achievements Tab */}
+          <TabsContent value="achievements">
+            <AchievementBadges />
           </TabsContent>
         </Tabs>
       </div>
