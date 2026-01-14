@@ -20,6 +20,7 @@ import TeacherClassroom from "./pages/teacher/TeacherClassroom";
 import TeacherExams from "./pages/teacher/TeacherExams";
 import TeacherReports from "./pages/teacher/TeacherReports";
 import TeacherSettings from "./pages/teacher/TeacherSettings";
+import TeacherStudents from "./pages/teacher/TeacherStudents";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentSubjects from "./pages/student/StudentSubjects";
 import StudentClassrooms from "./pages/student/StudentClassrooms";
@@ -95,6 +96,11 @@ const App = () => (
               <Route path="/teacher/settings" element={
                 <ProtectedRoute allowedRoles={['teacher']}>
                   <TeacherSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/teacher/students" element={
+                <ProtectedRoute allowedRoles={['teacher']}>
+                  <TeacherStudents />
                 </ProtectedRoute>
               } />
               
