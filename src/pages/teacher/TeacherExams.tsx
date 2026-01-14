@@ -36,25 +36,35 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock data for classes
-const MOCK_CLASSES = [
-  { id: 1, name: 'Grade 9th Math Class A', students: 32 },
-  { id: 2, name: 'Grade 10th Math Class B', students: 28 },
-  { id: 3, name: 'Grade 9th Math Class C', students: 30 },
+// Mock data for teacher's subjects
+const TEACHER_SUBJECTS = [
+  { id: 'math', name: 'Mathematics' },
+  { id: 'physics', name: 'Physics' },
 ];
 
-// Mock questions from question bank
+// Mock data for classes
+const MOCK_CLASSES = [
+  { id: 1, name: 'Grade 9th Math Class A', students: 32, subject: 'Mathematics' },
+  { id: 2, name: 'Grade 10th Math Class B', students: 28, subject: 'Mathematics' },
+  { id: 3, name: 'Grade 9th Math Class C', students: 30, subject: 'Mathematics' },
+  { id: 4, name: 'Grade 10th Physics Class A', students: 25, subject: 'Physics' },
+];
+
+// Mock questions from question bank (with subject)
 const MOCK_QUESTIONS = [
-  { id: 'Q001', question: 'What is 2 + 2?', type: 'multiple_choice', difficulty: 'easy', topic: 'Arithmetic', chapter: 'Basic Operations', points: 5 },
-  { id: 'Q002', question: 'Solve for x: 2x + 5 = 15', type: 'fill_blank', difficulty: 'medium', topic: 'Algebra', chapter: 'Linear Equations', points: 10 },
-  { id: 'Q003', question: 'What is the derivative of x²?', type: 'multiple_choice', difficulty: 'hard', topic: 'Calculus', chapter: 'Derivatives', points: 15 },
-  { id: 'Q004', question: 'Is π a rational number?', type: 'true_false', difficulty: 'easy', topic: 'Number Theory', chapter: 'Real Numbers', points: 5 },
-  { id: 'Q005', question: 'Calculate the area of a circle with radius 5', type: 'fill_blank', difficulty: 'medium', topic: 'Geometry', chapter: 'Circles', points: 10 },
-  { id: 'Q006', question: 'What is the quadratic formula?', type: 'multiple_choice', difficulty: 'medium', topic: 'Algebra', chapter: 'Quadratic Equations', points: 10 },
-  { id: 'Q007', question: 'Prove that √2 is irrational', type: 'writing', difficulty: 'hard', topic: 'Number Theory', chapter: 'Proofs', points: 20 },
-  { id: 'Q008', question: 'What is 15% of 200?', type: 'fill_blank', difficulty: 'easy', topic: 'Arithmetic', chapter: 'Percentages', points: 5 },
-  { id: 'Q009', question: 'The sum of angles in a triangle is 180°', type: 'true_false', difficulty: 'easy', topic: 'Geometry', chapter: 'Triangles', points: 5 },
-  { id: 'Q010', question: 'Find the integral of 3x² dx', type: 'multiple_choice', difficulty: 'hard', topic: 'Calculus', chapter: 'Integration', points: 15 },
+  { id: 'Q001', question: 'What is 2 + 2?', type: 'multiple_choice', difficulty: 'easy', topic: 'Arithmetic', chapter: 'Basic Operations', points: 5, subject: 'Mathematics' },
+  { id: 'Q002', question: 'Solve for x: 2x + 5 = 15', type: 'fill_blank', difficulty: 'medium', topic: 'Algebra', chapter: 'Linear Equations', points: 10, subject: 'Mathematics' },
+  { id: 'Q003', question: 'What is the derivative of x²?', type: 'multiple_choice', difficulty: 'hard', topic: 'Calculus', chapter: 'Derivatives', points: 15, subject: 'Mathematics' },
+  { id: 'Q004', question: 'Is π a rational number?', type: 'true_false', difficulty: 'easy', topic: 'Number Theory', chapter: 'Real Numbers', points: 5, subject: 'Mathematics' },
+  { id: 'Q005', question: 'Calculate the area of a circle with radius 5', type: 'fill_blank', difficulty: 'medium', topic: 'Geometry', chapter: 'Circles', points: 10, subject: 'Mathematics' },
+  { id: 'Q006', question: 'What is the quadratic formula?', type: 'multiple_choice', difficulty: 'medium', topic: 'Algebra', chapter: 'Quadratic Equations', points: 10, subject: 'Mathematics' },
+  { id: 'Q007', question: 'Prove that √2 is irrational', type: 'writing', difficulty: 'hard', topic: 'Number Theory', chapter: 'Proofs', points: 20, subject: 'Mathematics' },
+  { id: 'Q008', question: 'What is 15% of 200?', type: 'fill_blank', difficulty: 'easy', topic: 'Arithmetic', chapter: 'Percentages', points: 5, subject: 'Mathematics' },
+  { id: 'Q009', question: 'The sum of angles in a triangle is 180°', type: 'true_false', difficulty: 'easy', topic: 'Geometry', chapter: 'Triangles', points: 5, subject: 'Mathematics' },
+  { id: 'Q010', question: 'Find the integral of 3x² dx', type: 'multiple_choice', difficulty: 'hard', topic: 'Calculus', chapter: 'Integration', points: 15, subject: 'Mathematics' },
+  { id: 'Q011', question: 'What is Newton\'s First Law?', type: 'multiple_choice', difficulty: 'easy', topic: 'Mechanics', chapter: 'Laws of Motion', points: 5, subject: 'Physics' },
+  { id: 'Q012', question: 'Calculate acceleration given F=10N and m=2kg', type: 'fill_blank', difficulty: 'medium', topic: 'Mechanics', chapter: 'Force', points: 10, subject: 'Physics' },
+  { id: 'Q013', question: 'Energy can neither be created nor destroyed', type: 'true_false', difficulty: 'easy', topic: 'Energy', chapter: 'Conservation', points: 5, subject: 'Physics' },
 ];
 
 // Mock existing exams
@@ -183,17 +193,37 @@ const TeacherExams = () => {
   };
 
   const handleAutoGenerate = () => {
-    // Simulate auto-generation based on config
-    const easyQuestions = MOCK_QUESTIONS.filter(q => q.difficulty === 'easy').slice(0, autoConfig.easyCount);
-    const mediumQuestions = MOCK_QUESTIONS.filter(q => q.difficulty === 'medium').slice(0, autoConfig.mediumCount);
-    const hardQuestions = MOCK_QUESTIONS.filter(q => q.difficulty === 'hard').slice(0, autoConfig.hardCount);
+    // Filter questions by selected subject
+    const subjectQuestions = MOCK_QUESTIONS.filter(q => q.subject === formData.subject);
     
-    const selected = [...easyQuestions, ...mediumQuestions, ...hardQuestions].map(q => q.id);
-    setSelectedQuestions(selected);
+    const easyPool = subjectQuestions.filter(q => q.difficulty === 'easy');
+    const mediumPool = subjectQuestions.filter(q => q.difficulty === 'medium');
+    const hardPool = subjectQuestions.filter(q => q.difficulty === 'hard');
+    
+    // Helper to select questions with potential duplicates
+    const selectWithDuplicates = (pool: typeof MOCK_QUESTIONS, count: number) => {
+      const selected: string[] = [];
+      for (let i = 0; i < count; i++) {
+        if (pool.length > 0) {
+          const randomIndex = Math.floor(Math.random() * pool.length);
+          selected.push(pool[randomIndex].id);
+        }
+      }
+      return selected;
+    };
+    
+    const selectedEasy = selectWithDuplicates(easyPool, autoConfig.easyCount);
+    const selectedMedium = selectWithDuplicates(mediumPool, autoConfig.mediumCount);
+    const selectedHard = selectWithDuplicates(hardPool, autoConfig.hardCount);
+    
+    const allSelected = [...selectedEasy, ...selectedMedium, ...selectedHard];
+    setSelectedQuestions(allSelected);
+    
+    const hasDuplicates = new Set(allSelected).size !== allSelected.length;
     
     toast({ 
       title: 'Questions Generated', 
-      description: `${selected.length} questions selected automatically` 
+      description: `${allSelected.length} questions selected automatically${hasDuplicates ? ' (includes duplicates)' : ''}` 
     });
     
     setCurrentStep(3); // Move to review step
@@ -529,132 +559,217 @@ const TeacherExams = () => {
     </div>
   );
 
-  const renderAutoStep1 = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
+  const renderAutoStep1 = () => {
+    // Filter questions by selected subject
+    const subjectQuestions = formData.subject 
+      ? MOCK_QUESTIONS.filter(q => q.subject === formData.subject)
+      : [];
+    
+    const availableEasy = subjectQuestions.filter(q => q.difficulty === 'easy').length;
+    const availableMedium = subjectQuestions.filter(q => q.difficulty === 'medium').length;
+    const availableHard = subjectQuestions.filter(q => q.difficulty === 'hard').length;
+    
+    const easyDuplicateWarning = autoConfig.easyCount > availableEasy;
+    const mediumDuplicateWarning = autoConfig.mediumCount > availableMedium;
+    const hardDuplicateWarning = autoConfig.hardCount > availableHard;
+    
+    // Filter classes by selected subject
+    const subjectClasses = formData.subject 
+      ? MOCK_CLASSES.filter(c => c.subject === formData.subject)
+      : [];
+
+    return (
+      <div className="space-y-6">
+        {/* Subject Selection - Must be first */}
         <div className="space-y-2">
-          <Label htmlFor="autoTitle">Exam Title *</Label>
-          <Input
-            id="autoTitle"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="Enter exam title"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="autoClass">Assign to Class *</Label>
-          <Select value={formData.classId} onValueChange={(v) => setFormData({ ...formData, classId: v })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a class" />
+          <Label htmlFor="autoSubject" className="text-base font-semibold">Select Subject *</Label>
+          <p className="text-sm text-muted-foreground mb-2">
+            Choose the subject for this exam. Questions will be pulled from your question bank for this subject.
+          </p>
+          <Select 
+            value={formData.subject} 
+            onValueChange={(v) => {
+              setFormData({ ...formData, subject: v, classId: '' });
+              // Reset counts when subject changes
+              setAutoConfig({ ...autoConfig, easyCount: 0, mediumCount: 0, hardCount: 0 });
+            }}
+          >
+            <SelectTrigger className="w-full md:w-[300px]">
+              <SelectValue placeholder="Select your subject" />
             </SelectTrigger>
             <SelectContent>
-              {MOCK_CLASSES.map(cls => (
-                <SelectItem key={cls.id} value={cls.id.toString()}>
-                  {cls.name} ({cls.students} students)
+              {TEACHER_SUBJECTS.map(subject => (
+                <SelectItem key={subject.id} value={subject.name}>
+                  {subject.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="autoDuration">Duration (minutes) *</Label>
-          <Input
-            id="autoDuration"
-            type="number"
-            value={formData.duration}
-            onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 60 })}
-            min={10}
-            max={300}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="autoPassingMarks">Passing Marks (%)</Label>
-          <Input
-            id="autoPassingMarks"
-            type="number"
-            value={formData.passingMarks}
-            onChange={(e) => setFormData({ ...formData, passingMarks: parseInt(e.target.value) || 40 })}
-            min={0}
-            max={100}
-          />
-        </div>
-      </div>
-      <Separator />
-      <div>
-        <Label className="text-base font-semibold">Question Distribution</Label>
-        <p className="text-sm text-muted-foreground mb-4">
-          Set the number of questions for each difficulty level
-        </p>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-green-200 bg-green-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-green-700">Easy Questions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                type="number"
-                value={autoConfig.easyCount}
-                onChange={(e) => setAutoConfig({ ...autoConfig, easyCount: parseInt(e.target.value) || 0 })}
-                min={0}
-                max={20}
-                className="text-center text-lg font-bold"
-              />
-              <p className="text-xs text-muted-foreground mt-1 text-center">
-                Available: {MOCK_QUESTIONS.filter(q => q.difficulty === 'easy').length}
+
+        {formData.subject && (
+          <>
+            <Separator />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="autoTitle">Exam Title *</Label>
+                <Input
+                  id="autoTitle"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="Enter exam title"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="autoClass">Assign to Class *</Label>
+                <Select value={formData.classId} onValueChange={(v) => setFormData({ ...formData, classId: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjectClasses.map(cls => (
+                      <SelectItem key={cls.id} value={cls.id.toString()}>
+                        {cls.name} ({cls.students} students)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="autoDuration">Duration (minutes) *</Label>
+                <Input
+                  id="autoDuration"
+                  type="number"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) || 60 })}
+                  min={10}
+                  max={300}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="autoPassingMarks">Passing Marks (%)</Label>
+                <Input
+                  id="autoPassingMarks"
+                  type="number"
+                  value={formData.passingMarks}
+                  onChange={(e) => setFormData({ ...formData, passingMarks: parseInt(e.target.value) || 40 })}
+                  min={0}
+                  max={100}
+                />
+              </div>
+            </div>
+            <Separator />
+            <div>
+              <Label className="text-base font-semibold">Question Distribution</Label>
+              <p className="text-sm text-muted-foreground mb-4">
+                Set the number of questions for each difficulty level from your {formData.subject} question bank
               </p>
-            </CardContent>
-          </Card>
-          <Card className="border-yellow-200 bg-yellow-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-yellow-700">Medium Questions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                type="number"
-                value={autoConfig.mediumCount}
-                onChange={(e) => setAutoConfig({ ...autoConfig, mediumCount: parseInt(e.target.value) || 0 })}
-                min={0}
-                max={20}
-                className="text-center text-lg font-bold"
-              />
-              <p className="text-xs text-muted-foreground mt-1 text-center">
-                Available: {MOCK_QUESTIONS.filter(q => q.difficulty === 'medium').length}
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border-red-200 bg-red-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-red-700">Hard Questions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                type="number"
-                value={autoConfig.hardCount}
-                onChange={(e) => setAutoConfig({ ...autoConfig, hardCount: parseInt(e.target.value) || 0 })}
-                min={0}
-                max={20}
-                className="text-center text-lg font-bold"
-              />
-              <p className="text-xs text-muted-foreground mt-1 text-center">
-                Available: {MOCK_QUESTIONS.filter(q => q.difficulty === 'hard').length}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-          <span className="text-sm font-medium">
-            Total Questions: {autoConfig.easyCount + autoConfig.mediumCount + autoConfig.hardCount}
-          </span>
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Shuffle className="h-3 w-3" />
-            Randomized for each student
-          </Badge>
-        </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {/* Easy Questions Card - Dark mode friendly */}
+                <Card className="border-emerald-500/50 bg-emerald-500/10 dark:bg-emerald-950/40 dark:border-emerald-400/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
+                      Easy Questions
+                      <Badge variant="outline" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-300 dark:border-emerald-600">
+                        {availableEasy} available
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Input
+                      type="number"
+                      value={autoConfig.easyCount}
+                      onChange={(e) => setAutoConfig({ ...autoConfig, easyCount: parseInt(e.target.value) || 0 })}
+                      min={0}
+                      max={50}
+                      className="text-center text-lg font-bold"
+                    />
+                    {easyDuplicateWarning && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center font-medium">
+                        ⚠️ Will include duplicate questions
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Medium Questions Card - Dark mode friendly */}
+                <Card className="border-amber-500/50 bg-amber-500/10 dark:bg-amber-950/40 dark:border-amber-400/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-amber-700 dark:text-amber-400 flex items-center justify-between">
+                      Medium Questions
+                      <Badge variant="outline" className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-amber-300 dark:border-amber-600">
+                        {availableMedium} available
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Input
+                      type="number"
+                      value={autoConfig.mediumCount}
+                      onChange={(e) => setAutoConfig({ ...autoConfig, mediumCount: parseInt(e.target.value) || 0 })}
+                      min={0}
+                      max={50}
+                      className="text-center text-lg font-bold"
+                    />
+                    {mediumDuplicateWarning && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center font-medium">
+                        ⚠️ Will include duplicate questions
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Hard Questions Card - Dark mode friendly */}
+                <Card className="border-rose-500/50 bg-rose-500/10 dark:bg-rose-950/40 dark:border-rose-400/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm text-rose-700 dark:text-rose-400 flex items-center justify-between">
+                      Hard Questions
+                      <Badge variant="outline" className="bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border-rose-300 dark:border-rose-600">
+                        {availableHard} available
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Input
+                      type="number"
+                      value={autoConfig.hardCount}
+                      onChange={(e) => setAutoConfig({ ...autoConfig, hardCount: parseInt(e.target.value) || 0 })}
+                      min={0}
+                      max={50}
+                      className="text-center text-lg font-bold"
+                    />
+                    {hardDuplicateWarning && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center font-medium">
+                        ⚠️ Will include duplicate questions
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="mt-4 p-3 bg-muted rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <span className="text-sm font-medium">
+                  Total Questions: {autoConfig.easyCount + autoConfig.mediumCount + autoConfig.hardCount}
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {(easyDuplicateWarning || mediumDuplicateWarning || hardDuplicateWarning) && (
+                    <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-400">
+                      Some duplicates may occur
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Shuffle className="h-3 w-3" />
+                    Randomized for each student
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderReviewStep = () => {
     const selectedClass = MOCK_CLASSES.find(c => c.id.toString() === formData.classId);
