@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -296,10 +297,258 @@ interface ExamMonitorProps {
 }
 
 const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) => {
-  const [sessions] = useState<ExamSession[]>(mockExamSessions);
+  const [sessions, setSessions] = useState<ExamSession[]>(mockExamSessions);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSession, setSelectedSession] = useState<ExamSession | null>(null);
   const [showActivityLog, setShowActivityLog] = useState(false);
+  const [isLive, setIsLive] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Simulated real-time events generator
+  const generateRandomEvent = useCallback(() => {
+    const eventTypes: Array<{
+      type: ActivityLog['type'];
+      description: string;
+      severity: ActivityLog['severity'];
+      details?: string;
+    }> = [
+      { type: 'answer', description: 'Answered a question', severity: 'info' },
+      { type: 'navigate', description: 'Navigated to next question', severity: 'info' },
+      { type: 'tab_switch', description: 'Switched to another tab', severity: 'warning', details: 'Browser focus lost momentarily' },
+      { type: 'copy_attempt', description: 'Attempted to copy text', severity: 'critical', details: 'Copy action was blocked' },
+      { type: 'focus_lost', description: 'Window focus lost', severity: 'warning', details: 'Application went to background' },
+      { type: 'disconnect', description: 'Connection interrupted', severity: 'warning', details: 'Network issue detected' },
+      { type: 'reconnect', description: 'Connection restored', severity: 'info' },
+    ];
+
+    return eventTypes[Math.floor(Math.random() * eventTypes.length)];
+  }, []);
+
+  // Simulate real-time updates
+  useEffect(() => {
+    if (!isOpen || !isLive) return;
+
+    const simulateUpdates = () => {
+      setSessions(prevSessions => {
+        const updatedSessions = prevSessions.map(session => {
+          // Skip completed sessions
+          if (session.status === 'submitted' || session.status === 'auto_submitted') {
+            return session;
+          }
+
+          // Random chance for each active session to have an update
+          const shouldUpdate = Math.random() > 0.7;
+          if (!shouldUpdate) return session;
+
+          let updatedSession = { ...session };
+          const now = new Date().toISOString();
+
+          // Simulate different types of updates based on current status
+          if (session.status === 'not_started' && Math.random() > 0.8) {
+            // Student logs in
+            updatedSession = {
+              ...updatedSession,
+              status: 'logged_in',
+              loginTime: now,
+              connectionStatus: 'online',
+              lastActivity: 'Just now',
+              activityLog: [
+                ...session.activityLog,
+                {
+                  id: `L${Date.now()}`,
+                  timestamp: now,
+                  type: 'login',
+                  description: 'Student logged in',
+                  severity: 'info'
+                }
+              ]
+            };
+            toast.info(`${session.studentName} logged in`, { duration: 3000 });
+          } else if (session.status === 'logged_in' && Math.random() > 0.6) {
+            // Student starts exam
+            updatedSession = {
+              ...updatedSession,
+              status: 'in_progress',
+              startTime: now,
+              currentQuestion: 1,
+              lastActivity: 'Just now',
+              activityLog: [
+                ...session.activityLog,
+                {
+                  id: `L${Date.now()}`,
+                  timestamp: now,
+                  type: 'start_exam',
+                  description: 'Started exam',
+                  severity: 'info'
+                }
+              ]
+            };
+            toast.info(`${session.studentName} started the exam`, { duration: 3000 });
+          } else if (session.status === 'in_progress') {
+            const event = generateRandomEvent();
+            
+            // Update progress
+            const newAnswered = Math.min(session.answeredQuestions + (event.type === 'answer' ? 1 : 0), session.totalQuestions);
+            const newCurrentQ = Math.min(session.currentQuestion + (Math.random() > 0.5 ? 1 : 0), session.totalQuestions);
+            const newTimeRemaining = Math.max(0, session.timeRemaining - Math.floor(Math.random() * 60 + 30));
+            const isViolation = event.severity === 'warning' || event.severity === 'critical';
+            const newAlertCount = session.alertCount + (isViolation ? 1 : 0);
+
+            // Check for auto-submit conditions
+            if (newTimeRemaining === 0 || newAlertCount >= 8) {
+              const reason = newTimeRemaining === 0 
+                ? 'Time expired - Student ran out of time'
+                : 'Exceeded maximum security violations (8 alerts)';
+              
+              updatedSession = {
+                ...updatedSession,
+                status: 'auto_submitted',
+                submitTime: now,
+                timeRemaining: 0,
+                alertCount: newAlertCount,
+                autoSubmitReason: reason,
+                connectionStatus: 'offline',
+                lastActivity: 'Just now',
+                activityLog: [
+                  ...session.activityLog,
+                  {
+                    id: `L${Date.now()}`,
+                    timestamp: now,
+                    type: 'auto_submit',
+                    description: 'Exam auto-submitted',
+                    severity: 'critical',
+                    details: reason
+                  }
+                ]
+              };
+              toast.warning(`${session.studentName}'s exam was auto-submitted`, { 
+                description: reason,
+                duration: 5000 
+              });
+            } else if (newAnswered === session.totalQuestions && Math.random() > 0.5) {
+              // Student submits
+              updatedSession = {
+                ...updatedSession,
+                status: 'submitted',
+                submitTime: now,
+                timeRemaining: newTimeRemaining,
+                answeredQuestions: newAnswered,
+                connectionStatus: 'offline',
+                lastActivity: 'Just now',
+                activityLog: [
+                  ...session.activityLog,
+                  {
+                    id: `L${Date.now()}`,
+                    timestamp: now,
+                    type: 'submit',
+                    description: 'Submitted exam manually',
+                    severity: 'info'
+                  }
+                ]
+              };
+              toast.success(`${session.studentName} submitted the exam`, { duration: 3000 });
+            } else {
+              // Regular update
+              updatedSession = {
+                ...updatedSession,
+                currentQuestion: newCurrentQ,
+                answeredQuestions: newAnswered,
+                timeRemaining: newTimeRemaining,
+                alertCount: newAlertCount,
+                lastActivity: 'Just now',
+                connectionStatus: event.type === 'disconnect' ? 'offline' : event.type === 'reconnect' ? 'online' : session.connectionStatus,
+                activityLog: [
+                  ...session.activityLog,
+                  {
+                    id: `L${Date.now()}`,
+                    timestamp: now,
+                    type: event.type,
+                    description: event.description,
+                    severity: event.severity,
+                    details: event.details
+                  }
+                ]
+              };
+
+              // Show toast for violations
+              if (isViolation) {
+                toast.warning(`Alert: ${session.studentName}`, {
+                  description: event.description,
+                  duration: 4000
+                });
+              }
+            }
+          } else if (session.status === 'disconnected' && Math.random() > 0.7) {
+            // Reconnect
+            updatedSession = {
+              ...updatedSession,
+              status: 'in_progress',
+              connectionStatus: 'online',
+              lastActivity: 'Just now',
+              activityLog: [
+                ...session.activityLog,
+                {
+                  id: `L${Date.now()}`,
+                  timestamp: now,
+                  type: 'reconnect',
+                  description: 'Connection restored',
+                  severity: 'info'
+                }
+              ]
+            };
+            toast.info(`${session.studentName} reconnected`, { duration: 3000 });
+          }
+
+          return updatedSession;
+        });
+
+        return updatedSessions;
+      });
+
+      setLastUpdate(new Date());
+    };
+
+    // Run updates every 3 seconds
+    updateIntervalRef.current = setInterval(simulateUpdates, 3000);
+
+    return () => {
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
+    };
+  }, [isOpen, isLive, generateRandomEvent]);
+
+  // Update lastActivity text periodically
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updateLastActivity = () => {
+      setSessions(prev => prev.map(session => {
+        if (session.lastActivity === 'Just now') {
+          return { ...session, lastActivity: '10 seconds ago' };
+        } else if (session.lastActivity === '10 seconds ago') {
+          return { ...session, lastActivity: '30 seconds ago' };
+        } else if (session.lastActivity === '30 seconds ago') {
+          return { ...session, lastActivity: '1 minute ago' };
+        }
+        return session;
+      }));
+    };
+
+    const interval = setInterval(updateLastActivity, 10000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
+  // Keep selected session in sync
+  useEffect(() => {
+    if (selectedSession) {
+      const updated = sessions.find(s => s.id === selectedSession.id);
+      if (updated) {
+        setSelectedSession(updated);
+      }
+    }
+  }, [sessions, selectedSession?.id]);
 
   const filteredSessions = sessions.filter((session) =>
     session.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -458,9 +707,9 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
               </Card>
             </div>
 
-            {/* Search and Refresh */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            {/* Search, Live Toggle, and Status */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search students..."
@@ -469,9 +718,29 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
                   className="pl-10"
                 />
               </div>
-              <Button variant="outline" size="icon">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={isLive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsLive(!isLive)}
+                  className={isLive ? "bg-green-600 hover:bg-green-700" : ""}
+                >
+                  <Activity className={`h-4 w-4 mr-2 ${isLive ? 'animate-pulse' : ''}`} />
+                  {isLive ? 'Live' : 'Paused'}
+                </Button>
+                <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Updated: {lastUpdate.toLocaleTimeString()}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setLastUpdate(new Date())}
+                  title="Force refresh"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Sessions Table */}
