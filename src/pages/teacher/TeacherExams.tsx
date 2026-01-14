@@ -32,8 +32,10 @@ import {
   Edit,
   Trash2,
   Copy,
-  Play
+  Play,
+  Monitor
 } from 'lucide-react';
+import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
 
 // Mock data for teacher's subjects
@@ -139,6 +141,8 @@ const TeacherExams = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [questionFilter, setQuestionFilter] = useState({ difficulty: 'all', topic: 'all', type: 'all' });
+  const [showMonitor, setShowMonitor] = useState(false);
+  const [monitorExam, setMonitorExam] = useState<{ id: string; title: string } | null>(null);
   
   const [formData, setFormData] = useState<ExamFormData>({
     title: '',
@@ -969,6 +973,19 @@ const TeacherExams = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {(exam.status === 'published' || exam.status === 'ongoing') && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => {
+                              setMonitorExam({ id: exam.id, title: exam.title });
+                              setShowMonitor(true);
+                            }}
+                            title="Monitor Exam"
+                          >
+                            <Monitor className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon">
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -1062,6 +1079,19 @@ const TeacherExams = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Exam Monitor */}
+        {monitorExam && (
+          <ExamMonitor
+            examId={monitorExam.id}
+            examTitle={monitorExam.title}
+            isOpen={showMonitor}
+            onClose={() => {
+              setShowMonitor(false);
+              setMonitorExam(null);
+            }}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
