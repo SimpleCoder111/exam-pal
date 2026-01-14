@@ -6,16 +6,24 @@ import { ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import QuestionCard from "@/components/exam/QuestionCard";
 import ExamHeader from "@/components/exam/ExamHeader";
 import QuestionNavigator from "@/components/exam/QuestionNavigator";
+import SecurityWarning from "@/components/exam/SecurityWarning";
+import ExamStatusBar from "@/components/exam/ExamStatusBar";
 import { useQuestions, Question } from "@/hooks/useQuestions";
+import { useExamSecurity, SecurityViolation } from "@/hooks/useExamSecurity";
+import { useExamCache } from "@/hooks/useExamCache";
+import { toast } from "sonner";
 
 export type { Question };
 
 const EXAM_DURATION_MINUTES = 30;
+const MAX_VIOLATIONS = 3;
 
 const Exam = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const subjectId = parseInt(searchParams.get("subjectId") || "52");
+  const examId = searchParams.get("examId") || "default";
+  const isSecureMode = searchParams.get("secure") === "true";
   
   const { questions, loading, error } = useQuestions(subjectId);
   
@@ -25,7 +33,66 @@ const Exam = () => {
   const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_MINUTES * 60);
   const [showNavigator, setShowNavigator] = useState(false);
   const [examStarted, setExamStarted] = useState(false);
+  const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
 
+  // Exam cache for auto-save
+  const {
+    saveToCache,
+    loadFromCache,
+    clearCache,
+    isSaving,
+    lastSaved,
+    isOffline,
+  } = useExamCache({
+    examId,
+    enabled: examStarted,
+    autoSaveInterval: 5000,
+  });
+
+  // Security monitoring
+  const { remainingChances } = useExamSecurity({
+    enabled: examStarted && isSecureMode,
+    maxViolations: MAX_VIOLATIONS,
+    onViolation: (violation, count) => {
+      setCurrentViolation(violation);
+      toast.error(`Warning ${count}/${MAX_VIOLATIONS + 1}: ${violation.message}`);
+    },
+    onMaxViolations: () => {
+      toast.error("Maximum violations reached. Your exam has been auto-submitted.");
+      handleSubmit();
+    },
+  });
+
+  // Load cached data on mount
+  useEffect(() => {
+    const cached = loadFromCache();
+    if (cached && cached.examId === examId) {
+      setAnswers(cached.answers);
+      setFlagged(new Set(cached.flagged));
+      setCurrentQuestion(cached.currentQuestion);
+      setTimeLeft(cached.timeLeft);
+      setExamStarted(true);
+      toast.info("Your previous progress has been restored.");
+    }
+  }, [examId, loadFromCache]);
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!examStarted) return;
+
+    const interval = setInterval(() => {
+      saveToCache({
+        answers,
+        flagged: Array.from(flagged),
+        currentQuestion,
+        timeLeft,
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [examStarted, answers, flagged, currentQuestion, timeLeft, saveToCache]);
+
+  // Timer effect
   useEffect(() => {
     if (!examStarted || loading || questions.length === 0) return;
     
@@ -67,6 +134,9 @@ const Exam = () => {
       }
     });
 
+    // Clear cache on submit
+    clearCache();
+
     navigate("/results", {
       state: {
         score,
@@ -75,7 +145,7 @@ const Exam = () => {
         questions,
       },
     });
-  }, [answers, navigate, questions]);
+  }, [answers, navigate, questions, clearCache]);
 
   const goToQuestion = (index: number) => {
     setCurrentQuestion(index);
@@ -122,7 +192,7 @@ const Exam = () => {
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">No questions available</h2>
           <p className="text-muted-foreground mb-4">There are no questions for this subject.</p>
-          <Button onClick={() => navigate("/")}>Back to Home</Button>
+          <Button onClick={() => navigate("/student/exams")}>Back to Exams</Button>
         </div>
       </div>
     );
@@ -163,6 +233,7 @@ const Exam = () => {
             <p className="text-sm text-foreground">
               <strong>Instructions:</strong> Answer all questions. You can flag questions to review later. 
               The exam will auto-submit when time runs out.
+              {isSecureMode && " Security monitoring is enabled."}
             </p>
           </div>
 
@@ -182,7 +253,16 @@ const Exam = () => {
   const currentQ = questions[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16">
+      {/* Security Warning Overlay */}
+      {isSecureMode && (
+        <SecurityWarning
+          violation={currentViolation}
+          remainingChances={remainingChances}
+          maxViolations={MAX_VIOLATIONS}
+        />
+      )}
+
       <ExamHeader
         timeLeft={timeLeft}
         formatTime={formatTime}
@@ -264,6 +344,17 @@ const Exam = () => {
           currentQuestion={currentQuestion}
           onSelect={goToQuestion}
           onClose={() => setShowNavigator(false)}
+        />
+      )}
+
+      {/* Status Bar */}
+      {isSecureMode && (
+        <ExamStatusBar
+          remainingChances={remainingChances}
+          maxViolations={MAX_VIOLATIONS}
+          isOffline={isOffline}
+          lastSaved={lastSaved}
+          isSaving={isSaving}
         />
       )}
     </div>
