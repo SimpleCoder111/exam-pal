@@ -2,25 +2,15 @@ import {
   Users, 
   BookOpen, 
   GraduationCap, 
-  Settings,
-  BarChart3,
   UserPlus,
-  Megaphone,
   TrendingUp,
-  Calendar
+  Calendar,
+  Bell
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-
-const navItems = [
-  { label: 'Dashboard', href: '/admin', icon: BarChart3 },
-  { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Subjects', href: '/admin/subjects', icon: BookOpen },
-  { label: 'Classes', href: '/admin/classes', icon: GraduationCap },
-  { label: 'Announcements', href: '/admin/announcements', icon: Megaphone },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
-];
+import { adminNavItems } from '@/config/adminNavItems';
 
 const stats = [
   { label: 'Total Students', value: '1,234', change: '+12%', icon: Users, color: 'text-blue-500 bg-blue-500/10' },
@@ -46,7 +36,7 @@ const gradeDistribution = [
 
 const AdminDashboard = () => {
   return (
-    <DashboardLayout navItems={navItems} role="admin">
+    <DashboardLayout navItems={adminNavItems} role="admin">
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -156,8 +146,8 @@ const AdminDashboard = () => {
                 <span>Create Class</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex-col gap-2">
-                <Megaphone className="w-6 h-6" />
-                <span>Announcement</span>
+                <Bell className="w-6 h-6" />
+                <span>Notification</span>
               </Button>
             </div>
           </CardContent>

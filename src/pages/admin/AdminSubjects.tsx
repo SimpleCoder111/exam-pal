@@ -48,7 +48,6 @@ import { Switch } from '@/components/ui/switch';
 import {
   Book,
   BookOpen,
-  ChevronDown,
   Edit,
   GripVertical,
   LayoutGrid,
@@ -59,6 +58,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { adminNavItems } from '@/config/adminNavItems';
 
 // Types
 interface Chapter {
@@ -137,12 +137,6 @@ const mockSubjects: Subject[] = [
     createdAt: '2024-02-10',
     updatedAt: '2024-02-10',
   },
-];
-
-const adminNavItems = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutGrid },
-  { label: 'Users', href: '/admin/users', icon: List },
-  { label: 'Subjects', href: '/admin/subjects', icon: Book },
 ];
 
 const AdminSubjects = () => {

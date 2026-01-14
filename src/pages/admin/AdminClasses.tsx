@@ -36,10 +36,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   GraduationCap,
-  Users,
-  BookOpen,
-  Settings,
-  Home,
   Plus,
   Search,
   MoreHorizontal,
@@ -54,6 +50,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { adminNavItems } from '@/config/adminNavItems';
 
 // Types
 interface Class {
@@ -176,13 +173,6 @@ const mockEnrollments: ClassroomEnrollment[] = [
   { id: 8, userId: "S2026A0008", classId: 6 },
 ];
 
-const navItems = [
-  { label: 'Dashboard', href: '/admin', icon: Home },
-  { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Subjects', href: '/admin/subjects', icon: BookOpen },
-  { label: 'Classes', href: '/admin/classes', icon: GraduationCap },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
-];
 
 const statusColors: Record<Class['classStatus'], string> = {
   ONGOING: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -385,7 +375,7 @@ const AdminClasses = () => {
   };
 
   return (
-    <DashboardLayout navItems={navItems} role="admin">
+    <DashboardLayout navItems={adminNavItems} role="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
