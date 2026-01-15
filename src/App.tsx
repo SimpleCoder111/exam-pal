@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AdminExams from "./pages/admin/AdminExams";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -82,6 +83,11 @@ const App = () => (
               <Route path="/admin/settings" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminSettings />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/notifications" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminNotifications />
                 </ProtectedRoute>
               } />
               
