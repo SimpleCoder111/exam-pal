@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/contexts/LanguageContext';
 interface NavItem {
   label: string;
   href: string;
@@ -43,6 +45,7 @@ const roleLabels: Record<UserRole, string> = {
 
 const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,6 +67,7 @@ const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => 
             <span className="font-heading text-lg font-semibold">ExamFlow</span>
           </div>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher />
             <ThemeToggle />
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -92,7 +96,10 @@ const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => 
               </div>
               <span className="font-heading text-xl font-semibold">ExamFlow</span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-1">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Role Badge */}
