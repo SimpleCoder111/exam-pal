@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import AdminExams from "./pages/admin/AdminExams";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -64,6 +65,11 @@ const App = () => (
               <Route path="/admin/classes" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminClasses />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin/exams" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminExams />
                 </ProtectedRoute>
               } />
               
