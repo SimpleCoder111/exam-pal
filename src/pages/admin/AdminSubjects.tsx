@@ -158,11 +158,9 @@ const AdminSubjects = () => {
   const [isChapterDialogOpen, setIsChapterDialogOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
-  const [chapterForm, setChapterForm] = useState({
-    name: '',
-    description: '',
-    isActive: true,
-  });
+  const [chapterForms, setChapterForms] = useState<Array<{ name: string; description: string; isActive: boolean }>>([
+    { name: '', description: '', isActive: true }
+  ]);
 
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -248,16 +246,32 @@ const AdminSubjects = () => {
     setSelectedSubjectId(subjectId);
     if (chapter) {
       setEditingChapter(chapter);
-      setChapterForm({
+      setChapterForms([{
         name: chapter.name,
         description: chapter.description,
         isActive: chapter.isActive,
-      });
+      }]);
     } else {
       setEditingChapter(null);
-      setChapterForm({ name: '', description: '', isActive: true });
+      setChapterForms([{ name: '', description: '', isActive: true }]);
     }
     setIsChapterDialogOpen(true);
+  };
+
+  const handleAddChapterForm = () => {
+    setChapterForms([...chapterForms, { name: '', description: '', isActive: true }]);
+  };
+
+  const handleRemoveChapterForm = (index: number) => {
+    if (chapterForms.length > 1) {
+      setChapterForms(chapterForms.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleChapterFormChange = (index: number, field: string, value: string | boolean) => {
+    const updated = [...chapterForms];
+    updated[index] = { ...updated[index], [field]: value };
+    setChapterForms(updated);
   };
 
   const handleSaveChapter = () => {
@@ -267,13 +281,15 @@ const AdminSubjects = () => {
     // POST /api/subjects/:subjectId/chapters or PUT /api/chapters/:id
 
     if (editingChapter) {
+      // Editing single chapter
+      const chapterData = chapterForms[0];
       setSubjects(
         subjects.map((s) =>
           s.id === selectedSubjectId
             ? {
                 ...s,
                 chapters: s.chapters.map((c) =>
-                  c.id === editingChapter.id ? { ...c, ...chapterForm } : c
+                  c.id === editingChapter.id ? { ...c, ...chapterData } : c
                 ),
                 updatedAt: new Date().toISOString().split('T')[0],
               }
@@ -282,25 +298,36 @@ const AdminSubjects = () => {
       );
       toast.success('Chapter updated successfully');
     } else {
+      // Adding multiple chapters
       const subject = subjects.find((s) => s.id === selectedSubjectId);
-      const newChapter: Chapter = {
-        id: `${selectedSubjectId}-${Date.now()}`,
-        ...chapterForm,
-        orderIndex: (subject?.chapters.length || 0) + 1,
+      const validChapters = chapterForms.filter(cf => cf.name.trim() !== '');
+      
+      if (validChapters.length === 0) {
+        toast.error('Please add at least one chapter with a name');
+        return;
+      }
+
+      const newChapters: Chapter[] = validChapters.map((cf, index) => ({
+        id: `${selectedSubjectId}-${Date.now()}-${index}`,
+        name: cf.name,
+        description: cf.description,
+        isActive: cf.isActive,
+        orderIndex: (subject?.chapters.length || 0) + index + 1,
         questionCount: 0,
-      };
+      }));
+
       setSubjects(
         subjects.map((s) =>
           s.id === selectedSubjectId
             ? {
                 ...s,
-                chapters: [...s.chapters, newChapter],
+                chapters: [...s.chapters, ...newChapters],
                 updatedAt: new Date().toISOString().split('T')[0],
               }
             : s
         )
       );
-      toast.success('Chapter added successfully');
+      toast.success(`${newChapters.length} chapter(s) added successfully`);
     }
     setIsChapterDialogOpen(false);
   };
@@ -729,50 +756,85 @@ const AdminSubjects = () => {
 
         {/* Chapter Dialog */}
         <Dialog open={isChapterDialogOpen} onOpenChange={setIsChapterDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingChapter ? 'Edit Chapter' : 'Add New Chapter'}</DialogTitle>
+              <DialogTitle>{editingChapter ? 'Edit Chapter' : 'Add Chapters'}</DialogTitle>
               <DialogDescription>
                 {editingChapter
                   ? 'Update the chapter information below.'
-                  : 'Fill in the details to add a new chapter.'}
+                  : 'Add one or more chapters to this subject. Click "Add Another Chapter" to add multiple chapters at once.'}
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="chapterName">Chapter Name</Label>
-                <Input
-                  id="chapterName"
-                  value={chapterForm.name}
-                  onChange={(e) => setChapterForm({ ...chapterForm, name: e.target.value })}
-                  placeholder="e.g., Introduction to Algebra"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="chapterDescription">Description</Label>
-                <Textarea
-                  id="chapterDescription"
-                  value={chapterForm.description}
-                  onChange={(e) => setChapterForm({ ...chapterForm, description: e.target.value })}
-                  placeholder="Brief description of the chapter..."
-                  rows={3}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="chapterIsActive">Active Status</Label>
-                <Switch
-                  id="chapterIsActive"
-                  checked={chapterForm.isActive}
-                  onCheckedChange={(checked) => setChapterForm({ ...chapterForm, isActive: checked })}
-                />
-              </div>
+            <div className="space-y-6 py-4">
+              {chapterForms.map((form, index) => (
+                <div key={index} className="space-y-4 p-4 border rounded-lg relative">
+                  {!editingChapter && chapterForms.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 h-6 w-6"
+                      onClick={() => handleRemoveChapterForm(index)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                  {!editingChapter && chapterForms.length > 1 && (
+                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                      Chapter {index + 1}
+                    </div>
+                  )}
+                  <div className="grid gap-2">
+                    <Label htmlFor={`chapterName-${index}`}>Chapter Name</Label>
+                    <Input
+                      id={`chapterName-${index}`}
+                      value={form.name}
+                      onChange={(e) => handleChapterFormChange(index, 'name', e.target.value)}
+                      placeholder="e.g., Introduction to Algebra"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor={`chapterDescription-${index}`}>Description</Label>
+                    <Textarea
+                      id={`chapterDescription-${index}`}
+                      value={form.description}
+                      onChange={(e) => handleChapterFormChange(index, 'description', e.target.value)}
+                      placeholder="Brief description of the chapter..."
+                      rows={2}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor={`chapterIsActive-${index}`}>Active Status</Label>
+                    <Switch
+                      id={`chapterIsActive-${index}`}
+                      checked={form.isActive}
+                      onCheckedChange={(checked) => handleChapterFormChange(index, 'isActive', checked)}
+                    />
+                  </div>
+                </div>
+              ))}
+              
+              {!editingChapter && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleAddChapterForm}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Another Chapter
+                </Button>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsChapterDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSaveChapter} disabled={!chapterForm.name}>
-                {editingChapter ? 'Save Changes' : 'Add Chapter'}
+              <Button 
+                onClick={handleSaveChapter} 
+                disabled={chapterForms.every(f => !f.name.trim())}
+              >
+                {editingChapter ? 'Save Changes' : `Add ${chapterForms.filter(f => f.name.trim()).length} Chapter(s)`}
               </Button>
             </DialogFooter>
           </DialogContent>
