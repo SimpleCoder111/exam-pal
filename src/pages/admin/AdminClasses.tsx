@@ -35,7 +35,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Book,
   GraduationCap,
   Plus,
   Search,
@@ -88,13 +87,6 @@ interface Subject {
   code: string;
 }
 
-// Class prefix options (grade levels with sections)
-const classPrefixes = [
-  '9A', '9B', '9C',
-  '10A', '10B', '10C',
-  '11A', '11B', '11C',
-  '12A', '12B', '12C',
-];
 
 // Mock subjects data
 // TODO: Replace with API call to fetch subjects
@@ -568,7 +560,6 @@ const AdminClasses = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Class Name</TableHead>
-                  <TableHead>Subject</TableHead>
                   <TableHead>Teacher</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Year</TableHead>
@@ -580,7 +571,7 @@ const AdminClasses = () => {
               <TableBody>
                 {filteredClasses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No classes found
                     </TableCell>
                   </TableRow>
@@ -591,12 +582,6 @@ const AdminClasses = () => {
                         <div>
                           <p className="font-medium">{cls.className}</p>
                           <p className="text-sm text-muted-foreground">ID: {cls.classId}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Book className="h-4 w-4 text-muted-foreground" />
-                          <span>{getSubjectName(cls.subjectId)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -678,22 +663,13 @@ const AdminClasses = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="classPrefix">Class Prefix</Label>
-                  <Select
+                  <Label htmlFor="classPrefix">Class</Label>
+                  <Input
+                    id="classPrefix"
                     value={formData.classPrefix}
-                    onValueChange={(value) => setFormData({ ...formData, classPrefix: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select prefix" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classPrefixes.map((prefix) => (
-                        <SelectItem key={prefix} value={prefix}>
-                          {prefix}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData({ ...formData, classPrefix: e.target.value })}
+                    placeholder="e.g., 9A, 10B, 12C"
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="subjectId">Subject</Label>
