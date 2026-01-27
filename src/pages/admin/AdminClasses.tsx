@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Book,
   GraduationCap,
   Plus,
   Search,
@@ -56,6 +57,7 @@ import { adminNavItems } from '@/config/adminNavItems';
 interface Class {
   classId: number;
   className: string;
+  subjectId: number;
   classStart: string;
   classEnd: string;
   classStatus: 'ONGOING' | 'COMPLETED' | 'UPCOMING' | 'CANCELLED';
@@ -80,13 +82,40 @@ interface Teacher {
   name: string;
 }
 
+interface Subject {
+  id: number;
+  name: string;
+  code: string;
+}
+
+// Class prefix options (grade levels with sections)
+const classPrefixes = [
+  '9A', '9B', '9C',
+  '10A', '10B', '10C',
+  '11A', '11B', '11C',
+  '12A', '12B', '12C',
+];
+
+// Mock subjects data
+// TODO: Replace with API call to fetch subjects
+const mockSubjects: Subject[] = [
+  { id: 1, name: 'Mathematics', code: 'MATH101' },
+  { id: 2, name: 'C Programming Basic', code: 'CS101' },
+  { id: 3, name: 'Physics', code: 'PHY101' },
+  { id: 4, name: 'Chemistry', code: 'CHEM101' },
+  { id: 5, name: 'Chinese Language', code: 'CHN101' },
+  { id: 6, name: 'English Literature', code: 'ENG101' },
+  { id: 7, name: 'Data Structures', code: 'CS201' },
+];
+
 // Mock data based on user's format
 // TODO: Replace with API call to fetch classes
 const mockClasses: Class[] = [
   {
     classEnd: "2026-04-07T00:00:00",
     classId: 2,
-    className: "Grade 9th Math Class A",
+    className: "9A - Mathematics",
+    subjectId: 1,
     classStart: "2026-01-07T00:00:00",
     classStatus: "ONGOING",
     classYear: "2025-2026",
@@ -95,7 +124,8 @@ const mockClasses: Class[] = [
   {
     classEnd: "2026-04-07T00:00:00",
     classId: 3,
-    className: "Grade 9th Math Class B",
+    className: "9B - Mathematics",
+    subjectId: 1,
     classStart: "2026-01-07T00:00:00",
     classStatus: "ONGOING",
     classYear: "2025-2026",
@@ -104,7 +134,8 @@ const mockClasses: Class[] = [
   {
     classEnd: "2026-04-07T00:00:00",
     classId: 4,
-    className: "Grade 9th Math Class C",
+    className: "10A - C Programming Basic",
+    subjectId: 2,
     classStart: "2026-01-07T00:00:00",
     classStatus: "ONGOING",
     classYear: "2025-2026",
@@ -113,7 +144,8 @@ const mockClasses: Class[] = [
   {
     classEnd: "2026-04-07T00:00:00",
     classId: 5,
-    className: "Grade 9th Chinese Class A",
+    className: "9A - Chinese Language",
+    subjectId: 5,
     classStart: "2026-01-07T00:00:00",
     classStatus: "ONGOING",
     classYear: "2025-2026",
@@ -122,7 +154,8 @@ const mockClasses: Class[] = [
   {
     classEnd: "2026-04-07T00:00:00",
     classId: 6,
-    className: "Grade 9th Chinese Class B",
+    className: "12A - Physics",
+    subjectId: 3,
     classStart: "2026-01-07T00:00:00",
     classStatus: "ONGOING",
     classYear: "2025-2026",
@@ -131,7 +164,8 @@ const mockClasses: Class[] = [
   {
     classEnd: "2025-12-15T00:00:00",
     classId: 7,
-    className: "Grade 8th Science Class A",
+    className: "11B - Chemistry",
+    subjectId: 4,
     classStart: "2025-09-01T00:00:00",
     classStatus: "COMPLETED",
     classYear: "2025-2026",
@@ -188,6 +222,7 @@ const AdminClasses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [yearFilter, setYearFilter] = useState<string>('all');
+  const [subjectFilter, setSubjectFilter] = useState<string>('all');
   
   // Dialog states
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -198,7 +233,8 @@ const AdminClasses = () => {
   
   // Form states
   const [formData, setFormData] = useState({
-    className: '',
+    classPrefix: '',
+    subjectId: 0,
     classStart: '',
     classEnd: '',
     classStatus: 'UPCOMING' as Class['classStatus'],
@@ -211,13 +247,27 @@ const AdminClasses = () => {
   // Get unique years for filter
   const uniqueYears = [...new Set(classes.map(c => c.classYear))];
 
+  // Generate class name from prefix and subject
+  const generateClassName = (prefix: string, subjectId: number) => {
+    const subject = mockSubjects.find(s => s.id === subjectId);
+    if (!prefix || !subject) return '';
+    return `${prefix} - ${subject.name}`;
+  };
+
+  // Get subject name by ID
+  const getSubjectName = (subjectId: number) => {
+    const subject = mockSubjects.find(s => s.id === subjectId);
+    return subject?.name || 'Unknown Subject';
+  };
+
   // Filter classes
   const filteredClasses = classes.filter(cls => {
     const matchesSearch = cls.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cls.teacherId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || cls.classStatus === statusFilter;
     const matchesYear = yearFilter === 'all' || cls.classYear === yearFilter;
-    return matchesSearch && matchesStatus && matchesYear;
+    const matchesSubject = subjectFilter === 'all' || cls.subjectId.toString() === subjectFilter;
+    return matchesSearch && matchesStatus && matchesYear && matchesSubject;
   });
 
   // Get teacher name by ID
@@ -246,7 +296,8 @@ const AdminClasses = () => {
 
   const resetForm = () => {
     setFormData({
-      className: '',
+      classPrefix: '',
+      subjectId: 0,
       classStart: '',
       classEnd: '',
       classStatus: 'UPCOMING',
@@ -257,9 +308,20 @@ const AdminClasses = () => {
 
   const handleCreate = () => {
     // TODO: API call to create class
+    const className = generateClassName(formData.classPrefix, formData.subjectId);
+    if (!className) {
+      toast({
+        title: "Error",
+        description: "Please select both a class prefix and a subject.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const newClass: Class = {
       classId: Math.max(...classes.map(c => c.classId)) + 1,
-      className: formData.className,
+      className: className,
+      subjectId: formData.subjectId,
       classStart: new Date(formData.classStart).toISOString(),
       classEnd: new Date(formData.classEnd).toISOString(),
       classStatus: formData.classStatus,
@@ -280,12 +342,23 @@ const AdminClasses = () => {
   const handleEdit = () => {
     if (!selectedClass) return;
     
+    const className = generateClassName(formData.classPrefix, formData.subjectId);
+    if (!className) {
+      toast({
+        title: "Error",
+        description: "Please select both a class prefix and a subject.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // TODO: API call to update class
     const updatedClasses = classes.map(cls =>
       cls.classId === selectedClass.classId
         ? {
             ...cls,
-            className: formData.className,
+            className: className,
+            subjectId: formData.subjectId,
             classStart: new Date(formData.classStart).toISOString(),
             classEnd: new Date(formData.classEnd).toISOString(),
             classStatus: formData.classStatus,
@@ -349,8 +422,11 @@ const AdminClasses = () => {
 
   const openEditDialog = (cls: Class) => {
     setSelectedClass(cls);
+    // Extract prefix from className (e.g., "9A - Mathematics" -> "9A")
+    const prefix = cls.className.split(' - ')[0] || '';
     setFormData({
-      className: cls.className,
+      classPrefix: prefix,
+      subjectId: cls.subjectId,
       classStart: cls.classStart.split('T')[0],
       classEnd: cls.classEnd.split('T')[0],
       classStatus: cls.classStatus,
@@ -447,6 +523,17 @@ const AdminClasses = () => {
                   className="pl-9"
                 />
               </div>
+              <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  {mockSubjects.map(subject => (
+                    <SelectItem key={subject.id} value={subject.id.toString()}>{subject.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-40">
                   <SelectValue placeholder="Status" />
@@ -481,6 +568,7 @@ const AdminClasses = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Class Name</TableHead>
+                  <TableHead>Subject</TableHead>
                   <TableHead>Teacher</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Year</TableHead>
@@ -492,7 +580,7 @@ const AdminClasses = () => {
               <TableBody>
                 {filteredClasses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No classes found
                     </TableCell>
                   </TableRow>
@@ -503,6 +591,12 @@ const AdminClasses = () => {
                         <div>
                           <p className="font-medium">{cls.className}</p>
                           <p className="text-sm text-muted-foreground">ID: {cls.classId}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Book className="h-4 w-4 text-muted-foreground" />
+                          <span>{getSubjectName(cls.subjectId)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -582,15 +676,53 @@ const AdminClasses = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="className">Class Name</Label>
-                <Input
-                  id="className"
-                  value={formData.className}
-                  onChange={(e) => setFormData({ ...formData, className: e.target.value })}
-                  placeholder="e.g., Grade 9th Math Class A"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="classPrefix">Class Prefix</Label>
+                  <Select
+                    value={formData.classPrefix}
+                    onValueChange={(value) => setFormData({ ...formData, classPrefix: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prefix" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classPrefixes.map((prefix) => (
+                        <SelectItem key={prefix} value={prefix}>
+                          {prefix}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="subjectId">Subject</Label>
+                  <Select
+                    value={formData.subjectId ? formData.subjectId.toString() : ''}
+                    onValueChange={(value) => setFormData({ ...formData, subjectId: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockSubjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id.toString()}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              
+              {/* Preview generated class name */}
+              {formData.classPrefix && formData.subjectId > 0 && (
+                <div className="rounded-md border border-dashed p-3 bg-muted/50">
+                  <p className="text-sm text-muted-foreground">Generated Class Name:</p>
+                  <p className="font-medium">{generateClassName(formData.classPrefix, formData.subjectId)}</p>
+                </div>
+              )}
+              
               <div className="grid gap-2">
                 <Label htmlFor="teacherId">Teacher</Label>
                 <Select
@@ -632,12 +764,20 @@ const AdminClasses = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="classYear">Academic Year</Label>
-                  <Input
-                    id="classYear"
+                  <Select
                     value={formData.classYear}
-                    onChange={(e) => setFormData({ ...formData, classYear: e.target.value })}
-                    placeholder="e.g., 2025-2026"
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, classYear: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2024-2025">2024-2025</SelectItem>
+                      <SelectItem value="2025-2026">2025-2026</SelectItem>
+                      <SelectItem value="2026-2027">2026-2027</SelectItem>
+                      <SelectItem value="2027-2028">2027-2028</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="classStatus">Status</Label>
