@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ const Login = () => {
     setError('');
     setIsLoading(true);
 
-    const result = await login(email, password);
+    const result = await login(userId, password);
     
     setIsLoading(false);
     
@@ -50,9 +50,9 @@ const Login = () => {
   };
 
   const demoCredentials = [
-    { role: 'Admin', email: 'admin@examflow.com', password: 'admin123' },
-    { role: 'Teacher', email: 'teacher@examflow.com', password: 'teacher123' },
-    { role: 'Student', email: 'student@examflow.com', password: 'student123' },
+    { role: 'Admin', userId: 'admin@examflow.com', password: 'admin123' },
+    { role: 'Teacher', userId: 'teacher@examflow.com', password: 'teacher123' },
+    { role: 'Student', userId: 'student@examflow.com', password: 'student123' },
   ];
 
   return (
@@ -106,15 +106,15 @@ const Login = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="userId">User ID</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="userId"
+                  type="text"
+                  placeholder="Enter your User ID"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
                   className="pl-10 h-12"
                   required
                 />
@@ -172,7 +172,7 @@ const Login = () => {
                   key={cred.role}
                   type="button"
                   onClick={() => {
-                    setEmail(cred.email);
+                    setUserId(cred.userId);
                     setPassword(cred.password);
                   }}
                   className="w-full p-3 bg-secondary/50 hover:bg-secondary rounded-lg transition-colors text-left group"
@@ -180,7 +180,7 @@ const Login = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="font-medium text-foreground">{cred.role}</span>
-                      <p className="text-sm text-muted-foreground">{cred.email}</p>
+                      <p className="text-sm text-muted-foreground">{cred.userId}</p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </div>
