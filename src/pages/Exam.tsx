@@ -10,6 +10,7 @@ import SecurityWarning from "@/components/exam/SecurityWarning";
 import ExamStatusBar from "@/components/exam/ExamStatusBar";
 import { useExamSecurity, SecurityViolation } from "@/hooks/useExamSecurity";
 import { useExamCache } from "@/hooks/useExamCache";
+import { useSaveProgress, buildSaveProgressPayload } from "@/hooks/useSaveProgress";
 import { toast } from "sonner";
 import type { TakeExamData, TakeExamQuestion } from "@/hooks/useTakeExam";
 
@@ -61,19 +62,26 @@ const Exam = () => {
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
 
-  // Exam cache for auto-save
+  // Exam cache for auto-save (local)
   const {
     saveToCache,
     loadFromCache,
     clearCache,
-    isSaving,
-    lastSaved,
+    isSaving: isCacheSaving,
+    lastSaved: cacheLastSaved,
     isOffline,
   } = useExamCache({
     examId,
     enabled: examStarted,
     autoSaveInterval: 5000,
   });
+
+  // Real save-progress API
+  const saveProgressMutation = useSaveProgress();
+  const isSaving = isCacheSaving || saveProgressMutation.isPending;
+  const lastSaved = saveProgressMutation.data?.lastSaved
+    ? new Date(saveProgressMutation.data.lastSaved)
+    : cacheLastSaved;
 
   // Security monitoring
   const { remainingChances } = useExamSecurity({
@@ -102,21 +110,28 @@ const Exam = () => {
     }
   }, [examId, loadFromCache]);
 
-  // Auto-save effect
+  // Auto-save effect (local cache + server)
   useEffect(() => {
-    if (!examStarted) return;
+    if (!examStarted || !examData) return;
 
     const interval = setInterval(() => {
+      // Save to local cache
       saveToCache({
         answers,
         flagged: Array.from(flagged),
         currentQuestion,
         timeLeft,
       });
+
+      // Save to server if online and has answers
+      if (navigator.onLine && Object.keys(answers).length > 0) {
+        const payload = buildSaveProgressPayload(examData, answers);
+        saveProgressMutation.mutate(payload);
+      }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [examStarted, answers, flagged, currentQuestion, timeLeft, saveToCache]);
+  }, [examStarted, answers, flagged, currentQuestion, timeLeft, saveToCache, examData]);
 
   // Timer effect
   useEffect(() => {
