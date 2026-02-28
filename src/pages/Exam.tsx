@@ -11,6 +11,7 @@ import ExamStatusBar from "@/components/exam/ExamStatusBar";
 import { useExamSecurity, SecurityViolation } from "@/hooks/useExamSecurity";
 import { useExamCache } from "@/hooks/useExamCache";
 import { useSaveProgress, buildSaveProgressPayload } from "@/hooks/useSaveProgress";
+import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
 import { toast } from "sonner";
 import type { TakeExamData, TakeExamQuestion } from "@/hooks/useTakeExam";
 
@@ -78,6 +79,8 @@ const Exam = () => {
 
   // Real save-progress API
   const saveProgressMutation = useSaveProgress();
+  // Real submit API
+  const submitExamMutation = useSubmitExam();
   const isSaving = isCacheSaving || saveProgressMutation.isPending;
   const lastSaved = saveProgressMutation.data?.lastSaved
     ? new Date(saveProgressMutation.data.lastSaved)
@@ -168,30 +171,35 @@ const Exam = () => {
   };
 
   const handleSubmit = useCallback(() => {
-    // Build selected option IDs map for submission
-    const selectedOptions: Record<number, number> = {};
-    questions.forEach((q) => {
-      const answerIndex = answers[q.id];
-      if (answerIndex !== undefined && q.optionIds[answerIndex] !== undefined) {
-        selectedOptions[q.id] = q.optionIds[answerIndex];
-      }
-    });
+    if (!examData) return;
 
-    clearCache();
+    const payload = buildSubmitPayload(examData, answers);
 
-    navigate("/results", {
-      state: {
-        score: 0, // Server will grade
-        total: questions.length,
-        answers,
-        selectedOptions,
-        questions,
-        examSessionId: examData?.examSessionId,
-        examTitle: examData?.examTitle,
-        subjectName: examData?.subjectName,
+    submitExamMutation.mutate(payload, {
+      onSuccess: (result) => {
+        clearCache();
+        navigate("/results", {
+          state: {
+            obtainedScore: result.obtainedScore,
+            totalPossibleScore: result.totalPossibleScore,
+            answeredCount: result.answeredCount,
+            totalQuestions: result.totalQuestions,
+            submittedAt: result.submittedAt,
+            isLate: result.isLate,
+            status: result.status,
+            examSessionId: result.examSessionId,
+            examTitle: examData.examTitle,
+            subjectName: examData.subjectName,
+            questions,
+            answers,
+          },
+        });
+      },
+      onError: (error) => {
+        toast.error(`Submit failed: ${error.message}. Please try again.`);
       },
     });
-  }, [answers, navigate, questions, clearCache, examData]);
+  }, [answers, navigate, questions, clearCache, examData, submitExamMutation]);
 
   const goToQuestion = (index: number) => {
     setCurrentQuestion(index);
@@ -338,8 +346,12 @@ const Exam = () => {
 
           <div className="flex gap-2">
             {Object.keys(answers).length === questions.length && (
-              <Button variant="success" onClick={handleSubmit}>
-                Submit Exam
+              <Button variant="success" onClick={handleSubmit} disabled={submitExamMutation.isPending}>
+                {submitExamMutation.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
+                ) : (
+                  "Submit Exam"
+                )}
               </Button>
             )}
           </div>
