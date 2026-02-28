@@ -8,59 +8,32 @@ import ExamHeader from "@/components/exam/ExamHeader";
 import QuestionNavigator from "@/components/exam/QuestionNavigator";
 import SecurityWarning from "@/components/exam/SecurityWarning";
 import ExamStatusBar from "@/components/exam/ExamStatusBar";
-import { useStartExam, ExamSessionData, ExamQuestion } from "@/hooks/useStartExam";
+import { useQuestions, Question } from "@/hooks/useQuestions";
 import { useExamSecurity, SecurityViolation } from "@/hooks/useExamSecurity";
 import { useExamCache } from "@/hooks/useExamCache";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-// Mapped question type for internal use
-export interface Question {
-  id: number;
-  question: string;
-  options: string[];
-  optionIds: number[];
-  correctAnswer?: number; // Only available in mock/review mode
-  difficulty: "EASY" | "MEDIUM" | "HARD";
-  chapter: string;
-  chapterId: number;
-  questionType: string;
-}
+export type { Question };
 
+const EXAM_DURATION_MINUTES = 30;
 const MAX_VIOLATIONS = 3;
-
-const mapQuestions = (apiQuestions: ExamQuestion[]): Question[] => {
-  return apiQuestions.map((q) => ({
-    id: q.questionId,
-    question: q.questionText || "—",
-    options: q.optionLists.map((o) => o.optionText),
-    optionIds: q.optionLists.map((o) => o.optionId),
-    difficulty: "MEDIUM" as const, // API doesn't return difficulty per question
-    chapter: q.chapterName || "—",
-    chapterId: q.chapterId,
-    questionType: q.questionType,
-  }));
-};
 
 const Exam = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const examId = searchParams.get("examId") || "1";
+  const subjectId = parseInt(searchParams.get("subjectId") || "52");
+  const examId = searchParams.get("examId") || "default";
   const isSecureMode = searchParams.get("secure") === "true";
-
-  const { startExam, loading: startLoading, error: startError } = useStartExam();
-
-  const [session, setSession] = useState<ExamSessionData | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  
+  const { questions, loading, error } = useQuestions(subjectId);
+  
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({}); // questionId -> optionIndex
+  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(EXAM_DURATION_MINUTES * 60);
   const [showNavigator, setShowNavigator] = useState(false);
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
-  const [initError, setInitError] = useState<string | null>(null);
 
   // Exam cache for auto-save
   const {
@@ -98,7 +71,8 @@ const Exam = () => {
       setFlagged(new Set(cached.flagged));
       setCurrentQuestion(cached.currentQuestion);
       setTimeLeft(cached.timeLeft);
-      // We still need session data, so don't skip the API call
+      setExamStarted(true);
+      toast.info("Your previous progress has been restored.");
     }
   }, [examId, loadFromCache]);
 
@@ -120,8 +94,8 @@ const Exam = () => {
 
   // Timer effect
   useEffect(() => {
-    if (!examStarted || questions.length === 0) return;
-
+    if (!examStarted || loading || questions.length === 0) return;
+    
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -134,38 +108,7 @@ const Exam = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [examStarted, questions.length]);
-
-  const handleStartExam = async () => {
-    try {
-      const sessionData = await startExam({
-        studentId: user?.id || "",
-        examId: parseInt(examId),
-        isDemo: true,
-      });
-
-      if (sessionData) {
-        setSession(sessionData);
-        const mapped = mapQuestions(sessionData.questionLists);
-        setQuestions(mapped);
-        setTimeLeft(sessionData.examDuration * 60);
-
-        // Restore cached answers if available
-        const cached = loadFromCache();
-        if (cached && cached.examId === examId) {
-          setAnswers(cached.answers);
-          setFlagged(new Set(cached.flagged));
-          setCurrentQuestion(cached.currentQuestion);
-          if (cached.timeLeft > 0) setTimeLeft(cached.timeLeft);
-          toast.info("Your previous progress has been restored.");
-        }
-
-        setExamStarted(true);
-      }
-    } catch (err) {
-      setInitError(err instanceof Error ? err.message : "Failed to start exam");
-    }
-  };
+  }, [examStarted, loading, questions.length]);
 
   const handleAnswerSelect = (questionId: number, optionIndex: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
@@ -184,27 +127,25 @@ const Exam = () => {
   };
 
   const handleSubmit = useCallback(() => {
-    // Build submission with optionIds
-    const submissionAnswers: Record<number, number> = {};
+    let score = 0;
     questions.forEach((q) => {
-      const selectedIndex = answers[q.id];
-      if (selectedIndex !== undefined && q.optionIds[selectedIndex] !== undefined) {
-        submissionAnswers[q.id] = q.optionIds[selectedIndex];
+      if (answers[q.id] === q.correctAnswer) {
+        score++;
       }
     });
 
+    // Clear cache on submit
     clearCache();
 
     navigate("/results", {
       state: {
-        score: 0, // Server will calculate
+        score,
         total: questions.length,
-        answers: submissionAnswers,
+        answers,
         questions,
-        session,
       },
     });
-  }, [answers, navigate, questions, clearCache, session]);
+  }, [answers, navigate, questions, clearCache]);
 
   const goToQuestion = (index: number) => {
     setCurrentQuestion(index);
@@ -217,86 +158,92 @@ const Exam = () => {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Loading state (calling take-exam API)
-  if (startLoading) {
+  // Loading state
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground">Preparing your exam...</p>
+          <p className="text-lg text-muted-foreground">Loading questions...</p>
         </div>
       </div>
     );
   }
 
   // Error state
-  if (startError || initError) {
+  if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md p-8">
           <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Failed to load exam</h2>
-          <p className="text-muted-foreground mb-4">{startError || initError}</p>
-          <div className="flex gap-3 justify-center">
-            <Button variant="outline" onClick={() => navigate("/student/exams")}>Back to Exams</Button>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
-          </div>
+          <h2 className="text-xl font-semibold mb-2">Failed to load questions</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
     );
   }
 
-  // Start exam screen (before API call)
-  if (!examStarted) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="max-w-lg w-full mx-4 p-8 bg-card rounded-xl border shadow-elegant">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-              Ready to Begin
-            </h1>
-            <p className="text-muted-foreground">Exam #{examId}</p>
-          </div>
-
-          <div className="space-y-4 mb-8">
-            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
-              <span className="text-muted-foreground">Student</span>
-              <span className="font-semibold">{user?.name || user?.id || "—"}</span>
-            </div>
-            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
-              <span className="text-muted-foreground">Security Mode</span>
-              <span className="font-semibold">{isSecureMode ? "Enabled" : "Disabled"}</span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg mb-8">
-            <p className="text-sm text-foreground">
-              <strong>Note:</strong> Clicking "Start Exam" will fetch your questions from the server and begin the timer.
-              {isSecureMode && " Security monitoring is enabled."}
-            </p>
-          </div>
-
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleStartExam}
-          >
-            Start Exam
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // No questions after API call
+  // No questions
   if (questions.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md p-8">
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">No questions available</h2>
-          <p className="text-muted-foreground mb-4">This exam has no questions assigned.</p>
+          <p className="text-muted-foreground mb-4">There are no questions for this subject.</p>
           <Button onClick={() => navigate("/student/exams")}>Back to Exams</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Start exam screen
+  if (!examStarted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="max-w-lg w-full mx-4 p-8 bg-card rounded-xl border shadow-elegant">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+              C Programming Exam
+            </h1>
+            <p className="text-muted-foreground">Subject ID: {subjectId}</p>
+          </div>
+          
+          <div className="space-y-4 mb-8">
+            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground">Total Questions</span>
+              <span className="font-semibold">{questions.length}</span>
+            </div>
+            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground">Duration</span>
+              <span className="font-semibold">{EXAM_DURATION_MINUTES} minutes</span>
+            </div>
+            <div className="flex justify-between p-4 bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground">Difficulty Mix</span>
+              <span className="font-semibold">
+                {questions.filter(q => q.difficulty === "EASY").length} Easy, {" "}
+                {questions.filter(q => q.difficulty === "MEDIUM").length} Medium, {" "}
+                {questions.filter(q => q.difficulty === "HARD").length} Hard
+              </span>
+            </div>
+          </div>
+
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg mb-8">
+            <p className="text-sm text-foreground">
+              <strong>Instructions:</strong> Answer all questions. You can flag questions to review later. 
+              The exam will auto-submit when time runs out.
+              {isSecureMode && " Security monitoring is enabled."}
+            </p>
+          </div>
+
+          <Button 
+            className="w-full" 
+            size="lg" 
+            onClick={() => setExamStarted(true)}
+          >
+            Start Exam
+          </Button>
         </div>
       </div>
     );
@@ -321,19 +268,6 @@ const Exam = () => {
         formatTime={formatTime}
         onShowNavigator={() => setShowNavigator(!showNavigator)}
       />
-
-      {/* Exam info bar */}
-      {session && (
-        <div className="container mx-auto px-6 pt-4 max-w-4xl">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{session.examTitle}</span>
-            <span>•</span>
-            <span>{session.subjectName}</span>
-            <span>•</span>
-            <span>{session.className}</span>
-          </div>
-        </div>
-      )}
 
       <main className="container mx-auto px-6 py-8 max-w-4xl">
         {/* Progress Bar */}

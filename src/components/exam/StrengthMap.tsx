@@ -19,7 +19,7 @@ const StrengthMap = ({ questions, answers }: StrengthMapProps) => {
   // Group questions by chapter and calculate performance
   const chapterStats = questions.reduce((acc, question) => {
     const existing = acc.find(ch => ch.chapterId === question.chapterId);
-    const isCorrect = question.correctAnswer !== undefined ? answers[question.id] === question.correctAnswer : false;
+    const isCorrect = answers[question.id] === question.correctAnswer;
 
     if (existing) {
       existing.total += 1;
