@@ -28,6 +28,7 @@ import TeacherStudents from "./pages/teacher/TeacherStudents";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentDashboardReal from "./pages/student/StudentDashboardReal";
 import StudentSubjects from "./pages/student/StudentSubjects";
+import StudentSubjectsReal from "./pages/student/StudentSubjectsReal";
 import StudentClassrooms from "./pages/student/StudentClassrooms";
 import StudentExams from "./pages/student/StudentExams";
 import StudentResults from "./pages/student/StudentResults";
@@ -141,6 +142,11 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/student/subjects" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentSubjectsReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/subjects-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentSubjects />
                 </ProtectedRoute>
