@@ -59,8 +59,8 @@ const getTotalQuestions = (exam: StudentExam) => {
   return fromDifficulty > 0 ? fromDifficulty : fromIds;
 };
 
-const isActiveExam = (exam: StudentExam) => {
-  return exam.examStatus === 'ACTIVE' || exam.examStatus === 'ON_GOING';
+const canTakeExam = (exam: StudentExam) => {
+  return exam.examStatus === 'ACTIVE' || exam.examStatus === 'ON_GOING' || exam.examStatus === 'UP_COMING';
 };
 
 const StudentExamsReal = () => {
@@ -70,7 +70,7 @@ const StudentExamsReal = () => {
   const [showRulesDialog, setShowRulesDialog] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
 
-  const upcomingExams = (exams ?? []).filter(e => e.examStatus === 'UP_COMING' || isActiveExam(e));
+  const upcomingExams = (exams ?? []).filter(e => e.examStatus === 'UP_COMING' || e.examStatus === 'ACTIVE' || e.examStatus === 'ON_GOING');
   const completedExams = (exams ?? []).filter(e => e.examStatus === 'COMPLETED' || e.examStatus === 'DONE' || e.examStatus === 'MISSED');
 
   const handleEnterExam = (exam: StudentExam) => {
@@ -95,7 +95,7 @@ const StudentExamsReal = () => {
         </div>
 
         {/* Active exam alert */}
-        {upcomingExams.some(isActiveExam) && (
+        {upcomingExams.some(canTakeExam) && (
           <Card className="border-green-500/30 bg-green-500/5">
             <CardContent className="flex items-center gap-4 py-4">
               <div className="p-3 rounded-full bg-green-500/10">
@@ -166,7 +166,7 @@ const StudentExamsReal = () => {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            {isActiveExam(exam) ? (
+                            {canTakeExam(exam) ? (
                               <Button onClick={() => handleEnterExam(exam)} className="gap-2">
                                 <Play className="w-4 h-4" />
                                 Enter Exam
@@ -174,7 +174,7 @@ const StudentExamsReal = () => {
                             ) : (
                               <Button disabled variant="outline" className="gap-2">
                                 <Lock className="w-4 h-4" />
-                                Upcoming
+                                Not Available
                               </Button>
                             )}
                           </div>

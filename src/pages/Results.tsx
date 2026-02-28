@@ -109,7 +109,7 @@ const Results = () => {
           <div className="space-y-4">
             {questions.map((q, index) => {
               const userAnswer = answers[q.id];
-              const isCorrect = userAnswer === q.correctAnswer;
+              const isCorrect = q.correctAnswer !== undefined ? userAnswer === q.correctAnswer : false;
 
               return (
                 <div
@@ -136,7 +136,7 @@ const Results = () => {
                       <div className="grid gap-2">
                         {q.options.map((option, optIndex) => {
                           const isUserAnswer = optIndex === userAnswer;
-                          const isCorrectAnswer = optIndex === q.correctAnswer;
+                          const isCorrectAnswer = q.correctAnswer !== undefined ? optIndex === q.correctAnswer : false;
 
                           let optionClass = "bg-secondary/50 text-muted-foreground";
                           if (isCorrectAnswer) {
