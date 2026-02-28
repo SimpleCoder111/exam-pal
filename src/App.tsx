@@ -30,9 +30,13 @@ import StudentDashboardReal from "./pages/student/StudentDashboardReal";
 import StudentSubjects from "./pages/student/StudentSubjects";
 import StudentSubjectsReal from "./pages/student/StudentSubjectsReal";
 import StudentClassrooms from "./pages/student/StudentClassrooms";
+import StudentClassroomsReal from "./pages/student/StudentClassroomsReal";
 import StudentExams from "./pages/student/StudentExams";
+import StudentExamsReal from "./pages/student/StudentExamsReal";
 import StudentResults from "./pages/student/StudentResults";
+import StudentResultsReal from "./pages/student/StudentResultsReal";
 import StudentSettings from "./pages/student/StudentSettings";
+import StudentSettingsReal from "./pages/student/StudentSettingsReal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -153,20 +157,40 @@ const App = () => (
               } />
               <Route path="/student/classrooms" element={
                 <ProtectedRoute allowedRoles={['student']}>
+                  <StudentClassroomsReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/classrooms-mock" element={
+                <ProtectedRoute allowedRoles={['student']}>
                   <StudentClassrooms />
                 </ProtectedRoute>
               } />
               <Route path="/student/exams" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentExamsReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/exams-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentExams />
                 </ProtectedRoute>
               } />
               <Route path="/student/results" element={
                 <ProtectedRoute allowedRoles={['student']}>
+                  <StudentResultsReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/results-mock" element={
+                <ProtectedRoute allowedRoles={['student']}>
                   <StudentResults />
                 </ProtectedRoute>
               } />
               <Route path="/student/settings" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentSettingsReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/settings-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentSettings />
                 </ProtectedRoute>
