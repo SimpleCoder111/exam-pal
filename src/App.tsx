@@ -26,6 +26,7 @@ import TeacherReports from "./pages/teacher/TeacherReports";
 import TeacherSettings from "./pages/teacher/TeacherSettings";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import StudentDashboardReal from "./pages/student/StudentDashboardReal";
 import StudentSubjects from "./pages/student/StudentSubjects";
 import StudentClassrooms from "./pages/student/StudentClassrooms";
 import StudentExams from "./pages/student/StudentExams";
@@ -130,6 +131,11 @@ const App = () => (
               
               {/* Student Routes */}
               <Route path="/student" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentDashboardReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/dashboard-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentDashboard />
                 </ProtectedRoute>
