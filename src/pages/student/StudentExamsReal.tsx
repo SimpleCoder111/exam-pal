@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTakeExam } from '@/hooks/useTakeExam';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   Calendar, Clock, BookOpen, Shield, AlertTriangle, Timer,
@@ -70,6 +74,10 @@ const StudentExamsReal = () => {
   const [showRulesDialog, setShowRulesDialog] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
 
+  const { user } = useAuth();
+  const takeExamMutation = useTakeExam();
+  const [isStarting, setIsStarting] = useState(false);
+
   const upcomingExams = (exams ?? []).filter(e => e.examStatus === 'UP_COMING' || isActiveExam(e));
   const completedExams = (exams ?? []).filter(e => e.examStatus === 'COMPLETED' || e.examStatus === 'DONE' || e.examStatus === 'MISSED');
 
@@ -79,10 +87,21 @@ const StudentExamsReal = () => {
     setRulesAccepted(false);
   };
 
-  const handleStartExam = () => {
-    if (selectedExam && rulesAccepted) {
+  const handleStartExam = async () => {
+    if (!selectedExam || !rulesAccepted || !user?.id) return;
+    setIsStarting(true);
+    try {
+      const examData = await takeExamMutation.mutateAsync({
+        studentId: user.id,
+        examId: selectedExam.examId,
+        isDemo: true,
+      });
       setShowRulesDialog(false);
-      navigate(`/exam?subjectId=${selectedExam.subjectId}&examId=${selectedExam.examId}&secure=true`);
+      navigate('/exam', { state: { examData } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start exam');
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -166,17 +185,10 @@ const StudentExamsReal = () => {
                           </div>
 
                           <div className="flex flex-col items-end gap-2">
-                            {isActiveExam(exam) ? (
-                              <Button onClick={() => handleEnterExam(exam)} className="gap-2">
-                                <Play className="w-4 h-4" />
-                                Enter Exam
-                              </Button>
-                            ) : (
-                              <Button disabled variant="outline" className="gap-2">
-                                <Lock className="w-4 h-4" />
-                                Upcoming
-                              </Button>
-                            )}
+                            <Button onClick={() => handleEnterExam(exam)} className="gap-2">
+                              <Play className="w-4 h-4" />
+                              {isActiveExam(exam) ? 'Enter Exam' : 'Take Exam'}
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -317,9 +329,9 @@ const StudentExamsReal = () => {
 
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowRulesDialog(false)}>Cancel</Button>
-            <Button onClick={handleStartExam} disabled={!rulesAccepted} className="gap-2">
-              <Play className="w-4 h-4" />
-              Start Exam
+            <Button onClick={handleStartExam} disabled={!rulesAccepted || isStarting} className="gap-2">
+              {isStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              {isStarting ? 'Starting...' : 'Start Exam'}
             </Button>
           </DialogFooter>
         </DialogContent>
