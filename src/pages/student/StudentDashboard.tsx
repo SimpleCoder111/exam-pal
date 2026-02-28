@@ -15,7 +15,6 @@ import { Progress } from '@/components/ui/progress';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Link } from 'react-router-dom';
 import { studentNavItems } from '@/config/studentNavItems';
-import { useStudentProfile } from '@/hooks/useStudentProfile';
 
 const enrolledSubjects = [
   { name: 'Mathematics', teacher: 'Mr. Smith', progress: 75, nextExam: 'Jan 15' },
@@ -55,21 +54,13 @@ const leaderboard = [
 ];
 
 const StudentDashboard = () => {
-  const { data: profile, isLoading: profileLoading } = useStudentProfile();
-
-  const displayName = profile?.name
-    ? profile.name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
-    : 'Student';
-
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-heading text-3xl font-semibold text-foreground">
-              Welcome Back, {profileLoading ? '...' : displayName}!
-            </h1>
+            <h1 className="font-heading text-3xl font-semibold text-foreground">Welcome Back, Jane!</h1>
             <p className="text-muted-foreground mt-1">Here's your learning progress and upcoming activities.</p>
           </div>
           <Link to="/exam">
