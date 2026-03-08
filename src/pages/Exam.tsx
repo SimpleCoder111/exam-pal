@@ -338,8 +338,10 @@ const Exam = () => {
           currentIndex={currentQuestion}
           totalQuestions={questions.length}
           selectedAnswer={answers[currentQ.id]}
+          textAnswer={textAnswers[currentQ.id]}
           isFlagged={flagged.has(currentQ.id)}
           onAnswerSelect={handleAnswerSelect}
+          onTextAnswerChange={handleTextAnswerChange}
           onFlagToggle={handleFlagToggle}
         />
 
