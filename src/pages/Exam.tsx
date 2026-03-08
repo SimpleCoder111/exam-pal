@@ -299,7 +299,12 @@ const Exam = () => {
     );
   }
 
-  const progress = (Object.keys(answers).length / questions.length) * 100;
+  const answeredCount = questions.filter((q) =>
+    q.questionType === "FILL_BLANK"
+      ? !!textAnswers[q.id]?.trim()
+      : answers[q.id] !== undefined
+  ).length;
+  const progress = (answeredCount / questions.length) * 100;
   const currentQ = questions[currentQuestion];
 
   return (
