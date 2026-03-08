@@ -57,6 +57,7 @@ const Exam = () => {
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [textAnswers, setTextAnswers] = useState<Record<number, string>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [timeLeft, setTimeLeft] = useState(examDuration * 60);
   const [showNavigator, setShowNavigator] = useState(false);
