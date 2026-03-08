@@ -6,28 +6,48 @@ import {
   ArrowRight,
   CheckCircle,
   Star,
-  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Link } from 'react-router-dom';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentProfile } from '@/hooks/useStudentProfile';
 import { useStudentSubjects } from '@/hooks/useStudentSubjects';
-import { format, parseISO } from 'date-fns';
+import { useStudentResults } from '@/hooks/useStudentResults';
+import { useStudentExams } from '@/hooks/useStudentExams';
+import { format, parseISO, isFuture } from 'date-fns';
 
 const formatName = (name?: string | null) => {
   if (!name) return 'Student';
   return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 };
 
+const getScoreColor = (score: number) => {
+  if (score >= 80) return 'text-green-600';
+  if (score >= 50) return 'text-primary';
+  return 'text-destructive';
+};
+
 const StudentDashboardReal = () => {
   const { data: profile, isLoading: profileLoading, error: profileError } = useStudentProfile();
-  const { data: subjects, isLoading: subjectsLoading, error: subjectsError } = useStudentSubjects();
+  const { data: subjects, isLoading: subjectsLoading } = useStudentSubjects();
+  const { data: results, isLoading: resultsLoading } = useStudentResults();
+  const { data: exams, isLoading: examsLoading } = useStudentExams();
+
+  // Computed stats from real data
+  const averageScore = results?.length
+    ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
+    : null;
+
+  const upcomingExams = exams?.filter(e => e.examStatus === 'UPCOMING' || isFuture(parseISO(e.examDate))) ?? [];
+
+  const recentResults = results?.slice(0, 4) ?? [];
+
+  // Best score for "rank" placeholder
+  const bestScore = results?.length ? Math.max(...results.map(r => r.score)) : null;
 
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
@@ -91,7 +111,7 @@ const StudentDashboardReal = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Stats - placeholder for future APIs */}
+        {/* Quick Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4 text-center">
@@ -99,7 +119,7 @@ const StudentDashboardReal = () => {
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>
               <p className="text-2xl font-semibold text-foreground">
-                {subjectsLoading ? '…' : (subjects?.length ?? '—')}
+                {subjectsLoading ? <Skeleton className="h-7 w-8 mx-auto" /> : (subjects?.length ?? '—')}
               </p>
               <p className="text-sm text-muted-foreground">Enrolled Subjects</p>
             </CardContent>
@@ -109,7 +129,9 @@ const StudentDashboardReal = () => {
               <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mx-auto mb-2">
                 <Clock className="w-6 h-6 text-accent-foreground" />
               </div>
-              <p className="text-2xl font-semibold text-foreground">—</p>
+              <p className="text-2xl font-semibold text-foreground">
+                {examsLoading ? <Skeleton className="h-7 w-8 mx-auto" /> : upcomingExams.length}
+              </p>
               <p className="text-sm text-muted-foreground">Upcoming Exams</p>
             </CardContent>
           </Card>
@@ -118,7 +140,9 @@ const StudentDashboardReal = () => {
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                 <CheckCircle className="w-6 h-6 text-primary" />
               </div>
-              <p className="text-2xl font-semibold text-foreground">—</p>
+              <p className={`text-2xl font-semibold ${averageScore !== null ? getScoreColor(averageScore) : 'text-foreground'}`}>
+                {resultsLoading ? <Skeleton className="h-7 w-8 mx-auto" /> : (averageScore !== null ? `${averageScore}%` : '—')}
+              </p>
               <p className="text-sm text-muted-foreground">Average Score</p>
             </CardContent>
           </Card>
@@ -127,14 +151,16 @@ const StudentDashboardReal = () => {
               <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mx-auto mb-2">
                 <Trophy className="w-6 h-6 text-accent-foreground" />
               </div>
-              <p className="text-2xl font-semibold text-foreground">—</p>
-              <p className="text-sm text-muted-foreground">Class Rank</p>
+              <p className={`text-2xl font-semibold ${bestScore !== null ? getScoreColor(bestScore) : 'text-foreground'}`}>
+                {resultsLoading ? <Skeleton className="h-7 w-8 mx-auto" /> : (bestScore !== null ? `${bestScore}%` : '—')}
+              </p>
+              <p className="text-sm text-muted-foreground">Best Score</p>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Enrolled Subjects - awaiting API */}
+          {/* Enrolled Subjects */}
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="font-heading">My Subjects</CardTitle>
@@ -146,8 +172,6 @@ const StudentDashboardReal = () => {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : subjectsError ? (
-                <p className="text-sm text-destructive">Failed to load subjects.</p>
               ) : !subjects || subjects.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No enrolled subjects found.</p>
               ) : (
@@ -175,38 +199,133 @@ const StudentDashboardReal = () => {
             </CardContent>
           </Card>
 
-          {/* Leaderboard - awaiting API */}
+          {/* Recent Results */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading flex items-center gap-2">
                 <Star className="w-5 h-5 text-primary" />
-                Leaderboard
+                Recent Results
               </CardTitle>
+              <Link to="/student/results">
+                <Button variant="ghost" size="sm" className="gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">No leaderboard data yet. API integration pending.</p>
+              {resultsLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
+                </div>
+              ) : recentResults.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No results yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {recentResults.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground text-sm truncate">{r.exam.examTitle}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(r.gradedAt), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                      <span className={`text-lg font-semibold ${getScoreColor(r.score)}`}>
+                        {r.score}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Upcoming Exams - awaiting API */}
+          {/* Upcoming Exams */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="font-heading">Upcoming Exams</CardTitle>
+              <Link to="/student/exams">
+                <Button variant="ghost" size="sm" className="gap-1">
+                  View All <ArrowRight className="w-3 h-3" />
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">No upcoming exams yet. API integration pending.</p>
+              {examsLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
+                </div>
+              ) : upcomingExams.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No upcoming exams.</p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingExams.slice(0, 4).map((e) => (
+                    <div key={e.examId} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                      <div>
+                        <p className="font-medium text-foreground text-sm">{e.examTitle}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(e.examDate), 'MMM d, yyyy · h:mm a')} · {e.duration} min
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{e.examStatus}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Recent Results - awaiting API */}
+          {/* Exam Performance Summary */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading">Recent Results</CardTitle>
+              <CardTitle className="font-heading">Performance Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">No results yet. API integration pending.</p>
+              {resultsLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))}
+                </div>
+              ) : !results || results.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No performance data yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Exams Taken</span>
+                    <span className="font-medium text-foreground">{results.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Average Score</span>
+                    <span className={`font-medium ${averageScore !== null ? getScoreColor(averageScore) : ''}`}>
+                      {averageScore !== null ? `${averageScore}%` : '—'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Best Score</span>
+                    <span className={`font-medium ${bestScore !== null ? getScoreColor(bestScore) : ''}`}>
+                      {bestScore !== null ? `${bestScore}%` : '—'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Pass Rate (≥50%)</span>
+                    <span className="font-medium text-foreground">
+                      {Math.round((results.filter(r => r.score >= 50).length / results.length) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Avg. Time Taken</span>
+                    <span className="font-medium text-foreground">
+                      {Math.round(results.reduce((s, r) => s + r.timeTaken, 0) / results.length)} min
+                    </span>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
