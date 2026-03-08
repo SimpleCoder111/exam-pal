@@ -128,8 +128,8 @@ const Exam = () => {
       });
 
       // Save to server if online and has answers
-      if (navigator.onLine && Object.keys(answers).length > 0) {
-        const payload = buildSaveProgressPayload(examData, answers);
+      if (navigator.onLine && (Object.keys(answers).length > 0 || Object.keys(textAnswers).length > 0)) {
+        const payload = buildSaveProgressPayload(examData, answers, textAnswers);
         saveProgressMutation.mutate(payload);
       }
     }, 5000);
