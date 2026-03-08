@@ -1,6 +1,7 @@
 import { Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import type { Question } from "@/pages/Exam";
 
 interface QuestionCardProps {
@@ -8,8 +9,10 @@ interface QuestionCardProps {
   currentIndex: number;
   totalQuestions: number;
   selectedAnswer?: number;
+  textAnswer?: string;
   isFlagged: boolean;
   onAnswerSelect: (questionId: number, optionIndex: number) => void;
+  onTextAnswerChange: (questionId: number, text: string) => void;
   onFlagToggle: (questionId: number) => void;
 }
 
