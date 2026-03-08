@@ -5,19 +5,32 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
+import { useStudentResults } from '@/hooks/useStudentResults';
 
 const StudentResultsReal = () => {
-  // Placeholder: no results API integrated yet
-  const examHistory: any[] = [];
-  const isLoading = false;
-  const error = null;
+  const { data: examHistory = [], isLoading, error } = useStudentResults();
 
-  const overallStats = {
-    averageScore: 0,
-    totalExams: 0,
-    passRate: 0,
-    bestSubject: '—',
-    improvement: 0,
+  const overallStats = (() => {
+    if (examHistory.length === 0) {
+      return { averageScore: 0, totalExams: 0, passRate: 0, bestSubject: '—', improvement: 0 };
+    }
+    const scores = examHistory.map((r) => r.score);
+    const averageScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    const passRate = Math.round((scores.filter((s) => s >= 50).length / scores.length) * 100);
+    const sorted = [...scores];
+    const improvement = sorted.length >= 2 ? Math.round(sorted[0] - sorted[sorted.length - 1]) : 0;
+    return { averageScore, totalExams: examHistory.length, passRate, bestSubject: '—', improvement };
+  })();
+
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 dark:text-green-400';
+    if (score >= 50) return 'text-primary';
+    return 'text-destructive';
   };
 
   return (
@@ -36,7 +49,7 @@ const StudentResultsReal = () => {
             { label: 'Pass Rate', value: overallStats.passRate ? `${overallStats.passRate}%` : '—', icon: Trophy, gradient: 'from-primary/10 to-primary/5 border-primary/20' },
             { label: 'Exams Taken', value: overallStats.totalExams || '0', icon: BookOpen, gradient: 'from-accent/10 to-accent/5 border-accent/20' },
             { label: 'Best Subject', value: overallStats.bestSubject, icon: Star, gradient: 'from-secondary/10 to-secondary/5 border-secondary/20' },
-            { label: 'Improvement', value: overallStats.improvement ? `+${overallStats.improvement}%` : '—', icon: TrendingUp, gradient: 'from-primary/10 to-primary/5 border-primary/20' },
+            { label: 'Improvement', value: overallStats.improvement ? `${overallStats.improvement > 0 ? '+' : ''}${overallStats.improvement}%` : '—', icon: TrendingUp, gradient: 'from-primary/10 to-primary/5 border-primary/20' },
           ].map((stat) => (
             <Card key={stat.label} className={`bg-gradient-to-br ${stat.gradient}`}>
               <CardContent className="p-4 text-center">
@@ -90,35 +103,40 @@ const StudentResultsReal = () => {
                     <Trophy className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <h3 className="font-semibold text-lg">No Results Yet</h3>
-                  <p className="text-muted-foreground mt-1">Your exam results will appear here once the API is integrated.</p>
-                  <Badge variant="outline" className="mt-3">API integration pending</Badge>
+                  <p className="text-muted-foreground mt-1">Your exam results will appear here after you complete exams.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid gap-4">
-                {examHistory.map((exam: any) => (
-                  <Card key={exam.id} className="hover:shadow-md transition-all">
+                {examHistory.map((result) => (
+                  <Card key={result.id} className="hover:shadow-md transition-all">
                     <CardContent className="p-4">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
-                          <h3 className="font-semibold">{exam.name || '—'}</h3>
+                          <h3 className="font-semibold text-foreground">{result.exam.examTitle}</h3>
                           <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <BookOpen className="w-3 h-3" />
-                              {exam.subject || '—'}
+                              <Calendar className="w-3 h-3" />
+                              {new Date(result.exam.examDate).toLocaleDateString()}
                             </span>
                             <span>•</span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {exam.timeSpent || '—'}
+                              {formatDuration(result.timeTaken)}
+                            </span>
+                            <span>•</span>
+                            <span className="text-xs">
+                              Graded {new Date(result.gradedAt).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-primary">{exam.score ?? '—'}%</p>
-                          <p className="text-xs text-muted-foreground">
-                            {exam.correctAnswers ?? 0}/{exam.totalQuestions ?? 0} correct
+                          <p className={`text-2xl font-bold ${getScoreColor(result.score)}`}>
+                            {result.score}%
                           </p>
+                          <Badge variant={result.score >= 50 ? 'default' : 'destructive'} className="mt-1">
+                            {result.score >= 50 ? 'Passed' : 'Failed'}
+                          </Badge>
                         </div>
                       </div>
                     </CardContent>
@@ -136,7 +154,6 @@ const StudentResultsReal = () => {
                 </div>
                 <h3 className="font-semibold text-lg">Analytics Coming Soon</h3>
                 <p className="text-muted-foreground mt-1">Performance charts and trends will appear here once results data is available.</p>
-                <Badge variant="outline" className="mt-3">API integration pending</Badge>
               </CardContent>
             </Card>
           </TabsContent>
@@ -149,7 +166,6 @@ const StudentResultsReal = () => {
                 </div>
                 <h3 className="font-semibold text-lg">Study Plan Coming Soon</h3>
                 <p className="text-muted-foreground mt-1">Personalized recommendations will appear here based on your exam results.</p>
-                <Badge variant="outline" className="mt-3">API integration pending</Badge>
               </CardContent>
             </Card>
           </TabsContent>
