@@ -34,8 +34,10 @@ const QuestionCard = ({
   currentIndex,
   totalQuestions,
   selectedAnswer,
+  textAnswer,
   isFlagged,
   onAnswerSelect,
+  onTextAnswerChange,
   onFlagToggle,
 }: QuestionCardProps) => {
   return (
