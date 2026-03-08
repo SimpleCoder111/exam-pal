@@ -159,6 +159,10 @@ const Exam = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
   };
 
+  const handleTextAnswerChange = (questionId: number, text: string) => {
+    setTextAnswers((prev) => ({ ...prev, [questionId]: text }));
+  };
+
   const handleFlagToggle = (questionId: number) => {
     setFlagged((prev) => {
       const newSet = new Set(prev);
