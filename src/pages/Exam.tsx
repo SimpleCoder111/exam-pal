@@ -327,7 +327,7 @@ const Exam = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span>Progress</span>
-            <span>{Object.keys(answers).length} of {questions.length} answered</span>
+            <span>{answeredCount} of {questions.length} answered</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
