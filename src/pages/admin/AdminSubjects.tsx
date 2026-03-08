@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
@@ -59,94 +60,37 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminNavItems } from '@/config/adminNavItems';
-
-// Types
-interface Chapter {
-  id: string;
-  name: string;
-  description: string;
-  orderIndex: number;
-  isActive: boolean;
-  questionCount: number;
-}
-
-interface Subject {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  isActive: boolean;
-  chapters: Chapter[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Mock Data
-const mockSubjects: Subject[] = [
-  {
-    id: '1',
-    name: 'Mathematics',
-    code: 'MATH101',
-    description: 'Fundamental mathematics covering algebra, geometry, and calculus',
-    isActive: true,
-    chapters: [
-      { id: '1-1', name: 'Algebra Basics', description: 'Introduction to algebraic expressions', orderIndex: 1, isActive: true, questionCount: 45 },
-      { id: '1-2', name: 'Linear Equations', description: 'Solving linear equations and inequalities', orderIndex: 2, isActive: true, questionCount: 38 },
-      { id: '1-3', name: 'Quadratic Equations', description: 'Quadratic formulas and applications', orderIndex: 3, isActive: true, questionCount: 52 },
-      { id: '1-4', name: 'Geometry Fundamentals', description: 'Basic geometric shapes and properties', orderIndex: 4, isActive: false, questionCount: 0 },
-    ],
-    createdAt: '2024-01-15',
-    updatedAt: '2024-03-20',
-  },
-  {
-    id: '2',
-    name: 'Physics',
-    code: 'PHY101',
-    description: 'Introduction to physics principles and mechanics',
-    isActive: true,
-    chapters: [
-      { id: '2-1', name: 'Motion and Forces', description: 'Newton\'s laws and applications', orderIndex: 1, isActive: true, questionCount: 67 },
-      { id: '2-2', name: 'Energy and Work', description: 'Conservation of energy principles', orderIndex: 2, isActive: true, questionCount: 43 },
-      { id: '2-3', name: 'Waves and Sound', description: 'Wave properties and acoustics', orderIndex: 3, isActive: true, questionCount: 29 },
-    ],
-    createdAt: '2024-01-20',
-    updatedAt: '2024-03-18',
-  },
-  {
-    id: '3',
-    name: 'Chemistry',
-    code: 'CHEM101',
-    description: 'Basic chemistry concepts and laboratory principles',
-    isActive: true,
-    chapters: [
-      { id: '3-1', name: 'Atomic Structure', description: 'Atoms, electrons, and periodic table', orderIndex: 1, isActive: true, questionCount: 55 },
-      { id: '3-2', name: 'Chemical Bonding', description: 'Types of chemical bonds', orderIndex: 2, isActive: true, questionCount: 41 },
-    ],
-    createdAt: '2024-02-01',
-    updatedAt: '2024-03-15',
-  },
-  {
-    id: '4',
-    name: 'Biology',
-    code: 'BIO101',
-    description: 'Life sciences and cellular biology',
-    isActive: false,
-    chapters: [
-      { id: '4-1', name: 'Cell Structure', description: 'Cell components and functions', orderIndex: 1, isActive: true, questionCount: 38 },
-    ],
-    createdAt: '2024-02-10',
-    updatedAt: '2024-02-10',
-  },
-];
+import {
+  useAdminSubjects,
+  useCreateSubject,
+  useUpdateSubject,
+  useToggleSubjectStatus,
+  useDeleteSubject,
+  useAddChapters,
+  useUpdateChapter,
+  useDeleteChapter,
+  useToggleChapterStatus,
+  type SubjectResponse,
+  type ChapterResponse,
+} from '@/hooks/useAdminSubjects';
 
 const AdminSubjects = () => {
-  const [subjects, setSubjects] = useState<Subject[]>(mockSubjects);
+  const { data: subjects, isLoading } = useAdminSubjects();
+  const createSubject = useCreateSubject();
+  const updateSubject = useUpdateSubject();
+  const toggleSubjectStatus = useToggleSubjectStatus();
+  const deleteSubjectMutation = useDeleteSubject();
+  const addChapters = useAddChapters();
+  const updateChapter = useUpdateChapter();
+  const deleteChapterMutation = useDeleteChapter();
+  const toggleChapterStatus = useToggleChapterStatus();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   // Subject dialog state
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
-  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [editingSubject, setEditingSubject] = useState<SubjectResponse | null>(null);
   const [subjectForm, setSubjectForm] = useState({
     name: '',
     code: '',
@@ -156,33 +100,28 @@ const AdminSubjects = () => {
 
   // Chapter dialog state
   const [isChapterDialogOpen, setIsChapterDialogOpen] = useState(false);
-  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+  const [editingChapter, setEditingChapter] = useState<ChapterResponse | null>(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
   const [chapterForms, setChapterForms] = useState<Array<{ name: string; description: string; isActive: boolean }>>([
-    { name: '', description: '', isActive: true }
+    { name: '', description: '', isActive: true },
   ]);
 
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'subject' | 'chapter'; id: string; subjectId?: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'subject' | 'chapter'; id: number; subjectId?: number } | null>(null);
 
-  // Filter subjects based on search
-  const filteredSubjects = subjects.filter(
-    (subject) =>
-      subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      subject.code.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter subjects
+  const filteredSubjects = (subjects || []).filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Subject CRUD operations
-  const handleOpenSubjectDialog = (subject?: Subject) => {
+  // Subject CRUD
+  const handleOpenSubjectDialog = (subject?: SubjectResponse) => {
     if (subject) {
       setEditingSubject(subject);
-      setSubjectForm({
-        name: subject.name,
-        code: subject.code,
-        description: subject.description,
-        isActive: subject.isActive,
-      });
+      setSubjectForm({ name: subject.name, code: subject.code, description: subject.description, isActive: subject.active });
     } else {
       setEditingSubject(null);
       setSubjectForm({ name: '', code: '', description: '', isActive: true });
@@ -191,66 +130,46 @@ const AdminSubjects = () => {
   };
 
   const handleSaveSubject = () => {
-    // TODO: API call to create/update subject
-    // POST /api/subjects or PUT /api/subjects/:id
-
     if (editingSubject) {
-      setSubjects(
-        subjects.map((s) =>
-          s.id === editingSubject.id
-            ? { ...s, ...subjectForm, updatedAt: new Date().toISOString().split('T')[0] }
-            : s
-        )
+      updateSubject.mutate(
+        { id: editingSubject.id, ...subjectForm },
+        {
+          onSuccess: () => { toast.success('Subject updated successfully'); setIsSubjectDialogOpen(false); },
+          onError: () => toast.error('Failed to update subject'),
+        }
       );
-      toast.success('Subject updated successfully');
     } else {
-      const newSubject: Subject = {
-        id: Date.now().toString(),
-        ...subjectForm,
-        chapters: [],
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      };
-      setSubjects([...subjects, newSubject]);
-      toast.success('Subject created successfully');
+      createSubject.mutate(subjectForm, {
+        onSuccess: () => { toast.success('Subject created successfully'); setIsSubjectDialogOpen(false); },
+        onError: () => toast.error('Failed to create subject'),
+      });
     }
-    setIsSubjectDialogOpen(false);
   };
 
-  const handleToggleSubjectStatus = (subjectId: string) => {
-    // TODO: API call to toggle subject status
-    // PATCH /api/subjects/:id/status
-
-    setSubjects(
-      subjects.map((s) =>
-        s.id === subjectId ? { ...s, isActive: !s.isActive } : s
-      )
+  const handleToggleSubjectStatus = (subject: SubjectResponse) => {
+    toggleSubjectStatus.mutate(
+      { id: subject.id, isActive: !subject.active },
+      {
+        onSuccess: () => toast.success('Subject status updated'),
+        onError: () => toast.error('Failed to update status'),
+      }
     );
-    toast.success('Subject status updated');
   };
 
   const handleDeleteSubject = () => {
     if (!deleteTarget || deleteTarget.type !== 'subject') return;
-
-    // TODO: API call to delete subject
-    // DELETE /api/subjects/:id
-
-    setSubjects(subjects.filter((s) => s.id !== deleteTarget.id));
-    setDeleteConfirmOpen(false);
-    setDeleteTarget(null);
-    toast.success('Subject deleted successfully');
+    deleteSubjectMutation.mutate(deleteTarget.id, {
+      onSuccess: () => { toast.success('Subject deleted successfully'); setDeleteConfirmOpen(false); setDeleteTarget(null); },
+      onError: () => toast.error('Failed to delete subject'),
+    });
   };
 
-  // Chapter CRUD operations
-  const handleOpenChapterDialog = (subjectId: string, chapter?: Chapter) => {
+  // Chapter CRUD
+  const handleOpenChapterDialog = (subjectId: number, chapter?: ChapterResponse) => {
     setSelectedSubjectId(subjectId);
     if (chapter) {
       setEditingChapter(chapter);
-      setChapterForms([{
-        name: chapter.name,
-        description: chapter.description,
-        isActive: chapter.isActive,
-      }]);
+      setChapterForms([{ name: chapter.name, description: '', isActive: chapter.active }]);
     } else {
       setEditingChapter(null);
       setChapterForms([{ name: '', description: '', isActive: true }]);
@@ -263,9 +182,7 @@ const AdminSubjects = () => {
   };
 
   const handleRemoveChapterForm = (index: number) => {
-    if (chapterForms.length > 1) {
-      setChapterForms(chapterForms.filter((_, i) => i !== index));
-    }
+    if (chapterForms.length > 1) setChapterForms(chapterForms.filter((_, i) => i !== index));
   };
 
   const handleChapterFormChange = (index: number, field: string, value: string | boolean) => {
@@ -277,112 +194,64 @@ const AdminSubjects = () => {
   const handleSaveChapter = () => {
     if (!selectedSubjectId) return;
 
-    // TODO: API call to create/update chapter
-    // POST /api/subjects/:subjectId/chapters or PUT /api/chapters/:id
-
     if (editingChapter) {
-      // Editing single chapter
-      const chapterData = chapterForms[0];
-      setSubjects(
-        subjects.map((s) =>
-          s.id === selectedSubjectId
-            ? {
-                ...s,
-                chapters: s.chapters.map((c) =>
-                  c.id === editingChapter.id ? { ...c, ...chapterData } : c
-                ),
-                updatedAt: new Date().toISOString().split('T')[0],
-              }
-            : s
-        )
+      const form = chapterForms[0];
+      updateChapter.mutate(
+        { chapterId: editingChapter.id, name: form.name, description: form.description, index: editingChapter.orderIndex, isActive: form.isActive },
+        {
+          onSuccess: () => { toast.success('Chapter updated successfully'); setIsChapterDialogOpen(false); },
+          onError: () => toast.error('Failed to update chapter'),
+        }
       );
-      toast.success('Chapter updated successfully');
     } else {
-      // Adding multiple chapters
-      const subject = subjects.find((s) => s.id === selectedSubjectId);
-      const validChapters = chapterForms.filter(cf => cf.name.trim() !== '');
-      
-      if (validChapters.length === 0) {
-        toast.error('Please add at least one chapter with a name');
-        return;
-      }
+      const validChapters = chapterForms.filter((cf) => cf.name.trim() !== '');
+      if (validChapters.length === 0) { toast.error('Please add at least one chapter with a name'); return; }
 
-      const newChapters: Chapter[] = validChapters.map((cf, index) => ({
-        id: `${selectedSubjectId}-${Date.now()}-${index}`,
-        name: cf.name,
-        description: cf.description,
-        isActive: cf.isActive,
-        orderIndex: (subject?.chapters.length || 0) + index + 1,
-        questionCount: 0,
-      }));
+      const subject = subjects?.find((s) => s.id === selectedSubjectId);
+      const startIndex = (subject?.chapterResponseList.length || 0) + 1;
 
-      setSubjects(
-        subjects.map((s) =>
-          s.id === selectedSubjectId
-            ? {
-                ...s,
-                chapters: [...s.chapters, ...newChapters],
-                updatedAt: new Date().toISOString().split('T')[0],
-              }
-            : s
-        )
+      addChapters.mutate(
+        {
+          subjectId: selectedSubjectId,
+          chapters: validChapters.map((cf, i) => ({ name: cf.name, description: cf.description, isActive: cf.isActive, index: startIndex + i })),
+        },
+        {
+          onSuccess: () => { toast.success(`${validChapters.length} chapter(s) added successfully`); setIsChapterDialogOpen(false); },
+          onError: () => toast.error('Failed to add chapters'),
+        }
       );
-      toast.success(`${newChapters.length} chapter(s) added successfully`);
     }
-    setIsChapterDialogOpen(false);
   };
 
-  const handleToggleChapterStatus = (subjectId: string, chapterId: string) => {
-    // TODO: API call to toggle chapter status
-    // PATCH /api/chapters/:id/status
-
-    setSubjects(
-      subjects.map((s) =>
-        s.id === subjectId
-          ? {
-              ...s,
-              chapters: s.chapters.map((c) =>
-                c.id === chapterId ? { ...c, isActive: !c.isActive } : c
-              ),
-            }
-          : s
-      )
+  const handleToggleChapterStatus = (chapter: ChapterResponse) => {
+    toggleChapterStatus.mutate(
+      { chapterId: chapter.id, isActive: !chapter.active },
+      {
+        onSuccess: () => toast.success('Chapter status updated'),
+        onError: () => toast.error('Failed to update chapter status'),
+      }
     );
-    toast.success('Chapter status updated');
   };
 
   const handleDeleteChapter = () => {
-    if (!deleteTarget || deleteTarget.type !== 'chapter' || !deleteTarget.subjectId) return;
-
-    // TODO: API call to delete chapter
-    // DELETE /api/chapters/:id
-
-    setSubjects(
-      subjects.map((s) =>
-        s.id === deleteTarget.subjectId
-          ? {
-              ...s,
-              chapters: s.chapters.filter((c) => c.id !== deleteTarget.id),
-            }
-          : s
-      )
-    );
-    setDeleteConfirmOpen(false);
-    setDeleteTarget(null);
-    toast.success('Chapter deleted successfully');
+    if (!deleteTarget || deleteTarget.type !== 'chapter') return;
+    deleteChapterMutation.mutate(deleteTarget.id, {
+      onSuccess: () => { toast.success('Chapter deleted successfully'); setDeleteConfirmOpen(false); setDeleteTarget(null); },
+      onError: () => toast.error('Failed to delete chapter'),
+    });
   };
 
-  const confirmDelete = (type: 'subject' | 'chapter', id: string, subjectId?: string) => {
+  const confirmDelete = (type: 'subject' | 'chapter', id: number, subjectId?: number) => {
     setDeleteTarget({ type, id, subjectId });
     setDeleteConfirmOpen(true);
   };
 
   // Stats
-  const totalSubjects = subjects.length;
-  const activeSubjects = subjects.filter((s) => s.isActive).length;
-  const totalChapters = subjects.reduce((acc, s) => acc + s.chapters.length, 0);
-  const totalQuestions = subjects.reduce(
-    (acc, s) => acc + s.chapters.reduce((cAcc, c) => cAcc + c.questionCount, 0),
+  const totalSubjects = (subjects || []).length;
+  const activeSubjects = (subjects || []).filter((s) => s.active).length;
+  const totalChapters = (subjects || []).reduce((acc, s) => acc + s.chapterResponseList.length, 0);
+  const totalQuestions = (subjects || []).reduce(
+    (acc, s) => acc + s.chapterResponseList.reduce((cAcc, c) => cAcc + c.questionCount, 0),
     0
   );
 
@@ -393,9 +262,7 @@ const AdminSubjects = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Subject Management</h1>
-            <p className="text-muted-foreground">
-              Manage subjects and their chapters for examinations
-            </p>
+            <p className="text-muted-foreground">Manage subjects and their chapters for examinations</p>
           </div>
           <Button onClick={() => handleOpenSubjectDialog()}>
             <Plus className="mr-2 h-4 w-4" />
@@ -411,7 +278,7 @@ const AdminSubjects = () => {
               <Book className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalSubjects}</div>
+              {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{totalSubjects}</div>}
             </CardContent>
           </Card>
           <Card>
@@ -420,7 +287,7 @@ const AdminSubjects = () => {
               <Book className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{activeSubjects}</div>
+              {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{activeSubjects}</div>}
             </CardContent>
           </Card>
           <Card>
@@ -429,7 +296,7 @@ const AdminSubjects = () => {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalChapters}</div>
+              {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{totalChapters}</div>}
             </CardContent>
           </Card>
           <Card>
@@ -438,7 +305,7 @@ const AdminSubjects = () => {
               <List className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalQuestions}</div>
+              {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{totalQuestions}</div>}
             </CardContent>
           </Card>
         </div>
@@ -447,38 +314,39 @@ const AdminSubjects = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search subjects by name or code..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Search subjects by name or code..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
           </div>
           <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setViewMode('list')}
-            >
+            <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="icon" onClick={() => setViewMode('list')}>
               <List className="h-4 w-4" />
             </Button>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="icon"
-              onClick={() => setViewMode('grid')}
-            >
+            <Button variant={viewMode === 'grid' ? 'default' : 'outline'} size="icon" onClick={() => setViewMode('grid')}>
               <LayoutGrid className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Subjects List/Grid */}
-        {viewMode === 'list' ? (
+        {/* Loading state */}
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : viewMode === 'list' ? (
           <Card>
             <CardContent className="p-0">
               <Accordion type="multiple" className="w-full">
                 {filteredSubjects.map((subject) => (
-                  <AccordionItem key={subject.id} value={subject.id} className="border-b last:border-b-0">
+                  <AccordionItem key={subject.id} value={String(subject.id)} className="border-b last:border-b-0">
                     <div className="flex items-center px-4">
                       <AccordionTrigger className="flex-1 hover:no-underline py-4">
                         <div className="flex items-center gap-4 text-left">
@@ -489,12 +357,12 @@ const AdminSubjects = () => {
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">{subject.name}</span>
                               <Badge variant="outline">{subject.code}</Badge>
-                              <Badge variant={subject.isActive ? 'default' : 'secondary'}>
-                                {subject.isActive ? 'Active' : 'Inactive'}
+                              <Badge variant={subject.active ? 'default' : 'secondary'}>
+                                {subject.active ? 'Active' : 'Inactive'}
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {subject.chapters.length} chapters • {subject.chapters.reduce((acc, c) => acc + c.questionCount, 0)} questions
+                              {subject.chapterResponseList.length} chapters • {subject.chapterResponseList.reduce((acc, c) => acc + c.questionCount, 0)} questions
                             </p>
                           </div>
                         </div>
@@ -514,14 +382,11 @@ const AdminSubjects = () => {
                             <Plus className="mr-2 h-4 w-4" />
                             Add Chapter
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleSubjectStatus(subject.id)}>
+                          <DropdownMenuItem onClick={() => handleToggleSubjectStatus(subject)}>
                             <Switch className="mr-2 h-4 w-4" />
-                            {subject.isActive ? 'Deactivate' : 'Activate'}
+                            {subject.active ? 'Deactivate' : 'Activate'}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => confirmDelete('subject', subject.id)}
-                          >
+                          <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete('subject', subject.id)}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Subject
                           </DropdownMenuItem>
@@ -531,20 +396,19 @@ const AdminSubjects = () => {
                     <AccordionContent className="px-4 pb-4">
                       <div className="ml-14">
                         <p className="text-sm text-muted-foreground mb-4">{subject.description}</p>
-                        {subject.chapters.length > 0 ? (
+                        {subject.chapterResponseList.length > 0 ? (
                           <Table>
                             <TableHeader>
                               <TableRow>
                                 <TableHead className="w-12">#</TableHead>
                                 <TableHead>Chapter Name</TableHead>
-                                <TableHead>Description</TableHead>
                                 <TableHead className="text-center">Questions</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {subject.chapters
+                              {[...subject.chapterResponseList]
                                 .sort((a, b) => a.orderIndex - b.orderIndex)
                                 .map((chapter) => (
                                   <TableRow key={chapter.id}>
@@ -552,13 +416,10 @@ const AdminSubjects = () => {
                                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
                                     </TableCell>
                                     <TableCell className="font-medium">{chapter.name}</TableCell>
-                                    <TableCell className="text-muted-foreground max-w-xs truncate">
-                                      {chapter.description}
-                                    </TableCell>
                                     <TableCell className="text-center">{chapter.questionCount}</TableCell>
                                     <TableCell className="text-center">
-                                      <Badge variant={chapter.isActive ? 'default' : 'secondary'}>
-                                        {chapter.isActive ? 'Active' : 'Inactive'}
+                                      <Badge variant={chapter.active ? 'default' : 'secondary'}>
+                                        {chapter.active ? 'Active' : 'Inactive'}
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -569,22 +430,15 @@ const AdminSubjects = () => {
                                           </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                          <DropdownMenuItem
-                                            onClick={() => handleOpenChapterDialog(subject.id, chapter)}
-                                          >
+                                          <DropdownMenuItem onClick={() => handleOpenChapterDialog(subject.id, chapter)}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Edit
                                           </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() => handleToggleChapterStatus(subject.id, chapter.id)}
-                                          >
+                                          <DropdownMenuItem onClick={() => handleToggleChapterStatus(chapter)}>
                                             <Switch className="mr-2 h-4 w-4" />
-                                            {chapter.isActive ? 'Deactivate' : 'Activate'}
+                                            {chapter.active ? 'Deactivate' : 'Activate'}
                                           </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            className="text-destructive"
-                                            onClick={() => confirmDelete('chapter', chapter.id, subject.id)}
-                                          >
+                                          <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete('chapter', chapter.id, subject.id)}>
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             Delete
                                           </DropdownMenuItem>
@@ -599,11 +453,7 @@ const AdminSubjects = () => {
                           <div className="text-center py-8 text-muted-foreground">
                             <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
                             <p>No chapters yet</p>
-                            <Button
-                              variant="link"
-                              onClick={() => handleOpenChapterDialog(subject.id)}
-                              className="mt-2"
-                            >
+                            <Button variant="link" onClick={() => handleOpenChapterDialog(subject.id)} className="mt-2">
                               Add first chapter
                             </Button>
                           </div>
@@ -634,9 +484,7 @@ const AdminSubjects = () => {
                       </div>
                       <div>
                         <CardTitle className="text-lg">{subject.name}</CardTitle>
-                        <Badge variant="outline" className="mt-1">
-                          {subject.code}
-                        </Badge>
+                        <Badge variant="outline" className="mt-1">{subject.code}</Badge>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -654,14 +502,11 @@ const AdminSubjects = () => {
                           <Plus className="mr-2 h-4 w-4" />
                           Add Chapter
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleSubjectStatus(subject.id)}>
+                        <DropdownMenuItem onClick={() => handleToggleSubjectStatus(subject)}>
                           <Switch className="mr-2 h-4 w-4" />
-                          {subject.isActive ? 'Deactivate' : 'Activate'}
+                          {subject.active ? 'Deactivate' : 'Activate'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => confirmDelete('subject', subject.id)}
-                        >
+                        <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete('subject', subject.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Subject
                         </DropdownMenuItem>
@@ -670,22 +515,20 @@ const AdminSubjects = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {subject.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{subject.description}</p>
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <BookOpen className="h-4 w-4" />
-                        {subject.chapters.length} chapters
+                        {subject.chapterResponseList.length} chapters
                       </span>
                       <span className="flex items-center gap-1">
                         <List className="h-4 w-4" />
-                        {subject.chapters.reduce((acc, c) => acc + c.questionCount, 0)} questions
+                        {subject.chapterResponseList.reduce((acc, c) => acc + c.questionCount, 0)} questions
                       </span>
                     </div>
-                    <Badge variant={subject.isActive ? 'default' : 'secondary'}>
-                      {subject.isActive ? 'Active' : 'Inactive'}
+                    <Badge variant={subject.active ? 'default' : 'secondary'}>
+                      {subject.active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 </CardContent>
@@ -700,55 +543,31 @@ const AdminSubjects = () => {
             <DialogHeader>
               <DialogTitle>{editingSubject ? 'Edit Subject' : 'Add New Subject'}</DialogTitle>
               <DialogDescription>
-                {editingSubject
-                  ? 'Update the subject information below.'
-                  : 'Fill in the details to create a new subject.'}
+                {editingSubject ? 'Update the subject information below.' : 'Fill in the details to create a new subject.'}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Subject Name</Label>
-                <Input
-                  id="name"
-                  value={subjectForm.name}
-                  onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })}
-                  placeholder="e.g., Mathematics"
-                />
+                <Input id="name" value={subjectForm.name} onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })} placeholder="e.g., Mathematics" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="code">Subject Code</Label>
-                <Input
-                  id="code"
-                  value={subjectForm.code}
-                  onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value })}
-                  placeholder="e.g., MATH101"
-                />
+                <Input id="code" value={subjectForm.code} onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value })} placeholder="e.g., MATH101" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={subjectForm.description}
-                  onChange={(e) => setSubjectForm({ ...subjectForm, description: e.target.value })}
-                  placeholder="Brief description of the subject..."
-                  rows={3}
-                />
+                <Textarea id="description" value={subjectForm.description} onChange={(e) => setSubjectForm({ ...subjectForm, description: e.target.value })} placeholder="Brief description of the subject..." rows={3} />
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="isActive">Active Status</Label>
-                <Switch
-                  id="isActive"
-                  checked={subjectForm.isActive}
-                  onCheckedChange={(checked) => setSubjectForm({ ...subjectForm, isActive: checked })}
-                />
+                <Switch id="isActive" checked={subjectForm.isActive} onCheckedChange={(checked) => setSubjectForm({ ...subjectForm, isActive: checked })} />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsSubjectDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveSubject} disabled={!subjectForm.name || !subjectForm.code}>
-                {editingSubject ? 'Save Changes' : 'Create Subject'}
+              <Button variant="outline" onClick={() => setIsSubjectDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSaveSubject} disabled={!subjectForm.name || !subjectForm.code || createSubject.isPending || updateSubject.isPending}>
+                {(createSubject.isPending || updateSubject.isPending) ? 'Saving...' : editingSubject ? 'Save Changes' : 'Create Subject'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -769,72 +588,42 @@ const AdminSubjects = () => {
               {chapterForms.map((form, index) => (
                 <div key={index} className="space-y-4 p-4 border rounded-lg relative">
                   {!editingChapter && chapterForms.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 h-6 w-6"
-                      onClick={() => handleRemoveChapterForm(index)}
-                    >
+                    <Button type="button" variant="ghost" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => handleRemoveChapterForm(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                   {!editingChapter && chapterForms.length > 1 && (
-                    <div className="text-sm font-medium text-muted-foreground mb-2">
-                      Chapter {index + 1}
-                    </div>
+                    <div className="text-sm font-medium text-muted-foreground mb-2">Chapter {index + 1}</div>
                   )}
                   <div className="grid gap-2">
                     <Label htmlFor={`chapterName-${index}`}>Chapter Name</Label>
-                    <Input
-                      id={`chapterName-${index}`}
-                      value={form.name}
-                      onChange={(e) => handleChapterFormChange(index, 'name', e.target.value)}
-                      placeholder="e.g., Introduction to Algebra"
-                    />
+                    <Input id={`chapterName-${index}`} value={form.name} onChange={(e) => handleChapterFormChange(index, 'name', e.target.value)} placeholder="e.g., Introduction to Algebra" />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor={`chapterDescription-${index}`}>Description</Label>
-                    <Textarea
-                      id={`chapterDescription-${index}`}
-                      value={form.description}
-                      onChange={(e) => handleChapterFormChange(index, 'description', e.target.value)}
-                      placeholder="Brief description of the chapter..."
-                      rows={2}
-                    />
+                    <Textarea id={`chapterDescription-${index}`} value={form.description} onChange={(e) => handleChapterFormChange(index, 'description', e.target.value)} placeholder="Brief description of the chapter..." rows={2} />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor={`chapterIsActive-${index}`}>Active Status</Label>
-                    <Switch
-                      id={`chapterIsActive-${index}`}
-                      checked={form.isActive}
-                      onCheckedChange={(checked) => handleChapterFormChange(index, 'isActive', checked)}
-                    />
+                    <Switch id={`chapterIsActive-${index}`} checked={form.isActive} onCheckedChange={(checked) => handleChapterFormChange(index, 'isActive', checked)} />
                   </div>
                 </div>
               ))}
-              
               {!editingChapter && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleAddChapterForm}
-                >
+                <Button type="button" variant="outline" className="w-full" onClick={handleAddChapterForm}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Another Chapter
                 </Button>
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsChapterDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveChapter} 
-                disabled={chapterForms.every(f => !f.name.trim())}
-              >
-                {editingChapter ? 'Save Changes' : `Add ${chapterForms.filter(f => f.name.trim()).length} Chapter(s)`}
+              <Button variant="outline" onClick={() => setIsChapterDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSaveChapter} disabled={chapterForms.every((f) => !f.name.trim()) || addChapters.isPending || updateChapter.isPending}>
+                {(addChapters.isPending || updateChapter.isPending)
+                  ? 'Saving...'
+                  : editingChapter
+                    ? 'Save Changes'
+                    : `Add ${chapterForms.filter((f) => f.name.trim()).length} Chapter(s)`}
               </Button>
             </DialogFooter>
           </DialogContent>
