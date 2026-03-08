@@ -86,6 +86,25 @@ const QuestionCard = ({
             </p>
           )}
         </div>
+      ) : question.questionType === "TRUE_FALSE" ? (
+        <div className="grid grid-cols-2 gap-4">
+          {["True", "False"].map((label, index) => {
+            const isSelected = selectedAnswer === index;
+            return (
+              <button
+                key={label}
+                onClick={() => onAnswerSelect(question.id, index)}
+                className={`px-6 py-5 rounded-xl border-2 text-center font-semibold text-lg transition-all duration-200 ${
+                  isSelected
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/50 hover:bg-secondary/50 text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       ) : (
         <div className="space-y-3">
           {question.options.map((option, index) => {
