@@ -83,7 +83,8 @@ const TeacherExams = () => {
   });
 
   // Fetch questions for manual mode when subject is selected
-  const { data: questions } = useTeacherQuestions(formData.subjectId ?? undefined);
+  const { data: questionsData } = useTeacherQuestions(formData.subjectId ?? undefined);
+  const questions = questionsData?.questionData || [];
 
   const handleCreateExam = () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
