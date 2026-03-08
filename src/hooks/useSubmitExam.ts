@@ -77,7 +77,7 @@ export const buildSubmitPayload = (
         optionId: o.optionId,
         optionText: o.optionText,
       })),
-      studentAnswer: selectedOptionId,
+      studentAnswer,
     };
   });
 
