@@ -178,7 +178,7 @@ const Exam = () => {
   const handleSubmit = useCallback(() => {
     if (!examData) return;
 
-    const payload = buildSubmitPayload(examData, answers);
+    const payload = buildSubmitPayload(examData, answers, textAnswers);
 
     submitExamMutation.mutate(payload, {
       onSuccess: (result) => {
