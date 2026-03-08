@@ -357,7 +357,7 @@ const Exam = () => {
           </Button>
 
           <div className="flex gap-2">
-            {Object.keys(answers).length === questions.length && (
+            {answeredCount === questions.length && (
               <Button variant="success" onClick={handleSubmit} disabled={submitExamMutation.isPending}>
                 {submitExamMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
