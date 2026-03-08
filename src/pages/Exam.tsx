@@ -379,12 +379,12 @@ const Exam = () => {
         </div>
 
         {/* Warning for unanswered */}
-        {Object.keys(answers).length < questions.length && (
+        {answeredCount < questions.length && (
           <div className="mt-8 p-4 bg-accent/20 border border-accent/40 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-accent-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {questions.length - Object.keys(answers).length} questions unanswered
+                {questions.length - answeredCount} questions unanswered
               </p>
               <p className="text-sm text-muted-foreground">
                 Answer all questions before submitting the exam.
