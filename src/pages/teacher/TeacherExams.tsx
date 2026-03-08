@@ -383,23 +383,23 @@ const TeacherExams = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {questions.map((q: any) => (
+              {questions.map((q) => (
                 <TableRow 
-                  key={q.id} 
-                  className={selectedQuestionIds.includes(q.id) ? 'bg-primary/5' : 'cursor-pointer'}
-                  onClick={() => handleQuestionToggle(q.id)}
+                  key={q.questionId} 
+                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer'}
+                  onClick={() => handleQuestionToggle(q.questionId)}
                 >
                   <TableCell>
                     <input
                       type="checkbox"
-                      checked={selectedQuestionIds.includes(q.id)}
-                      onChange={() => handleQuestionToggle(q.id)}
+                      checked={selectedQuestionIds.includes(q.questionId)}
+                      onChange={() => handleQuestionToggle(q.questionId)}
                       className="rounded"
                     />
                   </TableCell>
-                  <TableCell className="font-medium max-w-[300px] truncate">{q.questionText || q.content || '—'}</TableCell>
+                  <TableCell className="font-medium max-w-[300px] truncate">{q.questionContent || '—'}</TableCell>
                   <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
-                  <TableCell><Badge variant="outline">{q.difficultyLevel || '—'}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
                 </TableRow>
               ))}
             </TableBody>
