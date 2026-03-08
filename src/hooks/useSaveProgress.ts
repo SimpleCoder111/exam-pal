@@ -50,14 +50,21 @@ const API_BASE_URL = 'http://localhost:7000';
  */
 export const buildSaveProgressPayload = (
   examData: TakeExamData,
-  answers: Record<number, number>
+  answers: Record<number, number>,
+  textAnswers: Record<number, string> = {}
 ): SaveProgressPayload => {
   const questionLists: SaveProgressQuestion[] = examData.questionLists.map((q) => {
-    const answerIndex = answers[q.questionId];
-    const selectedOptionId =
-      answerIndex !== undefined && q.optionLists[answerIndex]
-        ? String(q.optionLists[answerIndex].optionId)
-        : null;
+    let studentAnswer: string | null = null;
+
+    if (q.questionType === 'FILL_BLANK') {
+      studentAnswer = textAnswers[q.questionId]?.trim() || null;
+    } else {
+      const answerIndex = answers[q.questionId];
+      studentAnswer =
+        answerIndex !== undefined && q.optionLists[answerIndex]
+          ? String(q.optionLists[answerIndex].optionId)
+          : null;
+    }
 
     return {
       questionId: q.questionId,
@@ -69,7 +76,7 @@ export const buildSaveProgressPayload = (
         optionId: o.optionId,
         optionText: o.optionText,
       })),
-      studentAnswer: selectedOptionId,
+      studentAnswer,
     };
   });
 

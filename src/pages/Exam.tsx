@@ -57,6 +57,7 @@ const Exam = () => {
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [textAnswers, setTextAnswers] = useState<Record<number, string>>({});
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [timeLeft, setTimeLeft] = useState(examDuration * 60);
   const [showNavigator, setShowNavigator] = useState(false);
@@ -127,8 +128,8 @@ const Exam = () => {
       });
 
       // Save to server if online and has answers
-      if (navigator.onLine && Object.keys(answers).length > 0) {
-        const payload = buildSaveProgressPayload(examData, answers);
+      if (navigator.onLine && (Object.keys(answers).length > 0 || Object.keys(textAnswers).length > 0)) {
+        const payload = buildSaveProgressPayload(examData, answers, textAnswers);
         saveProgressMutation.mutate(payload);
       }
     }, 5000);
@@ -158,6 +159,10 @@ const Exam = () => {
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
   };
 
+  const handleTextAnswerChange = (questionId: number, text: string) => {
+    setTextAnswers((prev) => ({ ...prev, [questionId]: text }));
+  };
+
   const handleFlagToggle = (questionId: number) => {
     setFlagged((prev) => {
       const newSet = new Set(prev);
@@ -173,7 +178,7 @@ const Exam = () => {
   const handleSubmit = useCallback(() => {
     if (!examData) return;
 
-    const payload = buildSubmitPayload(examData, answers);
+    const payload = buildSubmitPayload(examData, answers, textAnswers);
 
     submitExamMutation.mutate(payload, {
       onSuccess: (result) => {
@@ -294,7 +299,12 @@ const Exam = () => {
     );
   }
 
-  const progress = (Object.keys(answers).length / questions.length) * 100;
+  const answeredCount = questions.filter((q) =>
+    q.questionType === "FILL_BLANK"
+      ? !!textAnswers[q.id]?.trim()
+      : answers[q.id] !== undefined
+  ).length;
+  const progress = (answeredCount / questions.length) * 100;
   const currentQ = questions[currentQuestion];
 
   return (
@@ -317,7 +327,7 @@ const Exam = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
             <span>Progress</span>
-            <span>{Object.keys(answers).length} of {questions.length} answered</span>
+            <span>{answeredCount} of {questions.length} answered</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -328,8 +338,10 @@ const Exam = () => {
           currentIndex={currentQuestion}
           totalQuestions={questions.length}
           selectedAnswer={answers[currentQ.id]}
+          textAnswer={textAnswers[currentQ.id]}
           isFlagged={flagged.has(currentQ.id)}
           onAnswerSelect={handleAnswerSelect}
+          onTextAnswerChange={handleTextAnswerChange}
           onFlagToggle={handleFlagToggle}
         />
 
@@ -345,7 +357,7 @@ const Exam = () => {
           </Button>
 
           <div className="flex gap-2">
-            {Object.keys(answers).length === questions.length && (
+            {answeredCount === questions.length && (
               <Button variant="success" onClick={handleSubmit} disabled={submitExamMutation.isPending}>
                 {submitExamMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
@@ -367,12 +379,12 @@ const Exam = () => {
         </div>
 
         {/* Warning for unanswered */}
-        {Object.keys(answers).length < questions.length && (
+        {answeredCount < questions.length && (
           <div className="mt-8 p-4 bg-accent/20 border border-accent/40 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-accent-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {questions.length - Object.keys(answers).length} questions unanswered
+                {questions.length - answeredCount} questions unanswered
               </p>
               <p className="text-sm text-muted-foreground">
                 Answer all questions before submitting the exam.

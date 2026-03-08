@@ -1,6 +1,7 @@
 import { Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import type { Question } from "@/pages/Exam";
 
 interface QuestionCardProps {
@@ -8,8 +9,10 @@ interface QuestionCardProps {
   currentIndex: number;
   totalQuestions: number;
   selectedAnswer?: number;
+  textAnswer?: string;
   isFlagged: boolean;
   onAnswerSelect: (questionId: number, optionIndex: number) => void;
+  onTextAnswerChange: (questionId: number, text: string) => void;
   onFlagToggle: (questionId: number) => void;
 }
 
@@ -31,8 +34,10 @@ const QuestionCard = ({
   currentIndex,
   totalQuestions,
   selectedAnswer,
+  textAnswer,
   isFlagged,
   onAnswerSelect,
+  onTextAnswerChange,
   onFlagToggle,
 }: QuestionCardProps) => {
   return (
@@ -63,37 +68,56 @@ const QuestionCard = ({
         {question.question}
       </h2>
 
-      {/* Options */}
-      <div className="space-y-3">
-        {question.options.map((option, index) => {
-          const isSelected = selectedAnswer === index;
+      {/* Options / Input */}
+      {question.questionType === "FILL_BLANK" ? (
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-muted-foreground">
+            Type your answer below
+          </label>
+          <Input
+            value={textAnswer ?? ""}
+            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+            placeholder="Enter your answer…"
+            className="text-base py-5 rounded-xl border-2 border-border focus:border-primary"
+          />
+          {textAnswer && (
+            <p className="text-xs text-muted-foreground">
+              Your answer: <span className="font-medium text-foreground">{textAnswer}</span>
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {question.options.map((option, index) => {
+            const isSelected = selectedAnswer === index;
 
-          return (
-            <button
-              key={index}
-              onClick={() => onAnswerSelect(question.id, index)}
-              className={`w-full text-left px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
-                isSelected
-                  ? "border-primary bg-primary/5 text-foreground"
-                  : "border-border hover:border-primary/50 hover:bg-secondary/50 text-foreground"
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <span
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {String.fromCharCode(65 + index)}
-                </span>
-                <span className="flex-1">{option}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={index}
+                onClick={() => onAnswerSelect(question.id, index)}
+                className={`w-full text-left px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
+                  isSelected
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border hover:border-primary/50 hover:bg-secondary/50 text-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <span
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground"
+                    }`}
+                  >
+                    {String.fromCharCode(65 + index)}
+                  </span>
+                  <span className="flex-1">{option}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
