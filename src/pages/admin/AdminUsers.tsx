@@ -1,271 +1,225 @@
 import { useState } from 'react';
-import { Users, Plus, Search, MoreHorizontal, Pencil, UserX, UserCheck, Mail, Shield, GraduationCap } from 'lucide-react';
+import { Users, Plus, Search, MoreHorizontal, Pencil, UserX, UserCheck, GraduationCap, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { useToast } from '@/hooks/use-toast';
 import { adminNavItems } from '@/config/adminNavItems';
-
-// Types
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'teacher' | 'student';
-  status: 'active' | 'inactive';
-  createdAt: string;
-  lastLogin?: string;
-  department?: string;
-  inviteCode?: string;
-}
-
-// Mock data - TODO: Replace with API call to fetch users
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@school.edu',
-    role: 'teacher',
-    status: 'active',
-    createdAt: '2024-01-15',
-    lastLogin: '2024-01-20',
-    department: 'Mathematics',
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@school.edu',
-    role: 'teacher',
-    status: 'active',
-    createdAt: '2024-01-10',
-    lastLogin: '2024-01-19',
-    department: 'Science',
-  },
-  {
-    id: '3',
-    name: 'Mike Wilson',
-    email: 'mike.w@school.edu',
-    role: 'student',
-    status: 'active',
-    createdAt: '2024-01-12',
-    lastLogin: '2024-01-20',
-  },
-  {
-    id: '4',
-    name: 'Emily Davis',
-    email: 'emily.d@school.edu',
-    role: 'student',
-    status: 'active',
-    createdAt: '2024-01-08',
-    lastLogin: '2024-01-18',
-  },
-  {
-    id: '5',
-    name: 'James Brown',
-    email: 'james.b@school.edu',
-    role: 'student',
-    status: 'inactive',
-    createdAt: '2023-12-01',
-    lastLogin: '2024-01-05',
-  },
-  {
-    id: '6',
-    name: 'Lisa Anderson',
-    email: 'lisa.a@school.edu',
-    role: 'teacher',
-    status: 'inactive',
-    createdAt: '2023-11-15',
-    lastLogin: '2023-12-20',
-    department: 'English',
-  },
-];
+import { toast } from 'sonner';
+import {
+  useAdminUsers,
+  useCreateUser,
+  useUpdateUser,
+  useToggleUserStatus,
+  getRoleId,
+  type AdminUserResponse,
+} from '@/hooks/useAdminUsers';
 
 const AdminUsers = () => {
-  const { toast } = useToast();
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const { data: users = [], isLoading } = useAdminUsers();
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
+  const toggleStatus = useToggleUserStatus();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  
-  // Form state
+  const [selectedUser, setSelectedUser] = useState<AdminUserResponse | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'student' as 'teacher' | 'student',
-    department: '',
+    role: 'STUDENT',
+    password: '',
+    dob: '',
+    gender: 'M',
+    phoneNumber: '',
+    address: '',
   });
 
-  // Filter users based on search and filters
+  // Filter
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+      user.userId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === 'all' || user.roleName === roleFilter.toUpperCase();
+    const matchesStatus = statusFilter === 'all' || user.status === statusFilter.toUpperCase();
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   // Stats
-  const totalTeachers = users.filter(u => u.role === 'teacher').length;
-  const totalStudents = users.filter(u => u.role === 'student').length;
-  const activeUsers = users.filter(u => u.status === 'active').length;
+  const totalTeachers = users.filter(u => u.roleName === 'TEACHER').length;
+  const totalStudents = users.filter(u => u.roleName === 'STUDENT').length;
+  const activeUsers = users.filter(u => u.status === 'ACTIVE').length;
 
   const handleCreateUser = () => {
-    // TODO: API call to create user
-    // const response = await fetch('/api/users', {
-    //   method: 'POST',
-    //   body: JSON.stringify(formData),
-    // });
-    
-    const newUser: User = {
-      id: String(Date.now()),
-      name: formData.name,
-      email: formData.email,
-      role: formData.role,
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0],
-      department: formData.role === 'teacher' ? formData.department : undefined,
-      inviteCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-    };
-    
-    setUsers([...users, newUser]);
-    setIsCreateDialogOpen(false);
-    resetForm();
-    
-    toast({
-      title: 'User Created',
-      description: `${newUser.name} has been added successfully. Invite code: ${newUser.inviteCode}`,
-    });
+    createUser.mutate(
+      {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        password: formData.password,
+        userId: '',
+        dob: formData.dob,
+        gender: formData.gender,
+        roleId: getRoleId(formData.role),
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        status: true,
+      },
+      {
+        onSuccess: (data) => {
+          setIsCreateDialogOpen(false);
+          resetForm();
+          toast.success(`User ${data.name} created successfully (ID: ${data.userId})`);
+        },
+        onError: (err) => toast.error(err.message),
+      }
+    );
   };
 
   const handleEditUser = () => {
     if (!selectedUser) return;
-    
-    // TODO: API call to update user
-    // const response = await fetch(`/api/users/${selectedUser.id}`, {
-    //   method: 'PUT',
-    //   body: JSON.stringify(formData),
-    // });
-    
-    setUsers(users.map(user => 
-      user.id === selectedUser.id 
-        ? { 
-            ...user, 
-            name: formData.name, 
-            email: formData.email, 
-            role: formData.role,
-            department: formData.role === 'teacher' ? formData.department : undefined,
-          } 
-        : user
-    ));
-    
-    setIsEditDialogOpen(false);
-    setSelectedUser(null);
-    resetForm();
-    
-    toast({
-      title: 'User Updated',
-      description: 'User information has been updated successfully.',
-    });
+    updateUser.mutate(
+      {
+        targetUserId: selectedUser.userId,
+        userId: selectedUser.userId,
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        password: formData.password || '***',
+        dob: formData.dob,
+        gender: formData.gender,
+        roleId: getRoleId(formData.role),
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        status: selectedUser.status === 'ACTIVE',
+      },
+      {
+        onSuccess: () => {
+          setIsEditDialogOpen(false);
+          setSelectedUser(null);
+          resetForm();
+          toast.success('User updated successfully');
+        },
+        onError: (err) => toast.error(err.message),
+      }
+    );
   };
 
-  const handleToggleStatus = (user: User) => {
-    // TODO: API call to toggle user status
-    // const response = await fetch(`/api/users/${user.id}/status`, {
-    //   method: 'PATCH',
-    //   body: JSON.stringify({ status: user.status === 'active' ? 'inactive' : 'active' }),
-    // });
-    
-    const newStatus = user.status === 'active' ? 'inactive' : 'active';
-    setUsers(users.map(u => 
-      u.id === user.id ? { ...u, status: newStatus } : u
-    ));
-    
-    toast({
-      title: newStatus === 'active' ? 'User Activated' : 'User Deactivated',
-      description: `${user.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'}.`,
-    });
+  const handleToggleStatus = (user: AdminUserResponse) => {
+    const newStatus = user.status !== 'ACTIVE';
+    toggleStatus.mutate(
+      { userId: user.userId, status: newStatus },
+      {
+        onSuccess: () => toast.success(`${user.name} has been ${newStatus ? 'activated' : 'deactivated'}`),
+        onError: (err) => toast.error(err.message),
+      }
+    );
   };
 
-  const handleSendInvite = (user: User) => {
-    // TODO: API call to send invite email
-    // const response = await fetch(`/api/users/${user.id}/invite`, {
-    //   method: 'POST',
-    // });
-    
-    toast({
-      title: 'Invite Sent',
-      description: `An invitation email has been sent to ${user.email}.`,
-    });
-  };
-
-  const openEditDialog = (user: User) => {
+  const openEditDialog = (user: AdminUserResponse) => {
     setSelectedUser(user);
     setFormData({
       name: user.name,
       email: user.email,
-      role: user.role,
-      department: user.department || '',
+      role: user.roleName,
+      password: '',
+      dob: user.dateOfBirth || '',
+      gender: user.gender || 'M',
+      phoneNumber: user.phoneNumber || '',
+      address: user.address || '',
     });
     setIsEditDialogOpen(true);
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      role: 'student',
-      department: '',
-    });
+    setFormData({ name: '', email: '', role: 'STUDENT', password: '', dob: '', gender: 'M', phoneNumber: '', address: '' });
   };
 
-  const generateInviteCode = () => {
-    // TODO: API call to generate invite code
-    // const response = await fetch('/api/invite-codes', { method: 'POST' });
-    
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    navigator.clipboard.writeText(code);
-    
-    toast({
-      title: 'Invite Code Generated',
-      description: `Code: ${code} has been copied to clipboard.`,
-    });
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString();
+    } catch {
+      return dateStr;
+    }
   };
+
+  const UserFormFields = () => (
+    <div className="space-y-4 py-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Full Name</Label>
+          <Input placeholder="Enter full name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Email</Label>
+          <Input type="email" placeholder="Enter email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Role</Label>
+          <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+              <SelectItem value="TEACHER">Teacher</SelectItem>
+              <SelectItem value="STUDENT">Student</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Gender</Label>
+          <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="M">Male</SelectItem>
+              <SelectItem value="F">Female</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Password</Label>
+          <Input type="password" placeholder="Enter password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Date of Birth</Label>
+          <Input type="date" value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Phone Number</Label>
+          <Input placeholder="Enter phone number" value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Address</Label>
+          <Input placeholder="Enter address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout navItems={adminNavItems} role="admin">
@@ -274,18 +228,12 @@ const AdminUsers = () => {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-            <p className="text-muted-foreground">Manage teachers and students in your organization</p>
+            <p className="text-muted-foreground">Manage admins, teachers and students in your organization</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={generateInviteCode}>
-              <Shield className="mr-2 h-4 w-4" />
-              Generate Invite Code
-            </Button>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </div>
+          <Button onClick={() => { resetForm(); setIsCreateDialogOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -296,7 +244,7 @@ const AdminUsers = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalTeachers}</div>
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{totalTeachers}</div>}
             </CardContent>
           </Card>
           <Card>
@@ -305,7 +253,7 @@ const AdminUsers = () => {
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalStudents}</div>
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{totalStudents}</div>}
             </CardContent>
           </Card>
           <Card>
@@ -314,15 +262,19 @@ const AdminUsers = () => {
               <UserCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{activeUsers}</div>
-              <p className="text-xs text-muted-foreground">
-                {((activeUsers / users.length) * 100).toFixed(0)}% of total
-              </p>
+              {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                <>
+                  <div className="text-2xl font-bold">{activeUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {users.length > 0 ? ((activeUsers / users.length) * 100).toFixed(0) : 0}% of total
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
+        {/* Users Table */}
         <Card>
           <CardHeader>
             <CardTitle>Users</CardTitle>
@@ -332,104 +284,88 @@ const AdminUsers = () => {
             <div className="flex flex-col gap-4 md:flex-row md:items-center mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
+                <Input placeholder="Search by name, ID, or email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8" />
               </div>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
+                <SelectTrigger className="w-[150px]"><SelectValue placeholder="Role" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="teacher">Teachers</SelectItem>
-                  <SelectItem value="student">Students</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="TEACHER">Teacher</SelectItem>
+                  <SelectItem value="STUDENT">Student</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
+                <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Table */}
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>User ID</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
+                    <TableHead>Gender</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead>Last Login</TableHead>
                     <TableHead className="w-[70px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.length === 0 ? (
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        {Array.from({ length: 8 }).map((_, j) => (
+                          <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  ) : filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                        No users found
-                      </TableCell>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No users found</TableCell>
                     </TableRow>
                   ) : (
                     filteredUsers.map((user) => (
                       <TableRow key={user.id}>
+                        <TableCell className="font-mono text-sm">{user.userId || '—'}</TableCell>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={user.role === 'teacher' ? 'default' : 'secondary'}>
-                            {user.role}
+                          <Badge variant={user.roleName === 'ADMIN' ? 'destructive' : user.roleName === 'TEACHER' ? 'default' : 'secondary'}>
+                            {user.roleName}
                           </Badge>
                         </TableCell>
-                        <TableCell>{user.department || '-'}</TableCell>
+                        <TableCell>{user.gender === 'M' ? 'Male' : 'Female'}</TableCell>
                         <TableCell>
-                          <Badge variant={user.status === 'active' ? 'default' : 'outline'} 
-                                 className={user.status === 'active' ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20' : ''}>
+                          <Badge variant={user.status === 'ACTIVE' ? 'default' : 'outline'}
+                            className={user.status === 'ACTIVE' ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20' : ''}>
                             {user.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{user.createdAt}</TableCell>
-                        <TableCell>{user.lastLogin || '-'}</TableCell>
+                        <TableCell>{formatDate(user.createdAt)}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
+                              <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => openEditDialog(user)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSendInvite(user)}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Send Invite
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                                {user.status === 'active' ? (
-                                  <>
-                                    <UserX className="mr-2 h-4 w-4" />
-                                    Deactivate
-                                  </>
+                                {user.status === 'ACTIVE' ? (
+                                  <><UserX className="mr-2 h-4 w-4" /> Deactivate</>
                                 ) : (
-                                  <>
-                                    <UserCheck className="mr-2 h-4 w-4" />
-                                    Activate
-                                  </>
+                                  <><UserCheck className="mr-2 h-4 w-4" /> Activate</>
                                 )}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -446,66 +382,16 @@ const AdminUsers = () => {
 
         {/* Create User Dialog */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
-              <DialogDescription>
-                Add a new teacher or student to your organization.
-              </DialogDescription>
+              <DialogDescription>Add a new user to your organization.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter full name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter email address"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(value: 'teacher' | 'student') => setFormData({ ...formData, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {formData.role === 'teacher' && (
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    placeholder="Enter department"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
+            <UserFormFields />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateUser} disabled={!formData.name || !formData.email}>
-                Create User
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreateUser} disabled={!formData.name || !formData.email || !formData.password || createUser.isPending}>
+                {createUser.isPending ? 'Creating...' : 'Create User'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -513,66 +399,16 @@ const AdminUsers = () => {
 
         {/* Edit User Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>
-                Update user information.
-              </DialogDescription>
+              <DialogDescription>Update user information. Leave password blank to keep unchanged.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Full Name</Label>
-                <Input
-                  id="edit-name"
-                  placeholder="Enter full name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  placeholder="Enter email address"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-role">Role</Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(value: 'teacher' | 'student') => setFormData({ ...formData, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="student">Student</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {formData.role === 'teacher' && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-department">Department</Label>
-                  <Input
-                    id="edit-department"
-                    placeholder="Enter department"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
+            <UserFormFields />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleEditUser} disabled={!formData.name || !formData.email}>
-                Save Changes
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleEditUser} disabled={!formData.name || !formData.email || updateUser.isPending}>
+                {updateUser.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </DialogContent>
