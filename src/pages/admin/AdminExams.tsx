@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Plus, 
   BookOpen, 
@@ -52,6 +53,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAdminExams, AdminExamResponse } from '@/hooks/useAdminExams';
+import { useAdminSubjects } from '@/hooks/useAdminSubjects';
+import { useAdminClasses } from '@/hooks/useAdminClasses';
 
 // Mock data for ALL subjects (admin sees everything)
 const ALL_SUBJECTS = [
