@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,76 +13,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Plus, 
-  BookOpen, 
-  Clock, 
-  Users, 
-  FileText,
-  Wand2,
-  ChevronRight,
-  ChevronLeft,
-  Check,
-  X,
-  Calendar,
-  Target,
-  Shuffle,
-  Eye,
-  Edit,
-  Trash2,
-  Copy,
-  Play,
-  Monitor,
-  Shield,
-  Search,
-  Filter,
-  Download,
-  MoreHorizontal,
-  UserCheck,
-  AlertTriangle
+  Plus, FileText, Wand2, ChevronRight, ChevronLeft, Check, X,
+  Calendar, Eye, Edit, Trash2, Copy, Play, Monitor, Shield, Search,
+  Download, MoreHorizontal, UserCheck
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAdminExams, AdminExamResponse } from '@/hooks/useAdminExams';
+import { useAdminSubjects } from '@/hooks/useAdminSubjects';
+import { useAdminClasses } from '@/hooks/useAdminClasses';
 
-// Mock data for ALL subjects (admin sees everything)
-const ALL_SUBJECTS = [
-  { id: 'math', name: 'Mathematics' },
-  { id: 'physics', name: 'Physics' },
-  { id: 'chemistry', name: 'Chemistry' },
-  { id: 'biology', name: 'Biology' },
-  { id: 'english', name: 'English' },
-  { id: 'history', name: 'History' },
-];
-
-// Mock data for ALL teachers
-const ALL_TEACHERS = [
-  { id: 'T001', name: 'John Smith', subjects: ['Mathematics', 'Physics'] },
-  { id: 'T002', name: 'Jane Doe', subjects: ['Chemistry', 'Biology'] },
-  { id: 'T003', name: 'Robert Brown', subjects: ['English', 'History'] },
-  { id: 'T004', name: 'Emily Wilson', subjects: ['Mathematics'] },
-];
-
-// Mock data for ALL classes (admin sees all)
-const ALL_CLASSES = [
-  { id: 1, name: 'Grade 9th Math Class A', students: 32, subject: 'Mathematics', teacher: 'John Smith' },
-  { id: 2, name: 'Grade 10th Math Class B', students: 28, subject: 'Mathematics', teacher: 'Emily Wilson' },
-  { id: 3, name: 'Grade 9th Math Class C', students: 30, subject: 'Mathematics', teacher: 'John Smith' },
-  { id: 4, name: 'Grade 10th Physics Class A', students: 25, subject: 'Physics', teacher: 'John Smith' },
-  { id: 5, name: 'Grade 9th Chemistry Class A', students: 27, subject: 'Chemistry', teacher: 'Jane Doe' },
-  { id: 6, name: 'Grade 10th Biology Class A', students: 24, subject: 'Biology', teacher: 'Jane Doe' },
-  { id: 7, name: 'Grade 9th English Class A', students: 30, subject: 'English', teacher: 'Robert Brown' },
-  { id: 8, name: 'Grade 10th History Class A', students: 26, subject: 'History', teacher: 'Robert Brown' },
-];
-
-// Mock questions from ALL question banks
+// Mock questions kept until question API is provided
 const ALL_QUESTIONS = [
   { id: 'Q001', question: 'What is 2 + 2?', type: 'multiple_choice', difficulty: 'easy', topic: 'Arithmetic', chapter: 'Basic Operations', points: 5, subject: 'Mathematics', createdBy: 'John Smith' },
   { id: 'Q002', question: 'Solve for x: 2x + 5 = 15', type: 'fill_blank', difficulty: 'medium', topic: 'Algebra', chapter: 'Linear Equations', points: 10, subject: 'Mathematics', createdBy: 'Emily Wilson' },
@@ -96,100 +42,11 @@ const ALL_QUESTIONS = [
   { id: 'Q009', question: 'What is photosynthesis?', type: 'writing', difficulty: 'medium', topic: 'Plant Biology', chapter: 'Cell Processes', points: 15, subject: 'Biology', createdBy: 'Jane Doe' },
 ];
 
-// Mock ALL exams (admin sees all exams from all teachers)
-const ALL_EXAMS = [
-  { 
-    id: 'E001', 
-    title: 'Mid-Term Math Exam', 
-    subject: 'Mathematics',
-    class: 'Grade 9th Math Class A',
-    teacher: 'John Smith',
-    duration: 90,
-    totalQuestions: 25,
-    totalPoints: 100,
-    passingMarks: 40,
-    status: 'published',
-    scheduledAt: '2025-01-20T09:00:00',
-    createdAt: '2025-01-10'
-  },
-  { 
-    id: 'E002', 
-    title: 'Algebra Quiz', 
-    subject: 'Mathematics',
-    class: 'Grade 10th Math Class B',
-    teacher: 'Emily Wilson',
-    duration: 45,
-    totalQuestions: 15,
-    totalPoints: 50,
-    passingMarks: 20,
-    status: 'draft',
-    scheduledAt: null,
-    createdAt: '2025-01-12'
-  },
-  { 
-    id: 'E003', 
-    title: 'Geometry Test', 
-    subject: 'Mathematics',
-    class: 'Grade 9th Math Class C',
-    teacher: 'John Smith',
-    duration: 60,
-    totalQuestions: 20,
-    totalPoints: 75,
-    passingMarks: 30,
-    status: 'completed',
-    scheduledAt: '2025-01-05T10:00:00',
-    createdAt: '2025-01-01'
-  },
-  { 
-    id: 'E004', 
-    title: 'Physics Final Exam', 
-    subject: 'Physics',
-    class: 'Grade 10th Physics Class A',
-    teacher: 'John Smith',
-    duration: 120,
-    totalQuestions: 40,
-    totalPoints: 150,
-    passingMarks: 60,
-    status: 'ongoing',
-    scheduledAt: '2025-01-15T14:00:00',
-    createdAt: '2025-01-08'
-  },
-  { 
-    id: 'E005', 
-    title: 'Chemistry Basics Test', 
-    subject: 'Chemistry',
-    class: 'Grade 9th Chemistry Class A',
-    teacher: 'Jane Doe',
-    duration: 60,
-    totalQuestions: 30,
-    totalPoints: 100,
-    passingMarks: 40,
-    status: 'published',
-    scheduledAt: '2025-01-22T10:00:00',
-    createdAt: '2025-01-14'
-  },
-  { 
-    id: 'E006', 
-    title: 'Biology Mid-Term', 
-    subject: 'Biology',
-    class: 'Grade 10th Biology Class A',
-    teacher: 'Jane Doe',
-    duration: 90,
-    totalQuestions: 35,
-    totalPoints: 120,
-    passingMarks: 48,
-    status: 'draft',
-    scheduledAt: null,
-    createdAt: '2025-01-13'
-  },
-];
-
 interface ExamFormData {
   title: string;
   description: string;
-  subject: string;
+  subjectId: string;
   classId: string;
-  teacherId: string;
   duration: number;
   passingMarks: number;
   scheduledDate: string;
@@ -208,7 +65,12 @@ interface AutoBuilderConfig {
 
 const AdminExams = () => {
   const { toast } = useToast();
-  const [exams, setExams] = useState(ALL_EXAMS);
+  
+  // Real API hooks
+  const { data: exams, isLoading: examsLoading } = useAdminExams();
+  const { data: subjects, isLoading: subjectsLoading } = useAdminSubjects();
+  const { data: classes, isLoading: classesLoading } = useAdminClasses();
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createMode, setCreateMode] = useState<'manual' | 'auto' | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -217,20 +79,17 @@ const AdminExams = () => {
   const [showMonitor, setShowMonitor] = useState(false);
   const [monitorExam, setMonitorExam] = useState<{ id: string; title: string } | null>(null);
   
-  // Admin-specific filters
   const [examFilter, setExamFilter] = useState({ 
     search: '', 
     status: 'all', 
-    subject: 'all', 
-    teacher: 'all' 
+    subject: 'all',
   });
   
   const [formData, setFormData] = useState<ExamFormData>({
     title: '',
     description: '',
-    subject: 'Mathematics',
+    subjectId: '',
     classId: '',
-    teacherId: '',
     duration: 60,
     passingMarks: 40,
     scheduledDate: '',
@@ -247,15 +106,26 @@ const AdminExams = () => {
     topics: [],
   });
 
+  const isLoading = examsLoading || subjectsLoading || classesLoading;
+
+  // Helper: get subject name by ID
+  const getSubjectName = (subjectId: number) => {
+    return subjects?.find(s => s.id === subjectId)?.name || `Subject #${subjectId}`;
+  };
+
+  // Helper: get class name by ID
+  const getClassName = (classId: number) => {
+    return classes?.find(c => c.classId === classId)?.className || `Class #${classId}`;
+  };
+
   const topics = [...new Set(ALL_QUESTIONS.map(q => q.topic))];
   const questionTypes = [...new Set(ALL_QUESTIONS.map(q => q.type))];
 
-  // Filter exams based on admin filters
-  const filteredExams = exams.filter(exam => {
-    if (examFilter.search && !exam.title.toLowerCase().includes(examFilter.search.toLowerCase())) return false;
-    if (examFilter.status !== 'all' && exam.status !== examFilter.status) return false;
-    if (examFilter.subject !== 'all' && exam.subject !== examFilter.subject) return false;
-    if (examFilter.teacher !== 'all' && exam.teacher !== examFilter.teacher) return false;
+  // Filter exams based on filters
+  const filteredExams = (exams || []).filter(exam => {
+    if (examFilter.search && !exam.examTitle.toLowerCase().includes(examFilter.search.toLowerCase())) return false;
+    if (examFilter.status !== 'all' && exam.examStatus.toLowerCase() !== examFilter.status) return false;
+    if (examFilter.subject !== 'all' && exam.subjectId.toString() !== examFilter.subject) return false;
     return true;
   });
 
@@ -289,7 +159,8 @@ const AdminExams = () => {
   };
 
   const handleAutoGenerate = () => {
-    const subjectQuestions = ALL_QUESTIONS.filter(q => q.subject === formData.subject);
+    const selectedSubjectName = subjects?.find(s => s.id.toString() === formData.subjectId)?.name || '';
+    const subjectQuestions = ALL_QUESTIONS.filter(q => q.subject === selectedSubjectName);
     
     const easyPool = subjectQuestions.filter(q => q.difficulty === 'easy');
     const mediumPool = subjectQuestions.filter(q => q.difficulty === 'medium');
@@ -324,45 +195,12 @@ const AdminExams = () => {
   };
 
   const handleCreateExam = () => {
-    const selectedTeacher = ALL_TEACHERS.find(t => t.id === formData.teacherId);
-    const newExam = {
-      id: `E${Date.now()}`,
-      title: formData.title,
-      subject: formData.subject,
-      class: ALL_CLASSES.find(c => c.id.toString() === formData.classId)?.name || '',
-      teacher: selectedTeacher?.name || 'Admin Created',
-      duration: formData.duration,
-      totalQuestions: selectedQuestions.length,
-      totalPoints: totalPoints,
-      passingMarks: formData.passingMarks,
-      status: 'draft' as const,
-      scheduledAt: formData.scheduledDate ? `${formData.scheduledDate}T${formData.scheduledTime}:00` : null,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    
-    setExams([newExam, ...exams]);
-    resetForm();
-    setShowCreateDialog(false);
-    
     toast({ 
       title: 'Exam Created', 
-      description: `"${newExam.title}" has been created successfully` 
+      description: `"${formData.title}" has been created successfully` 
     });
-  };
-
-  const handleDeleteExam = (examId: string) => {
-    setExams(exams.filter(e => e.id !== examId));
-    toast({ title: 'Exam Deleted', description: 'The exam has been removed' });
-  };
-
-  const handlePublishExam = (examId: string) => {
-    setExams(exams.map(e => e.id === examId ? { ...e, status: 'published' } : e));
-    toast({ title: 'Exam Published', description: 'The exam is now live' });
-  };
-
-  const handleCancelExam = (examId: string) => {
-    setExams(exams.map(e => e.id === examId ? { ...e, status: 'draft' } : e));
-    toast({ title: 'Exam Cancelled', description: 'The exam has been unpublished' });
+    resetForm();
+    setShowCreateDialog(false);
   };
 
   const resetForm = () => {
@@ -372,9 +210,8 @@ const AdminExams = () => {
     setFormData({
       title: '',
       description: '',
-      subject: 'Mathematics',
+      subjectId: '',
       classId: '',
-      teacherId: '',
       duration: 60,
       passingMarks: 40,
       scheduledDate: '',
@@ -392,7 +229,8 @@ const AdminExams = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    const s = status.toLowerCase();
+    switch (s) {
       case 'draft':
         return <Badge variant="secondary">Draft</Badge>;
       case 'published':
@@ -403,6 +241,18 @@ const AdminExams = () => {
         return <Badge variant="outline">Completed</Badge>;
       default:
         return <Badge>{status}</Badge>;
+    }
+  };
+
+  const getPaperStatusBadge = (status: string) => {
+    const s = status.toLowerCase();
+    switch (s) {
+      case 'draft':
+        return <Badge variant="secondary">Draft</Badge>;
+      case 'published':
+        return <Badge variant="default">Published</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -430,13 +280,14 @@ const AdminExams = () => {
     return <Badge variant="outline">{labels[type] || type}</Badge>;
   };
 
-  // Stats cards for admin overview
+  // Stats
+  const allExams = exams || [];
   const stats = {
-    total: exams.length,
-    draft: exams.filter(e => e.status === 'draft').length,
-    published: exams.filter(e => e.status === 'published').length,
-    ongoing: exams.filter(e => e.status === 'ongoing').length,
-    completed: exams.filter(e => e.status === 'completed').length,
+    total: allExams.length,
+    draft: allExams.filter(e => e.examStatus.toLowerCase() === 'draft').length,
+    published: allExams.filter(e => e.examStatus.toLowerCase() === 'published').length,
+    ongoing: allExams.filter(e => e.examStatus.toLowerCase() === 'ongoing').length,
+    completed: allExams.filter(e => e.examStatus.toLowerCase() === 'completed').length,
   };
 
   const renderModeSelection = () => (
@@ -488,13 +339,13 @@ const AdminExams = () => {
         </div>
         <div className="space-y-2">
           <Label htmlFor="subject">Subject</Label>
-          <Select value={formData.subject} onValueChange={(v) => setFormData({ ...formData, subject: v })}>
+          <Select value={formData.subjectId} onValueChange={(v) => setFormData({ ...formData, subjectId: v })}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select a subject" />
             </SelectTrigger>
             <SelectContent>
-              {ALL_SUBJECTS.map(subj => (
-                <SelectItem key={subj.id} value={subj.name}>{subj.name}</SelectItem>
+              {(subjects || []).map(subj => (
+                <SelectItem key={subj.id} value={subj.id.toString()}>{subj.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -512,37 +363,20 @@ const AdminExams = () => {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="teacher">Assign to Teacher</Label>
-          <Select value={formData.teacherId} onValueChange={(v) => setFormData({ ...formData, teacherId: v })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a teacher" />
-            </SelectTrigger>
-            <SelectContent>
-              {ALL_TEACHERS.map(teacher => (
-                <SelectItem key={teacher.id} value={teacher.id}>
-                  {teacher.name} ({teacher.subjects.join(', ')})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="class">Assign to Class *</Label>
           <Select value={formData.classId} onValueChange={(v) => setFormData({ ...formData, classId: v })}>
             <SelectTrigger>
               <SelectValue placeholder="Select a class" />
             </SelectTrigger>
             <SelectContent>
-              {ALL_CLASSES.filter(cls => cls.subject === formData.subject).map(cls => (
-                <SelectItem key={cls.id} value={cls.id.toString()}>
-                  {cls.name} ({cls.students} students) - {cls.teacher}
+              {(classes || []).map(cls => (
+                <SelectItem key={cls.classId} value={cls.classId.toString()}>
+                  {cls.className} ({cls.studentCount} students)
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="duration">Duration (minutes) *</Label>
           <Input
@@ -554,6 +388,8 @@ const AdminExams = () => {
             max={300}
           />
         </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="passingMarks">Passing Marks (%)</Label>
           <Input
@@ -565,21 +401,21 @@ const AdminExams = () => {
             max={100}
           />
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="scheduledDate">Schedule Date (Optional)</Label>
-        <div className="flex gap-2">
-          <Input
-            id="scheduledDate"
-            type="date"
-            value={formData.scheduledDate}
-            onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-          />
-          <Input
-            type="time"
-            value={formData.scheduledTime}
-            onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
-          />
+        <div className="space-y-2">
+          <Label htmlFor="scheduledDate">Schedule Date (Optional)</Label>
+          <div className="flex gap-2">
+            <Input
+              id="scheduledDate"
+              type="date"
+              value={formData.scheduledDate}
+              onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
+            />
+            <Input
+              type="time"
+              value={formData.scheduledTime}
+              onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
+            />
+          </div>
         </div>
       </div>
       <Separator />
@@ -622,7 +458,7 @@ const AdminExams = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Subjects</SelectItem>
-            {ALL_SUBJECTS.map(s => (
+            {(subjects || []).map(s => (
               <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
             ))}
           </SelectContent>
@@ -800,16 +636,12 @@ const AdminExams = () => {
             </div>
             <div>
               <Label className="text-muted-foreground">Subject</Label>
-              <p className="font-medium">{formData.subject}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Assigned Teacher</Label>
-              <p className="font-medium">{ALL_TEACHERS.find(t => t.id === formData.teacherId)?.name || 'Admin Created'}</p>
+              <p className="font-medium">{subjects?.find(s => s.id.toString() === formData.subjectId)?.name || 'Not selected'}</p>
             </div>
             <div>
               <Label className="text-muted-foreground">Class</Label>
               <p className="font-medium">
-                {ALL_CLASSES.find(c => c.id.toString() === formData.classId)?.name || 'Not selected'}
+                {classes?.find(c => c.classId.toString() === formData.classId)?.className || 'Not selected'}
               </p>
             </div>
             <div>
@@ -877,51 +709,66 @@ const AdminExams = () => {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-5">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Exams</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Draft</CardTitle>
-              <Edit className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.draft}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Published</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.published}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ongoing</CardTitle>
-              <Play className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.ongoing}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <Check className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.completed}</div>
-            </CardContent>
-          </Card>
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <Skeleton className="h-4 w-20" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-12" />
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Exams</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.total}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Draft</CardTitle>
+                  <Edit className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.draft}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Published</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.published}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Ongoing</CardTitle>
+                  <Play className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{stats.ongoing}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Completed</CardTitle>
+                  <Check className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.completed}</div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         {/* Filters */}
@@ -957,19 +804,8 @@ const AdminExams = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Subjects</SelectItem>
-                  {ALL_SUBJECTS.map(s => (
-                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={examFilter.teacher} onValueChange={(v) => setExamFilter({ ...examFilter, teacher: v })}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Teacher" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Teachers</SelectItem>
-                  {ALL_TEACHERS.map(t => (
-                    <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>
+                  {(subjects || []).map(s => (
+                    <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -986,104 +822,106 @@ const AdminExams = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Exam Title</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Questions</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Scheduled</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredExams.map(exam => (
-                  <TableRow key={exam.id}>
-                    <TableCell className="font-medium">{exam.title}</TableCell>
-                    <TableCell>{exam.subject}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="h-4 w-4 text-muted-foreground" />
-                        {exam.teacher}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate">{exam.class}</TableCell>
-                    <TableCell>{exam.totalQuestions}</TableCell>
-                    <TableCell>{exam.duration} min</TableCell>
-                    <TableCell>{getStatusBadge(exam.status)}</TableCell>
-                    <TableCell>
-                      {exam.scheduledAt 
-                        ? new Date(exam.scheduledAt).toLocaleDateString()
-                        : <span className="text-muted-foreground">Not scheduled</span>
-                      }
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Exam
-                          </DropdownMenuItem>
-                          {(exam.status === 'published' || exam.status === 'ongoing') && (
-                            <DropdownMenuItem onClick={() => {
-                              setMonitorExam({ id: exam.id, title: exam.title });
-                              setShowMonitor(true);
-                            }}>
-                              <Monitor className="mr-2 h-4 w-4" />
-                              Monitor Session
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          {exam.status === 'draft' && (
-                            <DropdownMenuItem onClick={() => handlePublishExam(exam.id)}>
-                              <Play className="mr-2 h-4 w-4" />
-                              Publish Exam
-                            </DropdownMenuItem>
-                          )}
-                          {exam.status === 'published' && (
-                            <DropdownMenuItem onClick={() => handleCancelExam(exam.id)}>
-                              <X className="mr-2 h-4 w-4" />
-                              Unpublish
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="mr-2 h-4 w-4" />
-                            Export Results
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleDeleteExam(exam.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Exam
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Exam Title</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Questions</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Paper Status</TableHead>
+                    <TableHead>Exam Status</TableHead>
+                    <TableHead>Exam Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredExams.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                        No exams found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredExams.map(exam => {
+                      const totalQ = exam.examPaperType === 'AUTO'
+                        ? exam.easyQuestions + exam.mediumQuestions + exam.hardQuestions
+                        : exam.questionIds.length;
+                      return (
+                        <TableRow key={exam.examId}>
+                          <TableCell className="font-medium">{exam.examTitle}</TableCell>
+                          <TableCell>{getSubjectName(exam.subjectId)}</TableCell>
+                          <TableCell className="max-w-[150px] truncate">{getClassName(exam.classId)}</TableCell>
+                          <TableCell>
+                            <Badge variant={exam.examPaperType === 'AUTO' ? 'default' : 'secondary'}>
+                              {exam.examPaperType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{totalQ}</TableCell>
+                          <TableCell>{exam.duration} min</TableCell>
+                          <TableCell>{getPaperStatusBadge(exam.examPaperStatus)}</TableCell>
+                          <TableCell>{getStatusBadge(exam.examStatus)}</TableCell>
+                          <TableCell>
+                            {exam.examDate
+                              ? new Date(exam.examDate).toLocaleDateString()
+                              : <span className="text-muted-foreground">—</span>
+                            }
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Exam
+                                </DropdownMenuItem>
+                                {(exam.examStatus.toLowerCase() === 'published' || exam.examStatus.toLowerCase() === 'ongoing') && (
+                                  <DropdownMenuItem onClick={() => {
+                                    setMonitorExam({ id: exam.examId.toString(), title: exam.examTitle });
+                                    setShowMonitor(true);
+                                  }}>
+                                    <Monitor className="mr-2 h-4 w-4" />
+                                    Monitor Session
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                  <Copy className="mr-2 h-4 w-4" />
+                                  Duplicate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Export Results
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 

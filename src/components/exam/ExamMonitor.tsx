@@ -303,7 +303,7 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
   const [showActivityLog, setShowActivityLog] = useState(false);
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const updateIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Simulated real-time events generator
   const generateRandomEvent = useCallback(() => {
