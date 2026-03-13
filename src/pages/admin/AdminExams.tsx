@@ -57,35 +57,7 @@ import { useAdminExams, AdminExamResponse } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
 
-// Mock data for ALL subjects (admin sees everything)
-const ALL_SUBJECTS = [
-  { id: 'math', name: 'Mathematics' },
-  { id: 'physics', name: 'Physics' },
-  { id: 'chemistry', name: 'Chemistry' },
-  { id: 'biology', name: 'Biology' },
-  { id: 'english', name: 'English' },
-  { id: 'history', name: 'History' },
-];
-
-// Mock data for ALL teachers
-const ALL_TEACHERS = [
-  { id: 'T001', name: 'John Smith', subjects: ['Mathematics', 'Physics'] },
-  { id: 'T002', name: 'Jane Doe', subjects: ['Chemistry', 'Biology'] },
-  { id: 'T003', name: 'Robert Brown', subjects: ['English', 'History'] },
-  { id: 'T004', name: 'Emily Wilson', subjects: ['Mathematics'] },
-];
-
-// Mock data for ALL classes (admin sees all)
-const ALL_CLASSES = [
-  { id: 1, name: 'Grade 9th Math Class A', students: 32, subject: 'Mathematics', teacher: 'John Smith' },
-  { id: 2, name: 'Grade 10th Math Class B', students: 28, subject: 'Mathematics', teacher: 'Emily Wilson' },
-  { id: 3, name: 'Grade 9th Math Class C', students: 30, subject: 'Mathematics', teacher: 'John Smith' },
-  { id: 4, name: 'Grade 10th Physics Class A', students: 25, subject: 'Physics', teacher: 'John Smith' },
-  { id: 5, name: 'Grade 9th Chemistry Class A', students: 27, subject: 'Chemistry', teacher: 'Jane Doe' },
-  { id: 6, name: 'Grade 10th Biology Class A', students: 24, subject: 'Biology', teacher: 'Jane Doe' },
-  { id: 7, name: 'Grade 9th English Class A', students: 30, subject: 'English', teacher: 'Robert Brown' },
-  { id: 8, name: 'Grade 10th History Class A', students: 26, subject: 'History', teacher: 'Robert Brown' },
-];
+// Questions mock data kept until question API is provided
 
 // Mock questions from ALL question banks
 const ALL_QUESTIONS = [
