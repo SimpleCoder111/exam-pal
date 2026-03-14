@@ -179,7 +179,7 @@ export const useToggleChapterStatus = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ chapterId, isActive }: { chapterId: number; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/subjects/chapters/${chapterId}/status?isActive=${isActive}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/chapters/${chapterId}/status?isActive=${isActive}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
