@@ -101,7 +101,7 @@ export const useUpdateClass = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ classId, ...payload }: CreateClassPayload & { classId: number }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes/${classId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/${classId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
