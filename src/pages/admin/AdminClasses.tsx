@@ -26,6 +26,7 @@ import { format } from 'date-fns';
 import { adminNavItems } from '@/config/adminNavItems';
 import { useAdminClasses, useCreateClass, useDeleteClass, useUpdateClass, AdminClassResponse } from '@/hooks/useAdminClasses';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
 
 const statusColors: Record<string, string> = {
   ONGOING: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -37,6 +38,8 @@ const statusColors: Record<string, string> = {
 const AdminClasses = () => {
   const { data: classes = [], isLoading } = useAdminClasses();
   const { data: subjects = [] } = useAdminSubjects();
+  const { data: users = [] } = useAdminUsers();
+  const teachers = users.filter(u => u.role?.id === 2 || u.roleName?.toUpperCase() === 'TEACHER');
   const createClass = useCreateClass();
   const updateClass = useUpdateClass();
   const deleteClass = useDeleteClass();
@@ -365,12 +368,22 @@ const AdminClasses = () => {
               </div>
 
               <div className="grid gap-2">
-                <Label>Teacher ID</Label>
-                <Input
+                <Label>Teacher</Label>
+                <Select
                   value={formData.teacherId}
-                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                  placeholder="e.g., T2026A0001"
-                />
+                  onValueChange={(v) => setFormData({ ...formData, teacherId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select teacher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teachers.map((t) => (
+                      <SelectItem key={t.userId} value={t.userId}>
+                        {t.name} ({t.userId})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
