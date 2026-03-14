@@ -26,6 +26,7 @@ import { format } from 'date-fns';
 import { adminNavItems } from '@/config/adminNavItems';
 import { useAdminClasses, useCreateClass, useDeleteClass, useUpdateClass, AdminClassResponse } from '@/hooks/useAdminClasses';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
 
 const statusColors: Record<string, string> = {
   ONGOING: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
