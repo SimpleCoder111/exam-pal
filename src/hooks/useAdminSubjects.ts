@@ -35,7 +35,7 @@ export const useAdminSubjects = () => {
   const { accessToken } = useAuth();
   return useQuery({
     queryKey: ['admin-subjects'],
-    queryFn: () => apiFetch<ApiResponse<SubjectResponse[]>>('/api/v1/subjects', accessToken),
+    queryFn: () => apiFetch<ApiResponse<SubjectResponse[]>>('/api/v1/admin/subjects', accessToken),
     select: (res) => res.data,
   });
 };
