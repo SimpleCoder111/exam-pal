@@ -39,6 +39,7 @@ const formatTimeAgo = (timestamp: string) => {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useAdminDashboardStats();
   const { data: activities, isLoading: activitiesLoading } = useAdminDashboardActivities(10);
 
