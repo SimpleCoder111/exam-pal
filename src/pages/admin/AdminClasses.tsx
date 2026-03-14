@@ -38,6 +38,8 @@ const statusColors: Record<string, string> = {
 const AdminClasses = () => {
   const { data: classes = [], isLoading } = useAdminClasses();
   const { data: subjects = [] } = useAdminSubjects();
+  const { data: users = [] } = useAdminUsers();
+  const teachers = users.filter(u => u.role?.id === 2 || u.roleName?.toUpperCase() === 'TEACHER');
   const createClass = useCreateClass();
   const updateClass = useUpdateClass();
   const deleteClass = useDeleteClass();
