@@ -32,7 +32,7 @@ export const useAdminExams = () => {
   return useQuery({
     queryKey: ['admin-exams'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/exams`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/exams`, {
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),

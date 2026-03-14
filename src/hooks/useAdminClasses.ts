@@ -37,7 +37,7 @@ export const useAdminClasses = () => {
   return useQuery({
     queryKey: ['admin-classes'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/classes`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes`, {
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
@@ -58,7 +58,7 @@ export const useCreateClass = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateClassPayload) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/classes`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export const useDeleteClass = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (classId: number) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/classes/${classId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes/${classId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export const useUpdateClass = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ classId, ...payload }: CreateClassPayload & { classId: number }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/classes/${classId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes/${classId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
