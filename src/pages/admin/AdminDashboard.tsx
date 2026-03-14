@@ -61,7 +61,7 @@ const AdminDashboard = () => {
             <h1 className="font-heading text-3xl font-semibold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">Welcome back! Here's what's happening at your school.</p>
           </div>
-          <Button>
+          <Button onClick={() => navigate('/admin/users')}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add New User
           </Button>
