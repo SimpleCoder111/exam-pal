@@ -368,12 +368,22 @@ const AdminClasses = () => {
               </div>
 
               <div className="grid gap-2">
-                <Label>Teacher ID</Label>
-                <Input
+                <Label>Teacher</Label>
+                <Select
                   value={formData.teacherId}
-                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                  placeholder="e.g., T2026A0001"
-                />
+                  onValueChange={(v) => setFormData({ ...formData, teacherId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select teacher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teachers.map((t) => (
+                      <SelectItem key={t.userId} value={t.userId}>
+                        {t.name} ({t.userId})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
