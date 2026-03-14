@@ -162,7 +162,7 @@ export const useDeleteChapter = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (chapterId: number) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/subjects/chapters/${chapterId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/chapters/${chapterId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
