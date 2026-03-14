@@ -9,6 +9,7 @@ import {
   Bell,
   Activity
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +39,7 @@ const formatTimeAgo = (timestamp: string) => {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useAdminDashboardStats();
   const { data: activities, isLoading: activitiesLoading } = useAdminDashboardActivities(10);
 
@@ -173,19 +175,19 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/admin/users')}>
                 <UserPlus className="w-6 h-6" />
                 <span>Add User</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/admin/subjects')}>
                 <BookOpen className="w-6 h-6" />
                 <span>New Subject</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/admin/classes')}>
                 <GraduationCap className="w-6 h-6" />
                 <span>Create Class</span>
               </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2">
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/admin/notifications')}>
                 <Bell className="w-6 h-6" />
                 <span>Notification</span>
               </Button>
