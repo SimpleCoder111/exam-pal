@@ -58,7 +58,7 @@ export const useCreateClass = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateClassPayload) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
