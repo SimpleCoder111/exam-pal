@@ -37,7 +37,7 @@ export const useAdminClasses = () => {
   return useQuery({
     queryKey: ['admin-classes'],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/classes`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/classes`, {
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
