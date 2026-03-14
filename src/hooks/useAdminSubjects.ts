@@ -196,7 +196,7 @@ export const useReorderChapters = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ subjectId, order }: { subjectId: number; order: Array<{ id: number; index: number }> }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/subjects/${subjectId}/chapters/reorder`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${subjectId}/chapters/reorder`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(order),
