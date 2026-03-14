@@ -56,7 +56,7 @@ export const useCreateSubject = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: { name: string; code: string; description: string; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/subjects`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(body),
