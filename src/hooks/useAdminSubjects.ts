@@ -144,7 +144,7 @@ export const useUpdateChapter = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ chapterId, ...body }: { chapterId: number; name: string; description: string; index: number; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/chapters/${chapterId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/chapters/${chapterId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(body),
