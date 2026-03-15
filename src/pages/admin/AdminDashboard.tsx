@@ -172,30 +172,66 @@ const AdminDashboard = () => {
               ) : (
                 <>
                   {/* Pie Chart */}
-                  <div className="h-[200px] mb-6">
+                  <div className="h-[220px] mb-6 relative">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
+                        <defs>
+                          {grades?.filter(g => g.percentage > 0).map((item) => (
+                            <filter key={`glow-${item.grade}`} id={`glow-${item.grade}`}>
+                              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                              <feMerge>
+                                <feMergeNode in="coloredBlur" />
+                                <feMergeNode in="SourceGraphic" />
+                              </feMerge>
+                            </filter>
+                          ))}
+                        </defs>
                         <Pie
                           data={grades?.filter(g => g.percentage > 0) ?? []}
                           dataKey="percentage"
                           nameKey="grade"
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={3}
-                          strokeWidth={0}
+                          innerRadius={55}
+                          outerRadius={85}
+                          paddingAngle={4}
+                          stroke="hsl(var(--background))"
+                          strokeWidth={2}
+                          cornerRadius={4}
+                          animationBegin={0}
+                          animationDuration={800}
                         >
                           {grades?.filter(g => g.percentage > 0).map((item) => (
-                            <Cell key={item.grade} fill={gradePieColors[item.grade] ?? 'hsl(var(--primary))'} />
+                            <Cell
+                              key={item.grade}
+                              fill={gradePieColors[item.grade] ?? 'hsl(var(--primary))'}
+                              className="drop-shadow-lg dark:drop-shadow-[0_0_6px_rgba(255,255,255,0.15)]"
+                              filter={`url(#glow-${item.grade})`}
+                            />
                           ))}
                         </Pie>
                         <Tooltip
                           formatter={(value: number, name: string) => [`${value}%`, `Grade ${name}`]}
-                          contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '10px',
+                            fontSize: '12px',
+                            color: 'hsl(var(--foreground))',
+                            boxShadow: '0 8px 24px hsl(var(--foreground) / 0.08)',
+                          }}
+                          itemStyle={{ color: 'hsl(var(--foreground))' }}
+                          labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
+                    {/* Center label */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center">
+                        <p className="text-2xl font-semibold text-foreground">{grades?.reduce((sum, g) => sum + (g as any).count, 0) ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">Students</p>
+                      </div>
+                    </div>
                   </div>
                   {/* Bar breakdown */}
                   <div className="space-y-3">

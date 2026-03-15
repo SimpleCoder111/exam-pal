@@ -71,6 +71,7 @@ export const useAdminDashboardActivities = (limit = 10) => {
 export interface GradeDistribution {
   grade: string;
   percentage: number;
+  count: number;
 }
 
 export const useAdminDashboardGrades = () => {
