@@ -45,7 +45,7 @@ export const useSubjectDashboard = () => {
   const { accessToken } = useAuth();
   return useQuery({
     queryKey: ['admin-subjects-dashboard'],
-    queryFn: () => apiFetch<ApiResponse<any>>('/api/v1/admin/subjects/dashboard', accessToken),
+    queryFn: () => apiFetch<ApiResponse<any>>('/api/v1/admin/subject/dashboard', accessToken),
     select: (res) => res.data,
   });
 };
