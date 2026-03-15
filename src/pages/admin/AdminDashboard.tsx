@@ -144,27 +144,34 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Grade Distribution (mock until API provided) */}
+          {/* Grade Distribution */}
           <Card>
             <CardHeader>
               <CardTitle className="font-heading">Overall Grade Distribution</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {gradeDistribution.map((item) => (
-                  <div key={item.grade} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-foreground">Grade {item.grade}</span>
-                      <span className="text-muted-foreground">{item.percentage}%</span>
-                    </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full ${item.color} rounded-full transition-all duration-500`}
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                {gradesLoading
+                  ? Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="w-full h-4" />
+                        <Skeleton className="w-full h-2" />
+                      </div>
+                    ))
+                  : grades?.map((item) => (
+                      <div key={item.grade} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-foreground">Grade {item.grade}</span>
+                          <span className="text-muted-foreground">{item.percentage}%</span>
+                        </div>
+                        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${gradeColors[item.grade] ?? 'bg-primary'} rounded-full transition-all duration-500`}
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
               </div>
             </CardContent>
           </Card>
