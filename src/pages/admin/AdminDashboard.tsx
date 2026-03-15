@@ -160,16 +160,47 @@ const AdminDashboard = () => {
               <CardTitle className="font-heading">Overall Grade Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {gradesLoading
-                  ? Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="space-y-2">
-                        <Skeleton className="w-full h-4" />
-                        <Skeleton className="w-full h-2" />
-                      </div>
-                    ))
-                  : grades?.map((item) => (
-                      <div key={item.grade} className="space-y-2">
+              {gradesLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="w-full h-4" />
+                      <Skeleton className="w-full h-2" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Pie Chart */}
+                  <div className="h-[200px] mb-6">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={grades?.filter(g => g.percentage > 0) ?? []}
+                          dataKey="percentage"
+                          nameKey="grade"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={3}
+                          strokeWidth={0}
+                        >
+                          {grades?.filter(g => g.percentage > 0).map((item) => (
+                            <Cell key={item.grade} fill={gradePieColors[item.grade] ?? 'hsl(var(--primary))'} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: number, name: string) => [`${value}%`, `Grade ${name}`]}
+                          contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Bar breakdown */}
+                  <div className="space-y-3">
+                    {grades?.map((item) => (
+                      <div key={item.grade} className="space-y-1.5">
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium text-foreground">Grade {item.grade}</span>
                           <span className="text-muted-foreground">{item.percentage}%</span>
@@ -182,7 +213,9 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     ))}
-              </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
