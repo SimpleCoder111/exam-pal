@@ -173,7 +173,52 @@ const AdminDashboard = () => {
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium text-foreground">Grade {item.grade}</span>
                           <span className="text-muted-foreground">{item.percentage}%</span>
-                        </div>
+        </div>
+
+        {/* Grade Distribution Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading">Grade Distribution Chart</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {gradesLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Skeleton className="w-48 h-48 rounded-full" />
+              </div>
+            ) : grades && grades.filter(g => g.percentage > 0).length > 0 ? (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={grades.filter(g => g.percentage > 0)}
+                      dataKey="percentage"
+                      nameKey="grade"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={50}
+                      paddingAngle={2}
+                      label={({ grade, percentage }) => `${grade}: ${percentage}%`}
+                    >
+                      {grades.filter(g => g.percentage > 0).map((entry) => (
+                        <Cell key={entry.grade} fill={gradePieColors[entry.grade] ?? 'hsl(var(--primary))'} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number, name: string) => [`${value}%`, `Grade ${name}`]}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
+                    />
+                    <Legend
+                      formatter={(value) => `Grade ${value}`}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">No grade data available</p>
+            )}
+          </CardContent>
+        </Card>
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                           <div
                             className={`h-full ${gradeColors[item.grade] ?? 'bg-primary'} rounded-full transition-all duration-500`}
