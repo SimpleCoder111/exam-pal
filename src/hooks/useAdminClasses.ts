@@ -117,3 +117,66 @@ export const useUpdateClass = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-classes'] }),
   });
 };
+
+// GET class dashboard summary
+export const useAdminClassSummary = () => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['admin-class-summary'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/summary`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json: ApiResponse<any> = await res.json();
+      if (json.code !== '0') throw new Error(json.message);
+      return json.data;
+    },
+    enabled: !!accessToken,
+  });
+};
+
+// GET teacher lists for class assignment
+export const useAdminClassTeachers = () => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['admin-class-teachers'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/teachers`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json: ApiResponse<any[]> = await res.json();
+      if (json.code !== '0') throw new Error(json.message);
+      return json.data;
+    },
+    enabled: !!accessToken,
+  });
+};
+
+// GET student lists for class assignment
+export const useAdminClassStudents = () => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['admin-class-students'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/students`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json: ApiResponse<any[]> = await res.json();
+      if (json.code !== '0') throw new Error(json.message);
+      return json.data;
+    },
+    enabled: !!accessToken,
+  });
+};
