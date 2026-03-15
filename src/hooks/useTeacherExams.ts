@@ -86,7 +86,7 @@ export const useUpdateExam = () => {
 
   return useMutation({
     mutationFn: async ({ examId, payload }: { examId: number; payload: UpdateExamPayload }) => {
-      const response = await fetch(`http://localhost:7000/api/v1/exams/${examId}`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
