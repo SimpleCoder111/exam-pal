@@ -82,6 +82,11 @@ const App = () => (
                   <AdminExams />
                 </ProtectedRoute>
               } />
+              <Route path="/admin/questions" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminQuestionBank />
+                </ProtectedRoute>
+              } />
               <Route path="/admin/reports" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminReports />
