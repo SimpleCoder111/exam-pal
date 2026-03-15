@@ -92,7 +92,7 @@ export const useToggleSubjectStatus = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${id}/status?isActive=${isActive}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${id}/status?isActive=${isActive}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
