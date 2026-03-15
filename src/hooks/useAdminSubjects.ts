@@ -74,7 +74,7 @@ export const useUpdateSubject = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...body }: { id: number; name: string; code: string; description: string; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(body),
