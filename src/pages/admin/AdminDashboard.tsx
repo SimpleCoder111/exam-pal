@@ -43,6 +43,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { data: stats, isLoading: statsLoading } = useAdminDashboardStats();
   const { data: activities, isLoading: activitiesLoading } = useAdminDashboardActivities(10);
+  const { data: grades, isLoading: gradesLoading } = useAdminDashboardGrades();
 
   const statCards = stats ? [
     { label: 'Total Students', value: stats.totalStudent.toLocaleString(), change: stats.studentChange, icon: Users, color: 'text-blue-500 bg-blue-500/10' },
