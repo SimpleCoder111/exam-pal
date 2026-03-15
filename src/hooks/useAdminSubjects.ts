@@ -126,7 +126,7 @@ export const useAddChapters = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ subjectId, chapters }: { subjectId: number; chapters: Array<{ name: string; description: string; isActive: boolean; index: number }> }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${subjectId}/chapters`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${subjectId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(chapters),
