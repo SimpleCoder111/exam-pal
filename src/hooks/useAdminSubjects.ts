@@ -45,7 +45,7 @@ export const useSubjectDashboard = () => {
   const { accessToken } = useAuth();
   return useQuery({
     queryKey: ['admin-subjects-dashboard'],
-    queryFn: () => apiFetch<ApiResponse<any>>('/api/v1/admin/subjects/dashboard', accessToken),
+    queryFn: () => apiFetch<ApiResponse<any>>('/api/v1/admin/subject/dashboard', accessToken),
     select: (res) => res.data,
   });
 };
@@ -56,7 +56,7 @@ export const useCreateSubject = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: { name: string; code: string; description: string; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(body),
@@ -74,7 +74,7 @@ export const useUpdateSubject = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...body }: { id: number; name: string; code: string; description: string; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(body),
@@ -92,7 +92,7 @@ export const useToggleSubjectStatus = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${id}/status?isActive=${isActive}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${id}/status?isActive=${isActive}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
@@ -109,7 +109,7 @@ export const useDeleteSubject = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
@@ -126,7 +126,7 @@ export const useAddChapters = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ subjectId, chapters }: { subjectId: number; chapters: Array<{ name: string; description: string; isActive: boolean; index: number }> }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${subjectId}/chapters`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${subjectId}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(chapters),
@@ -144,7 +144,7 @@ export const useUpdateChapter = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ chapterId, ...body }: { chapterId: number; name: string; description: string; index: number; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/chapters/${chapterId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/chapters/${chapterId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(body),
@@ -162,7 +162,7 @@ export const useDeleteChapter = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (chapterId: number) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/chapters/${chapterId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/chapters/${chapterId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
@@ -179,7 +179,7 @@ export const useToggleChapterStatus = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ chapterId, isActive }: { chapterId: number; isActive: boolean }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/chapters/${chapterId}/status?isActive=${isActive}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/chapters/${chapterId}/status?isActive=${isActive}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
       });
@@ -196,7 +196,7 @@ export const useReorderChapters = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ subjectId, order }: { subjectId: number; order: Array<{ id: number; index: number }> }) => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subjects/${subjectId}/chapters/reorder`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/subject/${subjectId}/chapters/reorder`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         body: JSON.stringify(order),
