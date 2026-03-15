@@ -228,8 +228,8 @@ const AdminDashboard = () => {
                     {/* Center label */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="text-center">
-                        <p className="text-2xl font-semibold text-foreground">{grades?.reduce((sum, g) => sum + (g as any).count, 0) ?? 0}</p>
-                        <p className="text-xs text-muted-foreground">Students</p>
+                        <p className="text-2xl font-semibold text-foreground">100%</p>
+                        <p className="text-xs text-muted-foreground">All Exams</p>
                       </div>
                     </div>
                   </div>
