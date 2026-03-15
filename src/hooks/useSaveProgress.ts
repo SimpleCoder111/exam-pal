@@ -100,7 +100,7 @@ export const useSaveProgress = () => {
 
   return useMutation({
     mutationFn: async (payload: SaveProgressPayload) => {
-      const response = await fetch(`${API_BASE_URL}/api/v1/exams/student/save-progress`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/student/exam/save-progress`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

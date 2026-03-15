@@ -32,7 +32,7 @@ export const useStudentExams = () => {
     queryKey: ['student-exams', user?.id],
     queryFn: async () => {
       const res = await apiFetch<ExamsResponse>(
-        `/api/v1/exams/student/${user!.id}`,
+        `/api/v1/student/exams/${user!.id}`,
         accessToken
       );
       return res.data ?? [];

@@ -49,7 +49,7 @@ export const useTakeExam = () => {
 
   return useMutation({
     mutationFn: async (payload: TakeExamPayload): Promise<TakeExamData> => {
-      const response = await fetch(`${API_BASE_URL}/api/v1/exams/student/take-exam`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/student/exam/take-exam`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

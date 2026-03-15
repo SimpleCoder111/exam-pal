@@ -46,7 +46,7 @@ export const useTeacherExams = () => {
     queryKey: ['teacherExams', user?.id],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: TeacherExam[]; message: string }>(
-        `/api/v1/exams/${user?.id}`,
+        `/api/v1/teacher/exams/${user?.id}`,
         accessToken
       );
       return res.data;
@@ -62,7 +62,7 @@ export const useCreateExam = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateExamPayload) => {
-      const response = await fetch(`http://localhost:7000/api/v1/exams`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export const useUpdateExam = () => {
 
   return useMutation({
     mutationFn: async ({ examId, payload }: { examId: number; payload: UpdateExamPayload }) => {
-      const response = await fetch(`http://localhost:7000/api/v1/exams/${examId}`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export const useDeleteExam = () => {
 
   return useMutation({
     mutationFn: async (examId: number) => {
-      const response = await fetch(`http://localhost:7000/api/v1/exams/${examId}`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam/${examId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
