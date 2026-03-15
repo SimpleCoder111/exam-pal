@@ -51,7 +51,7 @@ export const useClassQR = (classId: number | null) => {
     queryKey: ['classQR', classId],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: QRData; message: string }>(
-        `/api/v1/classes/${classId}/generate-qr`,
+        `/api/v1/teacher/class/${classId}/generate-qr`,
         accessToken
       );
       return res.data;
