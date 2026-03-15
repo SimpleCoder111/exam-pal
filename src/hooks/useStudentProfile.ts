@@ -27,7 +27,7 @@ export const useStudentProfile = () => {
     queryKey: ['studentProfile', user?.id],
     queryFn: () =>
       apiFetch<ProfileResponse>(
-        `/api/v1/dashboard/student/profile?studentId=${user?.id}`,
+        `/api/v1/student/dashboard/profile?studentId=${user?.id}`,
         accessToken
       ),
     enabled: !!user?.id && !!accessToken,

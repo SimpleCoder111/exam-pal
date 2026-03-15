@@ -40,6 +40,7 @@ export const useAdminDashboardStats = () => {
         },
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
+      // Stats endpoint returns DashboardStatisticResponse directly (not wrapped)
       const json: DashboardStats = await res.json();
       return json;
     },
