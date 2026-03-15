@@ -15,15 +15,16 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { adminNavItems } from '@/config/adminNavItems';
-import { useAdminDashboardStats, useAdminDashboardActivities } from '@/hooks/useAdminDashboard';
+import { useAdminDashboardStats, useAdminDashboardActivities, useAdminDashboardGrades } from '@/hooks/useAdminDashboard';
 
-const gradeDistribution = [
-  { grade: 'A', percentage: 25, color: 'bg-green-500' },
-  { grade: 'B', percentage: 35, color: 'bg-blue-500' },
-  { grade: 'C', percentage: 25, color: 'bg-yellow-500' },
-  { grade: 'D', percentage: 10, color: 'bg-orange-500' },
-  { grade: 'F', percentage: 5, color: 'bg-red-500' },
-];
+const gradeColors: Record<string, string> = {
+  A: 'bg-green-500',
+  B: 'bg-blue-500',
+  C: 'bg-yellow-500',
+  D: 'bg-orange-500',
+  E: 'bg-purple-500',
+  F: 'bg-red-500',
+};
 
 const formatTimeAgo = (timestamp: string) => {
   const now = new Date();
