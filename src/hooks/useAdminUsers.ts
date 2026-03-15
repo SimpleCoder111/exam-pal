@@ -140,6 +140,70 @@ export const useToggleUserStatus = () => {
   });
 };
 
+// GET users by role ID
+export const useAdminUsersByRole = (roleId: number) => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['admin-users-by-role', roleId],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/user/${roleId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json() as Promise<AdminUserResponse[]>;
+    },
+    enabled: !!accessToken && roleId > 0,
+  });
+};
+
+// GET user profile (general, any role)
+export const useUserProfile = (userId: string | undefined) => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['user-profile', userId],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/user/${userId}/profile`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
+    enabled: !!accessToken && !!userId,
+  });
+};
+
+// POST upload profile image (multipart)
+export const useUploadProfileImage = () => {
+  const { accessToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, userId }: { file: File; userId: string }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', userId);
+      const res = await fetch(`${API_BASE_URL}/api/v1/user/profile/image`, {
+        method: 'POST',
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: formData,
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['user-profile', variables.userId] });
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+};
+
 // Role ID mapping helper
 export const getRoleId = (roleName: string): number => {
   switch (roleName.toUpperCase()) {

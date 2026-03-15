@@ -22,7 +22,7 @@ export const useStudentSubjects = () => {
     queryKey: ['studentSubjects', user?.id],
     queryFn: () =>
       apiFetch<SubjectsResponse>(
-        `/api/v1/dashboard/student/enrolled-subjects?studentId=${user?.id}`,
+        `/api/v1/student/dashboard/enrolled-subjects?studentId=${user?.id}`,
         accessToken
       ),
     enabled: !!user?.id && !!accessToken,
