@@ -110,7 +110,7 @@ export const useDeleteExam = () => {
 
   return useMutation({
     mutationFn: async (examId: number) => {
-      const response = await fetch(`http://localhost:7000/api/v1/exams/${examId}`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam/${examId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

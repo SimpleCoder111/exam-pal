@@ -101,7 +101,7 @@ export const useSubmitExam = () => {
 
   return useMutation({
     mutationFn: async (payload: SubmitExamPayload): Promise<SubmitExamResult> => {
-      const response = await fetch(`${API_BASE_URL}/api/v1/exams/student/submit`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/student/exam/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
