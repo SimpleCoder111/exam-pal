@@ -67,7 +67,7 @@ export const usePendingRequests = (classId: number | null) => {
     queryKey: ['pendingRequests', classId],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: PendingRequest[]; message: string }>(
-        `/api/v1/classes/enrollment/pending?classId=${classId}`,
+        `/api/v1/teacher/class/enrollment/pending?classId=${classId}`,
         accessToken
       );
       return res.data;
