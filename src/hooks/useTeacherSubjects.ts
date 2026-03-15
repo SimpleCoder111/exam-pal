@@ -34,7 +34,7 @@ export const useTeacherSubjects = () => {
     queryKey: ['teacherSubjects', user?.id],
     queryFn: () =>
       apiFetch<SubjectsApiResponse>(
-        `/api/v1/subjects/${user?.id}`,
+        `/api/v1/teacher/subject/${user?.id}`,
         accessToken
       ),
     enabled: !!user?.id && !!accessToken,
