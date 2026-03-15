@@ -9,7 +9,6 @@ import {
   Bell,
   Activity
 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,15 +24,6 @@ const gradeColors: Record<string, string> = {
   D: 'bg-orange-500',
   E: 'bg-purple-500',
   F: 'bg-red-500',
-};
-
-const gradePieColors: Record<string, string> = {
-  A: '#22c55e',
-  B: '#3b82f6',
-  C: '#eab308',
-  D: '#f97316',
-  E: '#a855f7',
-  F: '#ef4444',
 };
 
 const formatTimeAgo = (timestamp: string) => {
@@ -173,52 +163,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium text-foreground">Grade {item.grade}</span>
                           <span className="text-muted-foreground">{item.percentage}%</span>
-        </div>
-
-        {/* Grade Distribution Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading">Grade Distribution Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {gradesLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <Skeleton className="w-48 h-48 rounded-full" />
-              </div>
-            ) : grades && grades.filter(g => g.percentage > 0).length > 0 ? (
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={grades.filter(g => g.percentage > 0)}
-                      dataKey="percentage"
-                      nameKey="grade"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                      paddingAngle={2}
-                      label={({ grade, percentage }) => `${grade}: ${percentage}%`}
-                    >
-                      {grades.filter(g => g.percentage > 0).map((entry) => (
-                        <Cell key={entry.grade} fill={gradePieColors[entry.grade] ?? 'hsl(var(--primary))'} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value: number, name: string) => [`${value}%`, `Grade ${name}`]}
-                      contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
-                    />
-                    <Legend
-                      formatter={(value) => `Grade ${value}`}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">No grade data available</p>
-            )}
-          </CardContent>
-        </Card>
+                        </div>
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                           <div
                             className={`h-full ${gradeColors[item.grade] ?? 'bg-primary'} rounded-full transition-all duration-500`}
