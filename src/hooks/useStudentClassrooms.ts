@@ -27,7 +27,7 @@ export const useStudentClassrooms = () => {
     queryKey: ['student-classrooms', user?.id],
     queryFn: async () => {
       const res = await apiFetch<ClassroomsResponse>(
-        `/api/v1/classes/student?studentId=${user!.id}`,
+        `/api/v1/student/classes?studentId=${user!.id}`,
         accessToken,
       );
       return res.data ?? [];

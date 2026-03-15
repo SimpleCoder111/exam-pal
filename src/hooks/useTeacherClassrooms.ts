@@ -51,7 +51,7 @@ export const useClassQR = (classId: number | null) => {
     queryKey: ['classQR', classId],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: QRData; message: string }>(
-        `/api/v1/classes/${classId}/generate-qr`,
+        `/api/v1/teacher/class/${classId}/generate-qr`,
         accessToken
       );
       return res.data;
@@ -67,7 +67,7 @@ export const usePendingRequests = (classId: number | null) => {
     queryKey: ['pendingRequests', classId],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: PendingRequest[]; message: string }>(
-        `/api/v1/classes/enrollment/pending?classId=${classId}`,
+        `/api/v1/teacher/class/enrollment/pending?classId=${classId}`,
         accessToken
       );
       return res.data;
@@ -83,7 +83,7 @@ export const useUpdateEnrollment = () => {
 
   return useMutation({
     mutationFn: async ({ classEnrolledId, isApproved }: { classEnrolledId: number; isApproved: boolean }) => {
-      const response = await fetch(`http://localhost:7000/api/v1/classes/enrollment/update_status`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/class/enrollment/update_status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiFetch } from '@/lib/api';
 
 const API_BASE_URL = 'http://localhost:7000';
 
@@ -82,25 +83,16 @@ export interface UpdateQuestionPayload extends CreateQuestionPayload {
 
 // --- Hooks ---
 
-const authFetch = async <T>(url: string, token: string | null, options?: RequestInit): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...options,
-  });
-  if (!response.ok) throw new Error(`API error: ${response.status}`);
-  return response.json();
-};
-
 export const useTeacherQuestions = (subjectId: number | null) => {
   const { accessToken } = useAuth();
 
   return useQuery({
     queryKey: ['teacherQuestions', subjectId],
     queryFn: () =>
-      authFetch<QuestionsApiResponse>(`/api/v1/questions/${subjectId}`, accessToken),
+      apiFetch<QuestionsApiResponse>(
+        `/api/v1/teacher/question/${subjectId}/questions`,
+        accessToken
+      ),
     enabled: !!subjectId && !!accessToken,
     select: (res) => res.data,
     staleTime: 2 * 60 * 1000,
@@ -113,7 +105,10 @@ export const useQuestionSummary = () => {
   return useQuery({
     queryKey: ['questionSummary', user?.id],
     queryFn: () =>
-      authFetch<SummaryApiResponse>(`/api/v1/questions/summary/${user?.id}`, accessToken),
+      apiFetch<SummaryApiResponse>(
+        `/api/v1/teacher/question/summary/${user?.id}`,
+        accessToken
+      ),
     enabled: !!user?.id && !!accessToken,
     select: (res) => res.data,
     staleTime: 2 * 60 * 1000,
@@ -125,11 +120,18 @@ export const useCreateQuestion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ subjectId, payload }: { subjectId: number; payload: CreateQuestionPayload }) =>
-      authFetch<MutationResponse>(`/api/v1/questions/${subjectId}`, accessToken, {
+    mutationFn: async ({ subjectId, payload }: { subjectId: number; payload: CreateQuestionPayload }) => {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/question/${subjectId}`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify(payload),
-      }),
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return response.json() as Promise<MutationResponse>;
+    },
     onSuccess: (_, { subjectId }) => {
       queryClient.invalidateQueries({ queryKey: ['teacherQuestions', subjectId] });
       queryClient.invalidateQueries({ queryKey: ['questionSummary'] });
@@ -142,11 +144,18 @@ export const useUpdateQuestion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ questionId, payload }: { questionId: number; payload: UpdateQuestionPayload }) =>
-      authFetch<MutationResponse>(`/api/v1/questions/${questionId}`, accessToken, {
+    mutationFn: async ({ questionId, payload }: { questionId: number; payload: UpdateQuestionPayload }) => {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/question/${questionId}`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify(payload),
-      }),
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return response.json() as Promise<MutationResponse>;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacherQuestions'] });
       queryClient.invalidateQueries({ queryKey: ['questionSummary'] });
@@ -159,10 +168,17 @@ export const useDeleteQuestion = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (questionId: number) =>
-      authFetch<MutationResponse>(`/api/v1/questions/${questionId}`, accessToken, {
+    mutationFn: async (questionId: number) => {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/question/${questionId}`, {
         method: 'DELETE',
-      }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+      return response.json() as Promise<MutationResponse>;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teacherQuestions'] });
       queryClient.invalidateQueries({ queryKey: ['questionSummary'] });
@@ -180,7 +196,7 @@ export const useImportQuestions = () => {
       formData.append('file', file);
 
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/questions/import?subjectId=${subjectId}`,
+        `${API_BASE_URL}/api/v1/teacher/questions/import?subjectId=${subjectId}`,
         {
           method: 'POST',
           headers: {
