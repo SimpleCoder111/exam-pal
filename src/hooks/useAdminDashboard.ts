@@ -66,3 +66,28 @@ export const useAdminDashboardActivities = (limit = 10) => {
     enabled: !!accessToken,
   });
 };
+
+// Grade Distribution
+export interface GradeDistribution {
+  grade: string;
+  percentage: number;
+}
+
+export const useAdminDashboardGrades = () => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['admin-dashboard-grades'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/dashboard/grades`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      // Returns List<GradeDistributionResponse> directly
+      return res.json() as Promise<GradeDistribution[]>;
+    },
+    enabled: !!accessToken,
+  });
+};
