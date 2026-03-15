@@ -83,7 +83,7 @@ export const useUpdateEnrollment = () => {
 
   return useMutation({
     mutationFn: async ({ classEnrolledId, isApproved }: { classEnrolledId: number; isApproved: boolean }) => {
-      const response = await fetch(`http://localhost:7000/api/v1/classes/enrollment/update_status`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/class/enrollment/update_status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
