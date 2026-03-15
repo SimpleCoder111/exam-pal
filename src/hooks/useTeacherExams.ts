@@ -46,7 +46,7 @@ export const useTeacherExams = () => {
     queryKey: ['teacherExams', user?.id],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: TeacherExam[]; message: string }>(
-        `/api/v1/exams/${user?.id}`,
+        `/api/v1/teacher/exams/${user?.id}`,
         accessToken
       );
       return res.data;
