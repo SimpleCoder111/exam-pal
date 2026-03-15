@@ -27,6 +27,15 @@ const gradeColors: Record<string, string> = {
   F: 'bg-red-500',
 };
 
+const gradePieColors: Record<string, string> = {
+  A: '#22c55e',
+  B: '#3b82f6',
+  C: '#eab308',
+  D: '#f97316',
+  E: '#a855f7',
+  F: '#ef4444',
+};
+
 const formatTimeAgo = (timestamp: string) => {
   const now = new Date();
   const date = new Date(timestamp);
