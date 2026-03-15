@@ -62,7 +62,7 @@ export const useCreateExam = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateExamPayload) => {
-      const response = await fetch(`http://localhost:7000/api/v1/exams`, {
+      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
