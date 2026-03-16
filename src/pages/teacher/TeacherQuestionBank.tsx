@@ -220,6 +220,18 @@ const TeacherQuestionBank = () => {
       };
     }
 
+    // CODING / WRITING
+    if (apiType === 'CODING' || apiType === 'WRITING') {
+      const existingOpt = editingQuestion?.optionLists[0];
+      return {
+        ...base,
+        optionLists: [
+          { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
+          ...(formData.options[0]?.text ? [{ optionText: formData.options[0].text, isCorrect: false }] : []),
+        ],
+      };
+    }
+
     // FILL_BLANK
     const existingOpt = editingQuestion?.optionLists[0];
     return {
