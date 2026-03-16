@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import FileDropzone from '@/components/ui/file-dropzone';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
   MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine, Lock, 
