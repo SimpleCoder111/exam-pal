@@ -572,19 +572,56 @@ const AdminQuestionBank = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="coding" className="mt-0">
-                  <div className="p-8 text-center bg-secondary/30 rounded-lg">
-                    <Code className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-medium text-foreground mb-2">Coding Questions Coming Soon</h3>
-                    <p className="text-sm text-muted-foreground">This feature is under development.</p>
+                <TabsContent value="coding" className="mt-0 space-y-3">
+                  <div className="space-y-2">
+                    <Label>Sample Code / Starter Code</Label>
+                    <p className="text-xs text-muted-foreground">Provide starter code or context for the coding question (optional)</p>
+                    <Textarea
+                      placeholder="// Write your starter code here..."
+                      rows={5}
+                      className="font-mono text-sm"
+                      value={formData.correctAnswer}
+                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Expected Output / Answer *</Label>
+                    <Textarea
+                      placeholder="Describe the expected output or solution..."
+                      rows={3}
+                      value={formData.options[0]?.text ?? ''}
+                      onChange={(e) => {
+                        const newOptions = [...formData.options];
+                        newOptions[0] = { ...newOptions[0], text: e.target.value, isCorrect: true };
+                        setFormData({ ...formData, options: newOptions });
+                      }}
+                    />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="writing" className="mt-0">
-                  <div className="p-8 text-center bg-secondary/30 rounded-lg">
-                    <PenLine className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-medium text-foreground mb-2">Writing Questions Coming Soon</h3>
-                    <p className="text-sm text-muted-foreground">This feature is under development.</p>
+                <TabsContent value="writing" className="mt-0 space-y-3">
+                  <div className="space-y-2">
+                    <Label>Writing Prompt Guidelines</Label>
+                    <p className="text-xs text-muted-foreground">Provide instructions or rubric for evaluating the written response</p>
+                    <Textarea
+                      placeholder="Enter grading rubric or guidelines..."
+                      rows={4}
+                      value={formData.correctAnswer}
+                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Word Limit (optional)</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 500"
+                      value={formData.options[0]?.text ?? ''}
+                      onChange={(e) => {
+                        const newOptions = [...formData.options];
+                        newOptions[0] = { ...newOptions[0], text: e.target.value, isCorrect: true };
+                        setFormData({ ...formData, options: newOptions });
+                      }}
+                    />
                   </div>
                 </TabsContent>
               </div>
