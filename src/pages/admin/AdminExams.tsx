@@ -530,6 +530,8 @@ const AdminExams = () => {
                             variant="ghost" 
                             size="icon" 
                             className="text-destructive"
+                            onClick={() => handleDeleteExam(exam.examId, exam.examTitle)}
+                            disabled={deleteExamMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
