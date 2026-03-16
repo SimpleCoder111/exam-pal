@@ -7,16 +7,19 @@ import {
   TrendingDown,
   Calendar,
   Bell,
-  Activity
+  Activity,
+  FileText
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { adminNavItems } from '@/config/adminNavItems';
 import { useAdminDashboardStats, useAdminDashboardActivities, useAdminDashboardGrades } from '@/hooks/useAdminDashboard';
+import { useAdminQuestionSummary } from '@/hooks/useAdminQuestions';
 
 const gradeColors: Record<string, string> = {
   A: 'bg-green-500',
