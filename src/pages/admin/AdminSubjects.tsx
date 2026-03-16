@@ -402,7 +402,6 @@ const AdminSubjects = () => {
                                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
                                     </TableCell>
                                     <TableCell className="font-medium">{chapter.name}</TableCell>
-                                    <TableCell className="text-center">{chapter.questionCount}</TableCell>
                                     <TableCell className="text-center">
                                       <Badge variant={chapter.active ? 'default' : 'secondary'}>
                                         {chapter.active ? 'Active' : 'Inactive'}
