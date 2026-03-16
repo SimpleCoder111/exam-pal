@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
+import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, useUpdateAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
 
@@ -45,6 +45,7 @@ const AdminExams = () => {
   const { data: classes, isLoading: classesLoading } = useAdminClasses();
   const createExamMutation = useCreateAdminExam();
   const deleteExamMutation = useDeleteAdminExam();
+  const updateExamMutation = useUpdateAdminExam();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createMode, setCreateMode] = useState<'manual' | 'auto' | null>(null);
@@ -52,6 +53,15 @@ const AdminExams = () => {
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([]);
   const [showMonitor, setShowMonitor] = useState(false);
   const [monitorExam, setMonitorExam] = useState<{ id: string; title: string } | null>(null);
+
+  // View & Edit state
+  const [viewExam, setViewExam] = useState<AdminExamResponse | null>(null);
+  const [editingExam, setEditingExam] = useState<AdminExamResponse | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editFormData, setEditFormData] = useState<ExamFormData>({ title: '', subjectId: null, classId: null, duration: 60, scheduledDate: '', scheduledTime: '' });
+  const [editAutoConfig, setEditAutoConfig] = useState<AutoBuilderConfig>({ easyCount: 5, mediumCount: 3, hardCount: 2 });
+  const [editQuestionIds, setEditQuestionIds] = useState<number[]>([]);
+  const [editIsDraft, setEditIsDraft] = useState(true);
 
   const [formData, setFormData] = useState<ExamFormData>({
     title: '',
@@ -110,6 +120,63 @@ const AdminExams = () => {
       toast({ title: 'Exam Deleted', description: `"${examTitle}" has been deleted` });
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to delete exam', variant: 'destructive' });
+    }
+  };
+
+  const handleOpenEdit = (exam: AdminExamResponse) => {
+    setEditingExam(exam);
+    const dateObj = exam.examDate ? new Date(exam.examDate) : null;
+    setEditFormData({
+      title: exam.examTitle,
+      subjectId: exam.subjectId,
+      classId: exam.classId,
+      duration: exam.duration,
+      scheduledDate: dateObj ? dateObj.toISOString().split('T')[0] : '',
+      scheduledTime: dateObj ? dateObj.toTimeString().substring(0, 5) : '',
+    });
+    setEditAutoConfig({
+      easyCount: exam.easyQuestions || 0,
+      mediumCount: exam.mediumQuestions || 0,
+      hardCount: exam.hardQuestions || 0,
+    });
+    setEditQuestionIds(exam.questionIds || []);
+    setEditIsDraft(exam.examStatus?.toLowerCase() === 'draft');
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateExam = async () => {
+    if (!editingExam || !editFormData.subjectId || !editFormData.classId || !editFormData.title) return;
+
+    const examDate = editFormData.scheduledDate
+      ? `${editFormData.scheduledDate} ${editFormData.scheduledTime ? `${editFormData.scheduledTime}:00` : '00:00:00'}`
+      : new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    const isAuto = editingExam.examPaperType === 'AUTO';
+
+    const payload: CreateAdminExamPayload = {
+      classId: editFormData.classId,
+      subjectId: editFormData.subjectId,
+      examDate,
+      examTitle: editFormData.title,
+      duration: editFormData.duration,
+      examPaperType: editingExam.examPaperType,
+      isDraft: editIsDraft,
+      ...(isAuto ? {
+        easyQuestions: editAutoConfig.easyCount,
+        mediumQuestions: editAutoConfig.mediumCount,
+        hardQuestions: editAutoConfig.hardCount,
+      } : {
+        questionIds: editQuestionIds,
+      }),
+    };
+
+    try {
+      await updateExamMutation.mutateAsync({ examId: editingExam.examId, payload });
+      toast({ title: 'Exam Updated', description: `"${editFormData.title}" has been updated successfully` });
+      setShowEditDialog(false);
+      setEditingExam(null);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update exam', variant: 'destructive' });
     }
   };
 
@@ -539,10 +606,10 @@ const AdminExams = () => {
                               <Monitor className="h-4 w-4 text-primary" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => setViewExam(exam)} title="View Details">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(exam)} title="Edit Exam">
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -643,6 +710,164 @@ const AdminExams = () => {
             }}
           />
         )}
+
+        {/* View Exam Details Dialog */}
+        <Dialog open={!!viewExam} onOpenChange={(open) => { if (!open) setViewExam(null); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Exam Details</DialogTitle>
+              <DialogDescription>View exam information</DialogDescription>
+            </DialogHeader>
+            {viewExam && (
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Title</p>
+                  <p className="font-medium">{viewExam.examTitle}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Subject</p>
+                  <p className="font-medium">{getSubjectName(viewExam.subjectId)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Class</p>
+                  <p className="font-medium">{getClassName(viewExam.classId)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="font-medium">{viewExam.duration} min</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Exam Date</p>
+                  <p className="font-medium">{viewExam.examDate ? new Date(viewExam.examDate).toLocaleString() : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Paper Type</p>
+                  <p className="font-medium">{viewExam.examPaperType}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Exam Status</p>
+                  <div>{getStatusBadge(viewExam.examStatus)}</div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Paper Status</p>
+                  <div>{getStatusBadge(viewExam.examPaperStatus)}</div>
+                </div>
+                {viewExam.examPaperType === 'AUTO' && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Question Distribution</p>
+                    <p className="font-medium">{viewExam.easyQuestions} easy, {viewExam.mediumQuestions} medium, {viewExam.hardQuestions} hard</p>
+                  </div>
+                )}
+                {viewExam.examPaperType === 'MANUAL' && viewExam.questionIds?.length > 0 && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Question IDs</p>
+                    <p className="font-medium">{viewExam.questionIds.join(', ')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setViewExam(null)}>Close</Button>
+              <Button onClick={() => { if (viewExam) { handleOpenEdit(viewExam); setViewExam(null); } }}>
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Exam Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={(open) => { if (!open) { setShowEditDialog(false); setEditingExam(null); } }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Exam</DialogTitle>
+              <DialogDescription>Update exam details{editingExam ? ` — ${editingExam.examPaperType} mode` : ''}</DialogDescription>
+            </DialogHeader>
+            {editingExam && (
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Exam Title *</Label>
+                    <Input value={editFormData.title} onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Subject *</Label>
+                    <Select value={editFormData.subjectId?.toString() || ''} onValueChange={(v) => setEditFormData({ ...editFormData, subjectId: parseInt(v) })}>
+                      <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                      <SelectContent>
+                        {subjects?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Class *</Label>
+                    <Select value={editFormData.classId?.toString() || ''} onValueChange={(v) => setEditFormData({ ...editFormData, classId: parseInt(v) })}>
+                      <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                      <SelectContent>
+                        {classes?.map(cls => <SelectItem key={cls.classId} value={cls.classId.toString()}>{cls.className}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration (min) *</Label>
+                    <Input type="number" value={editFormData.duration} onChange={(e) => setEditFormData({ ...editFormData, duration: parseInt(e.target.value) || 60 })} min={10} max={300} />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input type="date" value={editFormData.scheduledDate} onChange={(e) => setEditFormData({ ...editFormData, scheduledDate: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time</Label>
+                    <Input type="time" value={editFormData.scheduledTime} onChange={(e) => setEditFormData({ ...editFormData, scheduledTime: e.target.value })} />
+                  </div>
+                </div>
+
+                {editingExam.examPaperType === 'AUTO' && (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Easy Questions</Label>
+                      <Input type="number" value={editAutoConfig.easyCount} onChange={(e) => setEditAutoConfig({ ...editAutoConfig, easyCount: parseInt(e.target.value) || 0 })} min={0} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Medium Questions</Label>
+                      <Input type="number" value={editAutoConfig.mediumCount} onChange={(e) => setEditAutoConfig({ ...editAutoConfig, mediumCount: parseInt(e.target.value) || 0 })} min={0} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hard Questions</Label>
+                      <Input type="number" value={editAutoConfig.hardCount} onChange={(e) => setEditAutoConfig({ ...editAutoConfig, hardCount: parseInt(e.target.value) || 0 })} min={0} />
+                    </div>
+                  </div>
+                )}
+
+                {editingExam.examPaperType === 'MANUAL' && (
+                  <div className="space-y-2">
+                    <Label>Question IDs (comma-separated)</Label>
+                    <Input
+                      value={editQuestionIds.join(', ')}
+                      onChange={(e) => setEditQuestionIds(e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)))}
+                      placeholder="e.g. 452, 453, 454"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <input id="editIsDraft" type="checkbox" checked={editIsDraft} onChange={(e) => setEditIsDraft(e.target.checked)} className="accent-primary" />
+                  <Label htmlFor="editIsDraft" className="cursor-pointer">Save as draft</Label>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setShowEditDialog(false); setEditingExam(null); }}>Cancel</Button>
+              <Button onClick={handleUpdateExam} disabled={updateExamMutation.isPending}>
+                <Check className="mr-2 h-4 w-4" />
+                {updateExamMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
