@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminExams, AdminExamResponse } from '@/hooks/useAdminExams';
+import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
 
