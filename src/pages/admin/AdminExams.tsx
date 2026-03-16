@@ -393,6 +393,22 @@ const AdminExams = () => {
                 <p className="font-medium">{formData.scheduledDate} {formData.scheduledTime}</p>
               </div>
             )}
+            <div>
+              <p className="text-sm text-muted-foreground">Status</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Label htmlFor="isDraft" className="font-medium cursor-pointer">
+                  {isDraft ? 'Draft' : 'Published'}
+                </Label>
+                <input
+                  id="isDraft"
+                  type="checkbox"
+                  checked={isDraft}
+                  onChange={(e) => setIsDraft(e.target.checked)}
+                  className="accent-primary"
+                />
+                <span className="text-xs text-muted-foreground">Save as draft</span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
