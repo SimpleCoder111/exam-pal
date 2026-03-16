@@ -82,7 +82,7 @@ const emptyOptions: FormOption[] = [
 const TeacherQuestionBank = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   // Filters
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
