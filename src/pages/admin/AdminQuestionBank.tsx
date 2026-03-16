@@ -3,7 +3,7 @@ import FileDropzone from '@/components/ui/file-dropzone';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
   MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine, Lock, 
-  ChevronDown, Upload, FileSpreadsheet, AlertCircle, Loader2
+  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
