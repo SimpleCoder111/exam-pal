@@ -68,11 +68,47 @@ const AdminExams = () => {
     hardCount: 2,
   });
 
-  const handleCreateExam = () => {
+  const handleCreateExam = async () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
-    toast({ title: 'Exam Created', description: `"${formData.title}" has been created successfully` });
-    resetForm();
-    setShowCreateDialog(false);
+
+    const examDate = formData.scheduledDate
+      ? `${formData.scheduledDate}${formData.scheduledTime ? `T${formData.scheduledTime}:00` : 'T00:00:00'}`
+      : new Date().toISOString();
+
+    const payload: CreateAdminExamPayload = {
+      classId: formData.classId,
+      subjectId: formData.subjectId,
+      examDate,
+      examTitle: formData.title,
+      duration: formData.duration,
+      examPaperType: createMode === 'auto' ? 'AUTO' : 'MANUAL',
+      isDraft: false,
+      ...(createMode === 'auto' ? {
+        easyQuestions: autoConfig.easyCount,
+        mediumQuestions: autoConfig.mediumCount,
+        hardQuestions: autoConfig.hardCount,
+      } : {
+        questionIds: selectedQuestionIds,
+      }),
+    };
+
+    try {
+      await createExamMutation.mutateAsync(payload);
+      toast({ title: 'Exam Created', description: `"${formData.title}" has been created successfully` });
+      resetForm();
+      setShowCreateDialog(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to create exam', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteExam = async (examId: number, examTitle: string) => {
+    try {
+      await deleteExamMutation.mutateAsync(examId);
+      toast({ title: 'Exam Deleted', description: `"${examTitle}" has been deleted` });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete exam', variant: 'destructive' });
+    }
   };
 
   const resetForm = () => {
