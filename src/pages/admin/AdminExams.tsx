@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Plus, BookOpen, Clock, FileText, Wand2, ChevronRight, ChevronLeft, Check,
-  Calendar, Shuffle, Eye, Edit, Trash2, Play, Monitor
+  Calendar, Shuffle, Eye, Edit, Trash2, Play, Monitor, Search
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +21,6 @@ import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, useUpdateAdminEx
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
 import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
-import { Search } from 'lucide-react';
 
 interface ExamFormData {
   title: string;
