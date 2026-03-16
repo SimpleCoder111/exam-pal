@@ -13,13 +13,14 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Plus, BookOpen, Clock, FileText, Wand2, ChevronRight, ChevronLeft, Check,
-  Calendar, Shuffle, Eye, Edit, Trash2, Play, Monitor
+  Calendar, Shuffle, Eye, Edit, Trash2, Play, Monitor, Search
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, useUpdateAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
+import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
 
 interface ExamFormData {
   title: string;
@@ -79,6 +80,25 @@ const AdminExams = () => {
   });
 
   const [isDraft, setIsDraft] = useState(true);
+  const [questionSearch, setQuestionSearch] = useState('');
+
+  // Fetch questions for manual mode when subject is selected
+  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
+  const allQuestions = questionsData?.questionData || [];
+  const filteredQuestions = allQuestions.filter(q =>
+    !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+  );
+
+  const handleQuestionToggle = (questionId: number) => {
+    setSelectedQuestionIds(prev =>
+      prev.includes(questionId)
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    );
+  };
 
   const handleCreateExam = async () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
@@ -184,6 +204,7 @@ const AdminExams = () => {
     setCreateMode(null);
     setCurrentStep(1);
     setSelectedQuestionIds([]);
+    setQuestionSearch('');
     setFormData({
       title: '',
       subjectId: null,
@@ -406,9 +427,67 @@ const AdminExams = () => {
           Selected: {selectedQuestionIds.length} questions
         </span>
       </div>
-      <p className="text-sm text-muted-foreground text-center py-8">
-        {formData.subjectId ? 'Question selection from question bank will be available soon.' : 'Please select a subject first.'}
-      </p>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search questions by content, type, difficulty, or chapter..."
+          value={questionSearch}
+          onChange={(e) => setQuestionSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      {questionsLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : !allQuestions.length ? (
+        <p className="text-sm text-muted-foreground text-center py-8">
+          {formData.subjectId ? 'No questions found for this subject.' : 'Please select a subject first.'}
+        </p>
+      ) : (
+        <div className="max-h-[350px] overflow-y-auto border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Question</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Difficulty</TableHead>
+                <TableHead>Chapter</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredQuestions.map((q) => (
+                <TableRow
+                  key={q.questionId}
+                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
+                  onClick={() => handleQuestionToggle(q.questionId)}
+                >
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={selectedQuestionIds.includes(q.questionId)}
+                      onChange={() => handleQuestionToggle(q.questionId)}
+                      className="rounded"
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium max-w-[250px] truncate">{q.questionContent || '—'}</TableCell>
+                  <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{q.chapter || '—'}</TableCell>
+                </TableRow>
+              ))}
+              {filteredQuestions.length === 0 && questionSearch && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-6">
+                    No questions match "{questionSearch}"
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 

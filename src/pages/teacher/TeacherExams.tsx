@@ -34,6 +34,7 @@ import { useTeacherExams, useCreateExam, useDeleteExam, type CreateExamPayload }
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useTeacherClasses } from '@/hooks/useTeacherClassrooms';
 import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
+import { Search } from 'lucide-react';
 
 interface ExamFormData {
   title: string;
@@ -82,9 +83,17 @@ const TeacherExams = () => {
     hardCount: 2,
   });
 
+  const [questionSearch, setQuestionSearch] = useState('');
+
   // Fetch questions for manual mode when subject is selected
-  const { data: questionsData } = useTeacherQuestions(formData.subjectId ?? undefined);
-  const questions = questionsData?.questionData || [];
+  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
+  const allQuestions = questionsData?.questionData || [];
+  const filteredQuestions = allQuestions.filter(q =>
+    !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+  );
 
   const handleCreateExam = () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
@@ -138,6 +147,7 @@ const TeacherExams = () => {
     setCreateMode(null);
     setCurrentStep(1);
     setSelectedQuestionIds([]);
+    setQuestionSearch('');
     setFormData({
       title: '',
       subjectId: null,
@@ -367,7 +377,20 @@ const TeacherExams = () => {
           Selected: {selectedQuestionIds.length} questions
         </span>
       </div>
-      {!questions?.length ? (
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search questions by content, type, difficulty, or chapter..."
+          value={questionSearch}
+          onChange={(e) => setQuestionSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      {questionsLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : !allQuestions.length ? (
         <p className="text-sm text-muted-foreground text-center py-8">
           {formData.subjectId ? 'No questions found for this subject.' : 'Please select a subject first.'}
         </p>
@@ -380,13 +403,14 @@ const TeacherExams = () => {
                 <TableHead>Question</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Difficulty</TableHead>
+                <TableHead>Chapter</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {questions.map((q) => (
-                <TableRow 
-                  key={q.questionId} 
-                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer'}
+              {filteredQuestions.map((q) => (
+                <TableRow
+                  key={q.questionId}
+                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
                   onClick={() => handleQuestionToggle(q.questionId)}
                 >
                   <TableCell>
@@ -397,11 +421,19 @@ const TeacherExams = () => {
                       className="rounded"
                     />
                   </TableCell>
-                  <TableCell className="font-medium max-w-[300px] truncate">{q.questionContent || '—'}</TableCell>
+                  <TableCell className="font-medium max-w-[250px] truncate">{q.questionContent || '—'}</TableCell>
                   <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
                   <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{q.chapter || '—'}</TableCell>
                 </TableRow>
               ))}
+              {filteredQuestions.length === 0 && questionSearch && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-6">
+                    No questions match "{questionSearch}"
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
