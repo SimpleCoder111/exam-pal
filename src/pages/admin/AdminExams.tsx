@@ -606,10 +606,10 @@ const AdminExams = () => {
                               <Monitor className="h-4 w-4 text-primary" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => setViewExam(exam)} title="View Details">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(exam)} title="Edit Exam">
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
