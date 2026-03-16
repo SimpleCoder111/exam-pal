@@ -20,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, useUpdateAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
+import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
+import { Search } from 'lucide-react';
 
 interface ExamFormData {
   title: string;
