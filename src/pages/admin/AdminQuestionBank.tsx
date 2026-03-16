@@ -29,10 +29,10 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { adminNavItems } from '@/config/adminNavItems';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import {
-  useTeacherQuestions, useCreateQuestion, useUpdateQuestion,
-  useDeleteQuestion, useImportQuestions,
+  useAdminQuestions, useCreateAdminQuestion, useUpdateAdminQuestion,
+  useDeleteAdminQuestion, useImportAdminQuestions,
   type ApiQuestion, type CreateQuestionPayload, type UpdateQuestionPayload,
-} from '@/hooks/useTeacherQuestions';
+} from '@/hooks/useAdminQuestions';
 
 // --- Type mappings ---
 
