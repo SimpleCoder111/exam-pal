@@ -601,9 +601,9 @@ const AdminExams = () => {
                     </Button>
                   )}
                   {currentStep === 3 && (
-                    <Button onClick={handleCreateExam}>
+                    <Button onClick={handleCreateExam} disabled={createExamMutation.isPending}>
                       <Check className="mr-2 h-4 w-4" />
-                      Create Exam
+                      {createExamMutation.isPending ? 'Creating...' : 'Create Exam'}
                     </Button>
                   )}
                 </div>
