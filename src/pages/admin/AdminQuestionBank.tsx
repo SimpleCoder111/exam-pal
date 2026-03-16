@@ -266,12 +266,6 @@ const AdminQuestionBank = () => {
 
   // --- Import handlers ---
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) setImportFile(file);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   const handleImport = async () => {
     if (!importFile || !selectedSubjectId) return;
     try {
