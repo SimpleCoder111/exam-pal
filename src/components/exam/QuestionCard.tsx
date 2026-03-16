@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import CodeEditor from "@/components/ui/code-editor";
 import type { Question } from "@/pages/Exam";
 
 interface QuestionCardProps {
