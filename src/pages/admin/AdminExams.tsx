@@ -710,6 +710,164 @@ const AdminExams = () => {
             }}
           />
         )}
+
+        {/* View Exam Details Dialog */}
+        <Dialog open={!!viewExam} onOpenChange={(open) => { if (!open) setViewExam(null); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Exam Details</DialogTitle>
+              <DialogDescription>View exam information</DialogDescription>
+            </DialogHeader>
+            {viewExam && (
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Title</p>
+                  <p className="font-medium">{viewExam.examTitle}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Subject</p>
+                  <p className="font-medium">{getSubjectName(viewExam.subjectId)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Class</p>
+                  <p className="font-medium">{getClassName(viewExam.classId)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="font-medium">{viewExam.duration} min</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Exam Date</p>
+                  <p className="font-medium">{viewExam.examDate ? new Date(viewExam.examDate).toLocaleString() : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Paper Type</p>
+                  <p className="font-medium">{viewExam.examPaperType}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Exam Status</p>
+                  <div>{getStatusBadge(viewExam.examStatus)}</div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Paper Status</p>
+                  <div>{getStatusBadge(viewExam.examPaperStatus)}</div>
+                </div>
+                {viewExam.examPaperType === 'AUTO' && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Question Distribution</p>
+                    <p className="font-medium">{viewExam.easyQuestions} easy, {viewExam.mediumQuestions} medium, {viewExam.hardQuestions} hard</p>
+                  </div>
+                )}
+                {viewExam.examPaperType === 'MANUAL' && viewExam.questionIds?.length > 0 && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Question IDs</p>
+                    <p className="font-medium">{viewExam.questionIds.join(', ')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setViewExam(null)}>Close</Button>
+              <Button onClick={() => { if (viewExam) { handleOpenEdit(viewExam); setViewExam(null); } }}>
+                <Edit className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Exam Dialog */}
+        <Dialog open={showEditDialog} onOpenChange={(open) => { if (!open) { setShowEditDialog(false); setEditingExam(null); } }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Exam</DialogTitle>
+              <DialogDescription>Update exam details{editingExam ? ` — ${editingExam.examPaperType} mode` : ''}</DialogDescription>
+            </DialogHeader>
+            {editingExam && (
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Exam Title *</Label>
+                    <Input value={editFormData.title} onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Subject *</Label>
+                    <Select value={editFormData.subjectId?.toString() || ''} onValueChange={(v) => setEditFormData({ ...editFormData, subjectId: parseInt(v) })}>
+                      <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
+                      <SelectContent>
+                        {subjects?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Class *</Label>
+                    <Select value={editFormData.classId?.toString() || ''} onValueChange={(v) => setEditFormData({ ...editFormData, classId: parseInt(v) })}>
+                      <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                      <SelectContent>
+                        {classes?.map(cls => <SelectItem key={cls.classId} value={cls.classId.toString()}>{cls.className}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Duration (min) *</Label>
+                    <Input type="number" value={editFormData.duration} onChange={(e) => setEditFormData({ ...editFormData, duration: parseInt(e.target.value) || 60 })} min={10} max={300} />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input type="date" value={editFormData.scheduledDate} onChange={(e) => setEditFormData({ ...editFormData, scheduledDate: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time</Label>
+                    <Input type="time" value={editFormData.scheduledTime} onChange={(e) => setEditFormData({ ...editFormData, scheduledTime: e.target.value })} />
+                  </div>
+                </div>
+
+                {editingExam.examPaperType === 'AUTO' && (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label>Easy Questions</Label>
+                      <Input type="number" value={editAutoConfig.easyCount} onChange={(e) => setEditAutoConfig({ ...editAutoConfig, easyCount: parseInt(e.target.value) || 0 })} min={0} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Medium Questions</Label>
+                      <Input type="number" value={editAutoConfig.mediumCount} onChange={(e) => setEditAutoConfig({ ...editAutoConfig, mediumCount: parseInt(e.target.value) || 0 })} min={0} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Hard Questions</Label>
+                      <Input type="number" value={editAutoConfig.hardCount} onChange={(e) => setEditAutoConfig({ ...editAutoConfig, hardCount: parseInt(e.target.value) || 0 })} min={0} />
+                    </div>
+                  </div>
+                )}
+
+                {editingExam.examPaperType === 'MANUAL' && (
+                  <div className="space-y-2">
+                    <Label>Question IDs (comma-separated)</Label>
+                    <Input
+                      value={editQuestionIds.join(', ')}
+                      onChange={(e) => setEditQuestionIds(e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)))}
+                      placeholder="e.g. 452, 453, 454"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <input id="editIsDraft" type="checkbox" checked={editIsDraft} onChange={(e) => setEditIsDraft(e.target.checked)} className="accent-primary" />
+                  <Label htmlFor="editIsDraft" className="cursor-pointer">Save as draft</Label>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setShowEditDialog(false); setEditingExam(null); }}>Cancel</Button>
+              <Button onClick={handleUpdateExam} disabled={updateExamMutation.isPending}>
+                <Check className="mr-2 h-4 w-4" />
+                {updateExamMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
