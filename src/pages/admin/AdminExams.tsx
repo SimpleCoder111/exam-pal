@@ -43,6 +43,8 @@ const AdminExams = () => {
   const { data: exams, isLoading: examsLoading } = useAdminExams();
   const { data: subjects, isLoading: subjectsLoading } = useAdminSubjects();
   const { data: classes, isLoading: classesLoading } = useAdminClasses();
+  const createExamMutation = useCreateAdminExam();
+  const deleteExamMutation = useDeleteAdminExam();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createMode, setCreateMode] = useState<'manual' | 'auto' | null>(null);
