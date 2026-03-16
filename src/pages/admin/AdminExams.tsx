@@ -68,12 +68,14 @@ const AdminExams = () => {
     hardCount: 2,
   });
 
+  const [isDraft, setIsDraft] = useState(true);
+
   const handleCreateExam = async () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
 
     const examDate = formData.scheduledDate
-      ? `${formData.scheduledDate}${formData.scheduledTime ? `T${formData.scheduledTime}:00` : 'T00:00:00'}`
-      : new Date().toISOString();
+      ? `${formData.scheduledDate} ${formData.scheduledTime ? `${formData.scheduledTime}:00` : '00:00:00'}`
+      : new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const payload: CreateAdminExamPayload = {
       classId: formData.classId,
@@ -82,7 +84,7 @@ const AdminExams = () => {
       examTitle: formData.title,
       duration: formData.duration,
       examPaperType: createMode === 'auto' ? 'AUTO' : 'MANUAL',
-      isDraft: false,
+      isDraft,
       ...(createMode === 'auto' ? {
         easyQuestions: autoConfig.easyCount,
         mediumQuestions: autoConfig.mediumCount,
