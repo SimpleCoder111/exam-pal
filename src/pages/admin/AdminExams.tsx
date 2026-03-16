@@ -81,6 +81,25 @@ const AdminExams = () => {
   });
 
   const [isDraft, setIsDraft] = useState(true);
+  const [questionSearch, setQuestionSearch] = useState('');
+
+  // Fetch questions for manual mode when subject is selected
+  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
+  const allQuestions = questionsData?.questionData || [];
+  const filteredQuestions = allQuestions.filter(q =>
+    !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+  );
+
+  const handleQuestionToggle = (questionId: number) => {
+    setSelectedQuestionIds(prev =>
+      prev.includes(questionId)
+        ? prev.filter(id => id !== questionId)
+        : [...prev, questionId]
+    );
+  };
 
   const handleCreateExam = async () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
