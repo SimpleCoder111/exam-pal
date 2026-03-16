@@ -16,7 +16,7 @@ export interface ApiQuestion {
   questionId: number;
   chapterId: number;
   chapter: string;
-  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_BLANK';
+  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_BLANK' | 'CODING' | 'WRITING';
   questionContent: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   createdBy: string;
