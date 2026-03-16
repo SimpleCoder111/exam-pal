@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import CodeEditor from '@/components/ui/code-editor';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -616,12 +617,11 @@ const TeacherQuestionBank = () => {
                   <div className="space-y-2">
                     <Label>Sample Code / Starter Code</Label>
                     <p className="text-xs text-muted-foreground">Provide starter code or context for the coding question (optional)</p>
-                    <Textarea
-                      placeholder="// Write your starter code here..."
-                      rows={5}
-                      className="font-mono text-sm"
+                    <CodeEditor
                       value={formData.correctAnswer}
-                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                      onChange={(val) => setFormData({ ...formData, correctAnswer: val })}
+                      placeholder="// Write your starter code here..."
+                      minHeight="150px"
                     />
                   </div>
                   <div className="space-y-2">

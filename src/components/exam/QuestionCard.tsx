@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import CodeEditor from "@/components/ui/code-editor";
 import type { Question } from "@/pages/Exam";
 
 interface QuestionCardProps {
@@ -92,12 +93,11 @@ const QuestionCard = ({
           <label className="text-sm font-medium text-muted-foreground">
             Write your code below
           </label>
-          <Textarea
+          <CodeEditor
             value={textAnswer ?? ""}
-            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+            onChange={(val) => onTextAnswerChange(question.id, val)}
             placeholder="// Write your code here..."
-            rows={8}
-            className="font-mono text-sm rounded-xl border-2 border-border focus:border-primary"
+            minHeight="200px"
           />
         </div>
       ) : question.questionType === "WRITING" ? (
