@@ -42,12 +42,16 @@ const apiTypeToLocal = (t: string): QuestionType => {
   if (t === 'MULTIPLE_CHOICE') return 'multiple_choice';
   if (t === 'TRUE_FALSE') return 'true_false';
   if (t === 'FILL_BLANK') return 'fill_blank';
+  if (t === 'CODING') return 'coding';
+  if (t === 'WRITING') return 'writing';
   return 'multiple_choice';
 };
 
 const localTypeToApi = (t: QuestionType) => {
   if (t === 'multiple_choice') return 'MULTIPLE_CHOICE' as const;
   if (t === 'true_false') return 'TRUE_FALSE' as const;
+  if (t === 'coding') return 'CODING' as const;
+  if (t === 'writing') return 'WRITING' as const;
   return 'FILL_BLANK' as const;
 };
 
