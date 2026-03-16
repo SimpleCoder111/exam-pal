@@ -87,6 +87,37 @@ const QuestionCard = ({
             </p>
           )}
         </div>
+      ) : question.questionType === "CODING" ? (
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-muted-foreground">
+            Write your code below
+          </label>
+          <Textarea
+            value={textAnswer ?? ""}
+            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+            placeholder="// Write your code here..."
+            rows={8}
+            className="font-mono text-sm rounded-xl border-2 border-border focus:border-primary"
+          />
+        </div>
+      ) : question.questionType === "WRITING" ? (
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-muted-foreground">
+            Write your response below
+          </label>
+          <Textarea
+            value={textAnswer ?? ""}
+            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+            placeholder="Write your answer here..."
+            rows={6}
+            className="text-base rounded-xl border-2 border-border focus:border-primary"
+          />
+          {textAnswer && (
+            <p className="text-xs text-muted-foreground">
+              Word count: <span className="font-medium text-foreground">{textAnswer.trim().split(/\s+/).filter(Boolean).length}</span>
+            </p>
+          )}
+        </div>
       ) : question.questionType === "TRUE_FALSE" ? (
         <div className="grid grid-cols-2 gap-4">
           {["True", "False"].map((label, index) => {
