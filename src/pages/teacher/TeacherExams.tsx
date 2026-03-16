@@ -34,6 +34,7 @@ import { useTeacherExams, useCreateExam, useDeleteExam, type CreateExamPayload }
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useTeacherClasses } from '@/hooks/useTeacherClassrooms';
 import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
+import { Search } from 'lucide-react';
 
 interface ExamFormData {
   title: string;
