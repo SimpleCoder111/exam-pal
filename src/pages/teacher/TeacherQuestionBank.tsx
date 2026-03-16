@@ -42,12 +42,16 @@ const apiTypeToLocal = (t: string): QuestionType => {
   if (t === 'MULTIPLE_CHOICE') return 'multiple_choice';
   if (t === 'TRUE_FALSE') return 'true_false';
   if (t === 'FILL_BLANK') return 'fill_blank';
+  if (t === 'CODING') return 'coding';
+  if (t === 'WRITING') return 'writing';
   return 'multiple_choice';
 };
 
 const localTypeToApi = (t: QuestionType) => {
   if (t === 'multiple_choice') return 'MULTIPLE_CHOICE' as const;
   if (t === 'true_false') return 'TRUE_FALSE' as const;
+  if (t === 'coding') return 'CODING' as const;
+  if (t === 'writing') return 'WRITING' as const;
   return 'FILL_BLANK' as const;
 };
 
@@ -57,8 +61,8 @@ const questionTypeConfig: Record<QuestionType, { label: string; icon: React.Reac
   multiple_choice: { label: 'Multiple Choice', icon: <CheckCircle2 className="w-4 h-4" />, color: 'bg-blue-500/10 text-blue-600 border-blue-500/20', available: true },
   fill_blank: { label: 'Fill in the Blank', icon: <Circle className="w-4 h-4" />, color: 'bg-green-500/10 text-green-600 border-green-500/20', available: true },
   true_false: { label: 'True/False', icon: <ToggleLeft className="w-4 h-4" />, color: 'bg-purple-500/10 text-purple-600 border-purple-500/20', available: true },
-  coding: { label: 'Coding', icon: <Code className="w-4 h-4" />, color: 'bg-orange-500/10 text-orange-600 border-orange-500/20', available: false },
-  writing: { label: 'Writing', icon: <PenLine className="w-4 h-4" />, color: 'bg-pink-500/10 text-pink-600 border-pink-500/20', available: false },
+  coding: { label: 'Coding', icon: <Code className="w-4 h-4" />, color: 'bg-orange-500/10 text-orange-600 border-orange-500/20', available: true },
+  writing: { label: 'Writing', icon: <PenLine className="w-4 h-4" />, color: 'bg-pink-500/10 text-pink-600 border-pink-500/20', available: true },
 };
 
 const difficultyConfig: Record<string, { label: string; color: string }> = {
@@ -212,6 +216,18 @@ const TeacherQuestionBank = () => {
         optionLists: [
           { ...(trueOpt?.optionId ? { optionId: trueOpt.optionId } : {}), optionText: 'True', isCorrect: formData.correctAnswer === 'true' },
           { ...(falseOpt?.optionId ? { optionId: falseOpt.optionId } : {}), optionText: 'False', isCorrect: formData.correctAnswer === 'false' },
+        ],
+      };
+    }
+
+    // CODING / WRITING
+    if (apiType === 'CODING' || apiType === 'WRITING') {
+      const existingOpt = editingQuestion?.optionLists[0];
+      return {
+        ...base,
+        optionLists: [
+          { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
+          ...(formData.options[0]?.text ? [{ optionText: formData.options[0].text, isCorrect: false }] : []),
         ],
       };
     }
@@ -596,19 +612,56 @@ const TeacherQuestionBank = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="coding" className="mt-0">
-                  <div className="p-8 text-center bg-secondary/30 rounded-lg">
-                    <Code className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-medium text-foreground mb-2">Coding Questions Coming Soon</h3>
-                    <p className="text-sm text-muted-foreground">This feature is under development.</p>
+                <TabsContent value="coding" className="mt-0 space-y-3">
+                  <div className="space-y-2">
+                    <Label>Sample Code / Starter Code</Label>
+                    <p className="text-xs text-muted-foreground">Provide starter code or context for the coding question (optional)</p>
+                    <Textarea
+                      placeholder="// Write your starter code here..."
+                      rows={5}
+                      className="font-mono text-sm"
+                      value={formData.correctAnswer}
+                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Expected Output / Answer *</Label>
+                    <Textarea
+                      placeholder="Describe the expected output or solution..."
+                      rows={3}
+                      value={formData.options[0]?.text ?? ''}
+                      onChange={(e) => {
+                        const newOptions = [...formData.options];
+                        newOptions[0] = { ...newOptions[0], text: e.target.value, isCorrect: true };
+                        setFormData({ ...formData, options: newOptions });
+                      }}
+                    />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="writing" className="mt-0">
-                  <div className="p-8 text-center bg-secondary/30 rounded-lg">
-                    <PenLine className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-medium text-foreground mb-2">Writing Questions Coming Soon</h3>
-                    <p className="text-sm text-muted-foreground">This feature is under development.</p>
+                <TabsContent value="writing" className="mt-0 space-y-3">
+                  <div className="space-y-2">
+                    <Label>Writing Prompt Guidelines</Label>
+                    <p className="text-xs text-muted-foreground">Provide instructions or rubric for evaluating the written response</p>
+                    <Textarea
+                      placeholder="Enter grading rubric or guidelines..."
+                      rows={4}
+                      value={formData.correctAnswer}
+                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Word Limit (optional)</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 500"
+                      value={formData.options[0]?.text ?? ''}
+                      onChange={(e) => {
+                        const newOptions = [...formData.options];
+                        newOptions[0] = { ...newOptions[0], text: e.target.value, isCorrect: true };
+                        setFormData({ ...formData, options: newOptions });
+                      }}
+                    />
                   </div>
                 </TabsContent>
               </div>
