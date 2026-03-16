@@ -126,6 +126,7 @@ const AdminExams = () => {
       scheduledTime: '',
     });
     setAutoConfig({ easyCount: 5, mediumCount: 3, hardCount: 2 });
+    setIsDraft(true);
   };
 
   const getStatusBadge = (status: string | null) => {
