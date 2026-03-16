@@ -250,10 +250,6 @@ const AdminSubjects = () => {
   const totalSubjects = (subjects || []).length;
   const activeSubjects = (subjects || []).filter((s) => s.active).length;
   const totalChapters = (subjects || []).reduce((acc, s) => acc + s.chapterResponseList.length, 0);
-  const totalQuestions = (subjects || []).reduce(
-    (acc, s) => acc + s.chapterResponseList.reduce((cAcc, c) => cAcc + c.questionCount, 0),
-    0
-  );
 
   return (
     <DashboardLayout navItems={adminNavItems} role="admin">
@@ -271,7 +267,7 @@ const AdminSubjects = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subjects</CardTitle>
@@ -297,15 +293,6 @@ const AdminSubjects = () => {
             </CardHeader>
             <CardContent>
               {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{totalChapters}</div>}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
-              <List className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{totalQuestions}</div>}
             </CardContent>
           </Card>
         </div>
@@ -362,7 +349,7 @@ const AdminSubjects = () => {
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {subject.chapterResponseList.length} chapters • {subject.chapterResponseList.reduce((acc, c) => acc + c.questionCount, 0)} questions
+                              {subject.chapterResponseList.length} chapters
                             </p>
                           </div>
                         </div>
@@ -402,7 +389,6 @@ const AdminSubjects = () => {
                               <TableRow>
                                 <TableHead className="w-12">#</TableHead>
                                 <TableHead>Chapter Name</TableHead>
-                                <TableHead className="text-center">Questions</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
@@ -416,7 +402,6 @@ const AdminSubjects = () => {
                                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
                                     </TableCell>
                                     <TableCell className="font-medium">{chapter.name}</TableCell>
-                                    <TableCell className="text-center">{chapter.questionCount}</TableCell>
                                     <TableCell className="text-center">
                                       <Badge variant={chapter.active ? 'default' : 'secondary'}>
                                         {chapter.active ? 'Active' : 'Inactive'}
@@ -521,10 +506,6 @@ const AdminSubjects = () => {
                       <span className="flex items-center gap-1">
                         <BookOpen className="h-4 w-4" />
                         {subject.chapterResponseList.length} chapters
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <List className="h-4 w-4" />
-                        {subject.chapterResponseList.reduce((acc, c) => acc + c.questionCount, 0)} questions
                       </span>
                     </div>
                     <Badge variant={subject.active ? 'default' : 'secondary'}>
