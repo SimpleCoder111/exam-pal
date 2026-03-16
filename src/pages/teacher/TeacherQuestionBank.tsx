@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import FileDropzone from '@/components/ui/file-dropzone';
+import { downloadQuestionTemplate } from '@/lib/downloadTemplate';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
   MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine, Lock, 
@@ -634,13 +635,19 @@ const TeacherQuestionBank = () => {
             </DialogHeader>
 
             <div className="space-y-4 py-2">
-              <p className="text-sm text-muted-foreground">
-                Upload an Excel file to import questions into <strong>{currentSubject?.name ?? 'selected subject'}</strong>.
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Upload an Excel file to import questions into <strong>{currentSubject?.name ?? 'selected subject'}</strong>.
+                </p>
+                <Button variant="ghost" size="sm" onClick={downloadQuestionTemplate} className="shrink-0 text-primary">
+                  <Download className="w-4 h-4 mr-1.5" />
+                  Template
+                </Button>
+              </div>
 
               <FileDropzone
-                accept=".xlsx,.xls"
-                acceptLabel=".xlsx or .xls"
+                accept=".xlsx,.xls,.csv"
+                acceptLabel=".xlsx, .xls or .csv"
                 file={importFile}
                 onFileSelect={(file) => setImportFile(file)}
                 onFileClear={() => setImportFile(null)}
