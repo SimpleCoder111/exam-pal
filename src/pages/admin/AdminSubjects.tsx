@@ -507,10 +507,6 @@ const AdminSubjects = () => {
                         <BookOpen className="h-4 w-4" />
                         {subject.chapterResponseList.length} chapters
                       </span>
-                      <span className="flex items-center gap-1">
-                        <List className="h-4 w-4" />
-                        {subject.chapterResponseList.reduce((acc, c) => acc + c.questionCount, 0)} questions
-                      </span>
                     </div>
                     <Badge variant={subject.active ? 'default' : 'secondary'}>
                       {subject.active ? 'Active' : 'Inactive'}
