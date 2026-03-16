@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminExams, AdminExamResponse } from '@/hooks/useAdminExams';
+import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
 
@@ -43,6 +43,8 @@ const AdminExams = () => {
   const { data: exams, isLoading: examsLoading } = useAdminExams();
   const { data: subjects, isLoading: subjectsLoading } = useAdminSubjects();
   const { data: classes, isLoading: classesLoading } = useAdminClasses();
+  const createExamMutation = useCreateAdminExam();
+  const deleteExamMutation = useDeleteAdminExam();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createMode, setCreateMode] = useState<'manual' | 'auto' | null>(null);
@@ -66,11 +68,47 @@ const AdminExams = () => {
     hardCount: 2,
   });
 
-  const handleCreateExam = () => {
+  const handleCreateExam = async () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
-    toast({ title: 'Exam Created', description: `"${formData.title}" has been created successfully` });
-    resetForm();
-    setShowCreateDialog(false);
+
+    const examDate = formData.scheduledDate
+      ? `${formData.scheduledDate}${formData.scheduledTime ? `T${formData.scheduledTime}:00` : 'T00:00:00'}`
+      : new Date().toISOString();
+
+    const payload: CreateAdminExamPayload = {
+      classId: formData.classId,
+      subjectId: formData.subjectId,
+      examDate,
+      examTitle: formData.title,
+      duration: formData.duration,
+      examPaperType: createMode === 'auto' ? 'AUTO' : 'MANUAL',
+      isDraft: false,
+      ...(createMode === 'auto' ? {
+        easyQuestions: autoConfig.easyCount,
+        mediumQuestions: autoConfig.mediumCount,
+        hardQuestions: autoConfig.hardCount,
+      } : {
+        questionIds: selectedQuestionIds,
+      }),
+    };
+
+    try {
+      await createExamMutation.mutateAsync(payload);
+      toast({ title: 'Exam Created', description: `"${formData.title}" has been created successfully` });
+      resetForm();
+      setShowCreateDialog(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to create exam', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteExam = async (examId: number, examTitle: string) => {
+    try {
+      await deleteExamMutation.mutateAsync(examId);
+      toast({ title: 'Exam Deleted', description: `"${examTitle}" has been deleted` });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete exam', variant: 'destructive' });
+    }
   };
 
   const resetForm = () => {
@@ -492,6 +530,8 @@ const AdminExams = () => {
                             variant="ghost" 
                             size="icon" 
                             className="text-destructive"
+                            onClick={() => handleDeleteExam(exam.examId, exam.examTitle)}
+                            disabled={deleteExamMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -561,9 +601,9 @@ const AdminExams = () => {
                     </Button>
                   )}
                   {currentStep === 3 && (
-                    <Button onClick={handleCreateExam}>
+                    <Button onClick={handleCreateExam} disabled={createExamMutation.isPending}>
                       <Check className="mr-2 h-4 w-4" />
-                      Create Exam
+                      {createExamMutation.isPending ? 'Creating...' : 'Create Exam'}
                     </Button>
                   )}
                 </div>
