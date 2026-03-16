@@ -121,6 +121,64 @@ const AdminDashboard = () => {
               ))}
         </div>
 
+        {/* Question Bank Summary */}
+        <Card className="hover:shadow-card transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="font-heading flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Question Bank Overview
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/questions')}>
+              Manage Questions
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {questionSummaryLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="space-y-2 text-center">
+                    <Skeleton className="w-12 h-8 mx-auto" />
+                    <Skeleton className="w-16 h-3 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : questionSummary ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+                <div className="text-center p-3 rounded-lg bg-secondary/50">
+                  <p className="text-2xl font-semibold text-foreground">{questionSummary.totalQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-green-500/10">
+                  <p className="text-2xl font-semibold text-green-600">{questionSummary.totalEasyQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Easy</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-yellow-500/10">
+                  <p className="text-2xl font-semibold text-yellow-600">{questionSummary.totalMediumQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Medium</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-red-500/10">
+                  <p className="text-2xl font-semibold text-red-600">{questionSummary.totalHardQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Hard</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-blue-500/10">
+                  <p className="text-2xl font-semibold text-blue-600">{questionSummary.totalMCQQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">MCQ</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-purple-500/10">
+                  <p className="text-2xl font-semibold text-purple-600">{questionSummary.totalTrueFalseQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">True/False</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-orange-500/10">
+                  <p className="text-2xl font-semibold text-orange-600">{questionSummary.totalFillBlankQuestions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Fill Blank</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No question data available</p>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Recent Activity */}
           <Card>
