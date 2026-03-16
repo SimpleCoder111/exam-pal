@@ -83,9 +83,17 @@ const TeacherExams = () => {
     hardCount: 2,
   });
 
+  const [questionSearch, setQuestionSearch] = useState('');
+
   // Fetch questions for manual mode when subject is selected
-  const { data: questionsData } = useTeacherQuestions(formData.subjectId ?? undefined);
-  const questions = questionsData?.questionData || [];
+  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
+  const allQuestions = questionsData?.questionData || [];
+  const filteredQuestions = allQuestions.filter(q =>
+    !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
+    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+  );
 
   const handleCreateExam = () => {
     if (!formData.subjectId || !formData.classId || !formData.title) return;
