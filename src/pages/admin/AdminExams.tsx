@@ -204,6 +204,7 @@ const AdminExams = () => {
     setCreateMode(null);
     setCurrentStep(1);
     setSelectedQuestionIds([]);
+    setQuestionSearch('');
     setFormData({
       title: '',
       subjectId: null,

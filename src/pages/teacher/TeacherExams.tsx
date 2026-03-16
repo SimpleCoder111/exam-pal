@@ -147,6 +147,7 @@ const TeacherExams = () => {
     setCreateMode(null);
     setCurrentStep(1);
     setSelectedQuestionIds([]);
+    setQuestionSearch('');
     setFormData({
       title: '',
       subjectId: null,
