@@ -349,7 +349,7 @@ const AdminSubjects = () => {
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {subject.chapterResponseList.length} chapters • {subject.chapterResponseList.reduce((acc, c) => acc + c.questionCount, 0)} questions
+                              {subject.chapterResponseList.length} chapters
                             </p>
                           </div>
                         </div>
