@@ -616,12 +616,11 @@ const TeacherQuestionBank = () => {
                   <div className="space-y-2">
                     <Label>Sample Code / Starter Code</Label>
                     <p className="text-xs text-muted-foreground">Provide starter code or context for the coding question (optional)</p>
-                    <Textarea
-                      placeholder="// Write your starter code here..."
-                      rows={5}
-                      className="font-mono text-sm"
+                    <CodeEditor
                       value={formData.correctAnswer}
-                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                      onChange={(val) => setFormData({ ...formData, correctAnswer: val })}
+                      placeholder="// Write your starter code here..."
+                      minHeight="150px"
                     />
                   </div>
                   <div className="space-y-2">
