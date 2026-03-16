@@ -45,6 +45,7 @@ const AdminExams = () => {
   const { data: classes, isLoading: classesLoading } = useAdminClasses();
   const createExamMutation = useCreateAdminExam();
   const deleteExamMutation = useDeleteAdminExam();
+  const updateExamMutation = useUpdateAdminExam();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createMode, setCreateMode] = useState<'manual' | 'auto' | null>(null);
@@ -52,6 +53,15 @@ const AdminExams = () => {
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<number[]>([]);
   const [showMonitor, setShowMonitor] = useState(false);
   const [monitorExam, setMonitorExam] = useState<{ id: string; title: string } | null>(null);
+
+  // View & Edit state
+  const [viewExam, setViewExam] = useState<AdminExamResponse | null>(null);
+  const [editingExam, setEditingExam] = useState<AdminExamResponse | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editFormData, setEditFormData] = useState<ExamFormData>({ title: '', subjectId: null, classId: null, duration: 60, scheduledDate: '', scheduledTime: '' });
+  const [editAutoConfig, setEditAutoConfig] = useState<AutoBuilderConfig>({ easyCount: 5, mediumCount: 3, hardCount: 2 });
+  const [editQuestionIds, setEditQuestionIds] = useState<number[]>([]);
+  const [editIsDraft, setEditIsDraft] = useState(true);
 
   const [formData, setFormData] = useState<ExamFormData>({
     title: '',
