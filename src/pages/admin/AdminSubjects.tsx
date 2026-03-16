@@ -250,10 +250,6 @@ const AdminSubjects = () => {
   const totalSubjects = (subjects || []).length;
   const activeSubjects = (subjects || []).filter((s) => s.active).length;
   const totalChapters = (subjects || []).reduce((acc, s) => acc + s.chapterResponseList.length, 0);
-  const totalQuestions = (subjects || []).reduce(
-    (acc, s) => acc + s.chapterResponseList.reduce((cAcc, c) => cAcc + c.questionCount, 0),
-    0
-  );
 
   return (
     <DashboardLayout navItems={adminNavItems} role="admin">
