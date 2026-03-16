@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
+import FileDropzone from '@/components/ui/file-dropzone';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
   MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine, Lock, 
@@ -80,7 +81,7 @@ const emptyOptions: FormOption[] = [
 const AdminQuestionBank = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   // Filters
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -264,12 +265,6 @@ const AdminQuestionBank = () => {
   };
 
   // --- Import handlers ---
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) setImportFile(file);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
 
   const handleImport = async () => {
     if (!importFile || !selectedSubjectId) return;
@@ -615,16 +610,14 @@ const AdminQuestionBank = () => {
                 Upload an Excel file to import questions into <strong>{currentSubject?.name ?? 'selected subject'}</strong>.
               </p>
 
-              <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                <input ref={fileInputRef} type="file" accept=".xlsx,.xls" onChange={handleFileSelect} className="hidden" id="admin-import-upload" />
-                <label htmlFor="admin-import-upload" className="cursor-pointer">
-                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="font-medium text-foreground mb-1">
-                    {importFile ? importFile.name : 'Click to upload Excel file'}
-                  </p>
-                  <p className="text-sm text-muted-foreground">.xlsx or .xls</p>
-                </label>
-              </div>
+              <FileDropzone
+                accept=".xlsx,.xls"
+                acceptLabel=".xlsx or .xls"
+                file={importFile}
+                onFileSelect={(file) => setImportFile(file)}
+                onFileClear={() => setImportFile(null)}
+                id="admin-import-upload"
+              />
 
               {importMutation.isError && (
                 <Alert variant="destructive">
