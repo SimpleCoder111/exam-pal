@@ -389,7 +389,6 @@ const AdminSubjects = () => {
                               <TableRow>
                                 <TableHead className="w-12">#</TableHead>
                                 <TableHead>Chapter Name</TableHead>
-                                <TableHead className="text-center">Questions</TableHead>
                                 <TableHead className="text-center">Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                               </TableRow>
