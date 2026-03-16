@@ -29,10 +29,10 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { adminNavItems } from '@/config/adminNavItems';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import {
-  useTeacherQuestions, useCreateQuestion, useUpdateQuestion,
-  useDeleteQuestion, useImportQuestions,
+  useAdminQuestions, useCreateAdminQuestion, useUpdateAdminQuestion,
+  useDeleteAdminQuestion, useImportAdminQuestions,
   type ApiQuestion, type CreateQuestionPayload, type UpdateQuestionPayload,
-} from '@/hooks/useTeacherQuestions';
+} from '@/hooks/useAdminQuestions';
 
 // --- Type mappings ---
 
@@ -115,14 +115,14 @@ const AdminQuestionBank = () => {
     correctAnswer: '',
   });
 
-  // --- API hooks (admin uses admin subjects + teacher question endpoints) ---
+  // --- API hooks (admin-specific endpoints) ---
   const { data: subjects = [], isLoading: subjectsLoading } = useAdminSubjects();
   const subjectIdNum = selectedSubjectId ? parseInt(selectedSubjectId) : null;
-  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(subjectIdNum);
-  const createMutation = useCreateQuestion();
-  const updateMutation = useUpdateQuestion();
-  const deleteMutation = useDeleteQuestion();
-  const importMutation = useImportQuestions();
+  const { data: questionsData, isLoading: questionsLoading } = useAdminQuestions(subjectIdNum);
+  const createMutation = useCreateAdminQuestion();
+  const updateMutation = useUpdateAdminQuestion();
+  const deleteMutation = useDeleteAdminQuestion();
+  const importMutation = useImportAdminQuestions();
 
   const questions = questionsData?.questionData ?? [];
   const currentSubject = subjects.find(s => s.id.toString() === selectedSubjectId);
