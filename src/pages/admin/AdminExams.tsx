@@ -123,6 +123,63 @@ const AdminExams = () => {
     }
   };
 
+  const handleOpenEdit = (exam: AdminExamResponse) => {
+    setEditingExam(exam);
+    const dateObj = exam.examDate ? new Date(exam.examDate) : null;
+    setEditFormData({
+      title: exam.examTitle,
+      subjectId: exam.subjectId,
+      classId: exam.classId,
+      duration: exam.duration,
+      scheduledDate: dateObj ? dateObj.toISOString().split('T')[0] : '',
+      scheduledTime: dateObj ? dateObj.toTimeString().substring(0, 5) : '',
+    });
+    setEditAutoConfig({
+      easyCount: exam.easyQuestions || 0,
+      mediumCount: exam.mediumQuestions || 0,
+      hardCount: exam.hardQuestions || 0,
+    });
+    setEditQuestionIds(exam.questionIds || []);
+    setEditIsDraft(exam.examStatus?.toLowerCase() === 'draft');
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateExam = async () => {
+    if (!editingExam || !editFormData.subjectId || !editFormData.classId || !editFormData.title) return;
+
+    const examDate = editFormData.scheduledDate
+      ? `${editFormData.scheduledDate} ${editFormData.scheduledTime ? `${editFormData.scheduledTime}:00` : '00:00:00'}`
+      : new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    const isAuto = editingExam.examPaperType === 'AUTO';
+
+    const payload: CreateAdminExamPayload = {
+      classId: editFormData.classId,
+      subjectId: editFormData.subjectId,
+      examDate,
+      examTitle: editFormData.title,
+      duration: editFormData.duration,
+      examPaperType: editingExam.examPaperType,
+      isDraft: editIsDraft,
+      ...(isAuto ? {
+        easyQuestions: editAutoConfig.easyCount,
+        mediumQuestions: editAutoConfig.mediumCount,
+        hardQuestions: editAutoConfig.hardCount,
+      } : {
+        questionIds: editQuestionIds,
+      }),
+    };
+
+    try {
+      await updateExamMutation.mutateAsync({ examId: editingExam.examId, payload });
+      toast({ title: 'Exam Updated', description: `"${editFormData.title}" has been updated successfully` });
+      setShowEditDialog(false);
+      setEditingExam(null);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update exam', variant: 'destructive' });
+    }
+  };
+
   const resetForm = () => {
     setCreateMode(null);
     setCurrentStep(1);
