@@ -664,7 +664,7 @@ const AdminQuestionBank = () => {
                 <p className="text-sm text-muted-foreground">
                   Upload an Excel file to import questions into <strong>{currentSubject?.name ?? 'selected subject'}</strong>.
                 </p>
-                <Button variant="ghost" size="sm" onClick={downloadQuestionTemplate} className="shrink-0 text-primary">
+                <Button variant="ghost" size="sm" onClick={() => downloadQuestionTemplate(chapters)} className="shrink-0 text-primary">
                   <Download className="w-4 h-4 mr-1.5" />
                   Template
                 </Button>
