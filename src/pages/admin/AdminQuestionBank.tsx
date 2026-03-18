@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import FileDropzone from '@/components/ui/file-dropzone';
 import { downloadQuestionTemplate } from '@/lib/downloadTemplate';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
   MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine,
-  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2, Star
+  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2, Star, X, Copy
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -71,6 +73,26 @@ const difficultyConfig: Record<string, { label: string; color: string }> = {
   hard: { label: 'Hard', color: 'bg-red-500/10 text-red-600 border-red-500/20' },
 };
 
+interface QuestionFormData {
+  chapterId: string;
+  type: QuestionType;
+  difficulty: string;
+  questionText: string;
+  points: string;
+  options: string[];
+  correctAnswer: string;
+}
+
+const emptyFormData: QuestionFormData = {
+  chapterId: '',
+  type: 'multiple_choice',
+  difficulty: 'medium',
+  questionText: '',
+  points: '1',
+  options: ['', '', '', ''],
+  correctAnswer: '',
+};
+
 const AdminQuestionBank = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -90,17 +112,12 @@ const AdminQuestionBank = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    chapterId: '',
-    type: 'multiple_choice' as QuestionType,
-    difficulty: 'medium' as string,
-    questionText: '',
-    points: '1',
-    options: ['', '', '', ''] as string[],
-    correctAnswer: '',
-  });
+  // Batch create state
+  const [questionQueue, setQuestionQueue] = useState<QuestionFormData[]>([]);
+  const [activeQueueIndex, setActiveQueueIndex] = useState<number | null>(null);
 
+  // Form state
+  const [formData, setFormData] = useState<QuestionFormData>({ ...emptyFormData });
   // --- API hooks ---
   const { data: subjects = [], isLoading: subjectsLoading } = useAdminSubjects();
   const subjectIdNum = selectedSubjectId ? parseInt(selectedSubjectId) : null;
