@@ -487,11 +487,65 @@ const AdminQuestionBank = () => {
         </Card>
 
         {/* Add/Edit Question Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          if (!open) { setQuestionQueue([]); setActiveQueueIndex(null); }
+          setIsDialogOpen(open);
+        }}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingQuestion ? 'Edit Question' : 'Add New Question'}</DialogTitle>
+              <DialogTitle>
+                {editingQuestion ? 'Edit Question' : 'Add Questions'}
+                {!editingQuestion && questionQueue.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">{questionQueue.length} queued</Badge>
+                )}
+              </DialogTitle>
             </DialogHeader>
+
+            {/* Question Queue Preview (batch mode only) */}
+            {!editingQuestion && questionQueue.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Questions to create ({questionQueue.length})</Label>
+                  <Button variant="ghost" size="sm" onClick={() => { setQuestionQueue([]); setActiveQueueIndex(null); }} className="text-xs text-muted-foreground h-7">
+                    Clear All
+                  </Button>
+                </div>
+                <ScrollArea className="max-h-[140px]">
+                  <div className="space-y-1.5">
+                    {questionQueue.map((q, i) => {
+                      const typeConf = questionTypeConfig[q.type];
+                      return (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-2 p-2 rounded-md border text-sm cursor-pointer transition-colors ${
+                            activeQueueIndex === i ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                          }`}
+                          onClick={() => handleEditQueueItem(i)}
+                        >
+                          <span className="text-xs font-mono text-muted-foreground w-5">{i + 1}.</span>
+                          <Badge variant="outline" className={`${typeConf.color} text-[10px] px-1.5 py-0 shrink-0`}>
+                            {typeConf.label}
+                          </Badge>
+                          <p className="text-foreground truncate flex-1">{q.questionText}</p>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                            {q.points} pts
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveFromQueue(i); }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+                <Separator />
+              </div>
+            )}
 
             <Tabs value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as QuestionType })}>
               <TabsList className="grid grid-cols-5 mb-4">
@@ -569,7 +623,6 @@ const AdminQuestionBank = () => {
                           const newOptions = [...formData.options];
                           const oldVal = newOptions[index];
                           newOptions[index] = e.target.value;
-                          // Update correctAnswer if this was the selected one
                           const newCorrect = formData.correctAnswer === oldVal ? e.target.value : formData.correctAnswer;
                           setFormData({ ...formData, options: newOptions, correctAnswer: newCorrect });
                         }}
@@ -635,11 +688,26 @@ const AdminQuestionBank = () => {
               </div>
             </Tabs>
 
-            <DialogFooter className="mt-6">
+            <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSaveQuestion} disabled={!formData.questionText || isSaving}>
+              {!editingQuestion && (
+                <Button
+                  variant="outline"
+                  onClick={handleAddToQueue}
+                  disabled={!formData.questionText.trim()}
+                  className="gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  {activeQueueIndex !== null ? 'Update in Queue' : 'Add & Continue'}
+                </Button>
+              )}
+              <Button onClick={handleSaveQuestion} disabled={(!formData.questionText.trim() && questionQueue.length === 0) || isSaving}>
                 {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {editingQuestion ? 'Save Changes' : 'Create Question'}
+                {editingQuestion
+                  ? 'Save Changes'
+                  : questionQueue.length > 0
+                    ? `Create ${questionQueue.length + (formData.questionText.trim() ? 1 : 0)} Question${(questionQueue.length + (formData.questionText.trim() ? 1 : 0)) > 1 ? 's' : ''}`
+                    : 'Create Question'}
               </Button>
             </DialogFooter>
           </DialogContent>
