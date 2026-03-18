@@ -3,10 +3,10 @@ import FileDropzone from '@/components/ui/file-dropzone';
 import { downloadQuestionTemplate } from '@/lib/downloadTemplate';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
-  MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine, Lock, 
-  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2
+  MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine,
+  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2, Star
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +41,7 @@ type QuestionType = 'multiple_choice' | 'fill_blank' | 'true_false' | 'coding' |
 const apiTypeToLocal = (t: string): QuestionType => {
   if (t === 'MULTIPLE_CHOICE') return 'multiple_choice';
   if (t === 'TRUE_FALSE') return 'true_false';
-  if (t === 'FILL_BLANK') return 'fill_blank';
+  if (t === 'FILL_IN_THE_BLANK') return 'fill_blank';
   if (t === 'CODING') return 'coding';
   if (t === 'WRITING') return 'writing';
   return 'multiple_choice';
@@ -52,7 +52,7 @@ const localTypeToApi = (t: QuestionType) => {
   if (t === 'true_false') return 'TRUE_FALSE' as const;
   if (t === 'coding') return 'CODING' as const;
   if (t === 'writing') return 'WRITING' as const;
-  return 'FILL_BLANK' as const;
+  return 'FILL_IN_THE_BLANK' as const;
 };
 
 const localDiffToApi = (d: string) => d.toUpperCase() as 'EASY' | 'MEDIUM' | 'HARD';
@@ -71,28 +71,13 @@ const difficultyConfig: Record<string, { label: string; color: string }> = {
   hard: { label: 'Hard', color: 'bg-red-500/10 text-red-600 border-red-500/20' },
 };
 
-interface FormOption {
-  optionId?: number;
-  text: string;
-  isCorrect: boolean;
-}
-
-const emptyOptions: FormOption[] = [
-  { text: '', isCorrect: false },
-  { text: '', isCorrect: false },
-  { text: '', isCorrect: false },
-  { text: '', isCorrect: false },
-];
-
 const AdminQuestionBank = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  
 
   // Filters
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedChapter, setSelectedChapter] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const [expandedFilters, setExpandedFilters] = useState(false);
@@ -111,20 +96,20 @@ const AdminQuestionBank = () => {
     type: 'multiple_choice' as QuestionType,
     difficulty: 'medium' as string,
     questionText: '',
-    options: [...emptyOptions] as FormOption[],
+    points: '1',
+    options: ['', '', '', ''] as string[],
     correctAnswer: '',
   });
 
-  // --- API hooks (admin-specific endpoints) ---
+  // --- API hooks ---
   const { data: subjects = [], isLoading: subjectsLoading } = useAdminSubjects();
   const subjectIdNum = selectedSubjectId ? parseInt(selectedSubjectId) : null;
-  const { data: questionsData, isLoading: questionsLoading } = useAdminQuestions(subjectIdNum);
+  const { data: questions = [], isLoading: questionsLoading } = useAdminQuestions(subjectIdNum);
   const createMutation = useCreateAdminQuestion();
   const updateMutation = useUpdateAdminQuestion();
   const deleteMutation = useDeleteAdminQuestion();
   const importMutation = useImportAdminQuestions();
 
-  const questions = questionsData?.questionData ?? [];
   const currentSubject = subjects.find(s => s.id.toString() === selectedSubjectId);
   const chapters = currentSubject?.chapterResponseList ?? [];
 
@@ -136,23 +121,26 @@ const AdminQuestionBank = () => {
   // Filter questions
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesChapter = selectedChapter === 'all' || q.chapterId.toString() === selectedChapter;
     const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
     const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
-    return matchesSearch && matchesChapter && matchesType && matchesDifficulty;
+    return matchesSearch && matchesType && matchesDifficulty;
   });
 
-  // Count stats from current questions
+  // Count stats
   const totalQuestions = questions.length;
   const mcqCount = questions.filter(q => q.questionType === 'MULTIPLE_CHOICE').length;
-  const fillCount = questions.filter(q => q.questionType === 'FILL_BLANK').length;
+  const fillCount = questions.filter(q => q.questionType === 'FILL_IN_THE_BLANK').length;
   const tfCount = questions.filter(q => q.questionType === 'TRUE_FALSE').length;
+  const codingCount = questions.filter(q => q.questionType === 'CODING').length;
+  const writingCount = questions.filter(q => q.questionType === 'WRITING').length;
 
   const stats = [
-    { label: 'Total Questions', value: totalQuestions, icon: FileText },
-    { label: 'Multiple Choice', value: mcqCount, icon: CheckCircle2 },
-    { label: 'Fill in Blank', value: fillCount, icon: Circle },
+    { label: 'Total', value: totalQuestions, icon: FileText },
+    { label: 'MCQ', value: mcqCount, icon: CheckCircle2 },
+    { label: 'Fill Blank', value: fillCount, icon: Circle },
     { label: 'True/False', value: tfCount, icon: ToggleLeft },
+    { label: 'Coding', value: codingCount, icon: Code },
+    { label: 'Writing', value: writingCount, icon: PenLine },
   ];
 
   // --- Handlers ---
@@ -160,19 +148,17 @@ const AdminQuestionBank = () => {
   const handleOpenDialog = (question?: ApiQuestion) => {
     if (question) {
       setEditingQuestion(question);
+      const localType = apiTypeToLocal(question.questionType);
       setFormData({
-        chapterId: question.chapterId.toString(),
-        type: apiTypeToLocal(question.questionType),
+        chapterId: '',
+        type: localType,
         difficulty: question.difficulty.toLowerCase(),
         questionText: question.questionContent,
-        options: question.optionLists.length > 0
-          ? question.optionLists.map(o => ({ optionId: o.optionId, text: o.optionText, isCorrect: o.isCorrect }))
-          : [...emptyOptions],
-        correctAnswer: question.questionType === 'FILL_BLANK'
-          ? (question.optionLists[0]?.optionText ?? '')
-          : question.questionType === 'TRUE_FALSE'
-            ? (question.optionLists.find(o => o.isCorrect)?.optionText?.toLowerCase().includes('true') ? 'true' : 'false')
-            : '',
+        points: question.points || '1',
+        options: localType === 'multiple_choice'
+          ? [...question.optionContent, '', '', '', ''].slice(0, 4)
+          : ['', '', '', ''],
+        correctAnswer: question.correctAnswer || '',
       });
     } else {
       setEditingQuestion(null);
@@ -181,79 +167,57 @@ const AdminQuestionBank = () => {
         type: 'multiple_choice',
         difficulty: 'medium',
         questionText: '',
-        options: [...emptyOptions],
+        points: '1',
+        options: ['', '', '', ''],
         correctAnswer: '',
       });
     }
     setIsDialogOpen(true);
   };
 
-  const buildPayload = (): CreateQuestionPayload | UpdateQuestionPayload => {
+  const buildPayload = (): CreateQuestionPayload => {
     const apiType = localTypeToApi(formData.type);
-    const base = {
+    const base: CreateQuestionPayload = {
       subjectId: parseInt(selectedSubjectId),
-      chapterId: parseInt(formData.chapterId),
+      chapterId: formData.chapterId ? parseInt(formData.chapterId) : (chapters[0]?.id ?? 0),
       questionType: apiType,
       questionContent: formData.questionText,
       difficulty: localDiffToApi(formData.difficulty),
-      createdBy: user?.id ?? '',
+      createdBy: user?.username ?? user?.id ?? 'admin',
+      score: parseInt(formData.points) || 1,
+      correctAnswer: '',
+      optionLists: [],
     };
 
     if (apiType === 'MULTIPLE_CHOICE') {
-      return {
-        ...base,
-        optionLists: formData.options
-          .filter(o => o.text.trim())
-          .map(o => ({
-            ...(o.optionId ? { optionId: o.optionId } : {}),
-            optionText: o.text,
-            isCorrect: o.isCorrect,
-          })),
-      };
+      base.optionLists = formData.options.filter(o => o.trim());
+      base.correctAnswer = formData.correctAnswer;
+    } else if (apiType === 'TRUE_FALSE') {
+      base.optionLists = ['TRUE', 'FALSE'];
+      base.correctAnswer = formData.correctAnswer.toUpperCase();
+    } else if (apiType === 'FILL_IN_THE_BLANK') {
+      base.optionLists = [];
+      base.correctAnswer = formData.correctAnswer;
+    } else if (apiType === 'CODING') {
+      base.optionLists = [];
+      base.correctAnswer = formData.correctAnswer;
+    } else {
+      // WRITING
+      base.optionLists = [];
+      base.correctAnswer = formData.correctAnswer;
     }
 
-    if (apiType === 'TRUE_FALSE') {
-      const trueOpt = editingQuestion?.optionLists.find(o => o.optionText.toLowerCase().includes('true'));
-      const falseOpt = editingQuestion?.optionLists.find(o => !o.optionText.toLowerCase().includes('true'));
-      return {
-        ...base,
-        optionLists: [
-          { ...(trueOpt?.optionId ? { optionId: trueOpt.optionId } : {}), optionText: 'True', isCorrect: formData.correctAnswer === 'true' },
-          { ...(falseOpt?.optionId ? { optionId: falseOpt.optionId } : {}), optionText: 'False', isCorrect: formData.correctAnswer === 'false' },
-        ],
-      };
-    }
-
-    // CODING / WRITING
-    if (apiType === 'CODING' || apiType === 'WRITING') {
-      const existingOpt = editingQuestion?.optionLists[0];
-      return {
-        ...base,
-        optionLists: [
-          { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
-          ...(formData.options[0]?.text ? [{ optionText: formData.options[0].text, isCorrect: false }] : []),
-        ],
-      };
-    }
-
-    // FILL_BLANK
-    const existingOpt = editingQuestion?.optionLists[0];
-    return {
-      ...base,
-      optionLists: [
-        { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
-      ],
-    };
+    return base;
   };
 
   const handleSaveQuestion = async () => {
     const payload = buildPayload();
     try {
       if (editingQuestion) {
-        await updateMutation.mutateAsync({ questionId: editingQuestion.questionId, payload: payload as UpdateQuestionPayload });
+        await updateMutation.mutateAsync({ questionId: editingQuestion.id, payload: payload as UpdateQuestionPayload });
         toast({ title: 'Question updated successfully' });
       } else {
-        await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payload });
+        await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payloads: [payload] });
         toast({ title: 'Question created successfully' });
       }
       setIsDialogOpen(false);
@@ -270,16 +234,6 @@ const AdminQuestionBank = () => {
     } catch {
       toast({ title: 'Failed to delete question', variant: 'destructive' });
     }
-  };
-
-  const handleOptionChange = (index: number, field: 'text' | 'isCorrect', value: string | boolean) => {
-    const newOptions = [...formData.options];
-    if (field === 'isCorrect') {
-      newOptions.forEach((opt, i) => { opt.isCorrect = i === index ? (value as boolean) : false; });
-    } else {
-      newOptions[index] = { ...newOptions[index], text: value as string };
-    }
-    setFormData({ ...formData, options: newOptions });
   };
 
   // --- Import handlers ---
@@ -324,20 +278,20 @@ const AdminQuestionBank = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-4">
           {stats.map((stat) => (
             <Card key={stat.label}>
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="w-6 h-6 text-primary" />
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <stat.icon className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   {questionsLoading ? (
-                    <Skeleton className="h-7 w-12" />
+                    <Skeleton className="h-6 w-8" />
                   ) : (
-                    <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
+                    <p className="text-xl font-semibold text-foreground">{stat.value}</p>
                   )}
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </CardContent>
             </Card>
@@ -349,7 +303,7 @@ const AdminQuestionBank = () => {
           <CardContent className="p-4">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row gap-3">
-                <Select value={selectedSubjectId} onValueChange={(v) => { setSelectedSubjectId(v); setSelectedChapter('all'); }}>
+                <Select value={selectedSubjectId} onValueChange={(v) => { setSelectedSubjectId(v); }}>
                   <SelectTrigger className="sm:w-[260px]">
                     <SelectValue placeholder={subjectsLoading ? 'Loading...' : 'Select subject'} />
                   </SelectTrigger>
@@ -372,17 +326,7 @@ const AdminQuestionBank = () => {
 
               <Collapsible open={expandedFilters}>
                 <CollapsibleContent>
-                  <div className="grid sm:grid-cols-3 gap-3 pt-3 border-t border-border">
-                    <Select value={selectedChapter} onValueChange={setSelectedChapter}>
-                      <SelectTrigger><SelectValue placeholder="All Chapters" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Chapters</SelectItem>
-                        {chapters.map(ch => (
-                          <SelectItem key={ch.id} value={ch.id.toString()}>{ch.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
+                  <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-border">
                     <Select value={selectedType} onValueChange={setSelectedType}>
                       <SelectTrigger><SelectValue placeholder="All Types" /></SelectTrigger>
                       <SelectContent>
@@ -420,17 +364,18 @@ const AdminQuestionBank = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[45%]">Question</TableHead>
+                    <TableHead className="w-[40%]">Question</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Chapter</TableHead>
                     <TableHead>Difficulty</TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
+                    <TableHead>Points</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredQuestions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         {!selectedSubjectId ? 'Select a subject to view questions.' : 'No questions found.'}
                       </TableCell>
                     </TableRow>
@@ -439,7 +384,7 @@ const AdminQuestionBank = () => {
                       const localType = apiTypeToLocal(q.questionType);
                       const diffKey = q.difficulty.toLowerCase();
                       return (
-                        <TableRow key={q.questionId}>
+                        <TableRow key={q.id}>
                           <TableCell>
                             <p className="font-medium text-foreground line-clamp-2 max-w-md">{q.questionContent}</p>
                             <p className="text-xs text-muted-foreground mt-1">By: {q.createdBy}</p>
@@ -453,12 +398,20 @@ const AdminQuestionBank = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <p className="text-sm text-foreground">{q.chapter}</p>
-                          </TableCell>
-                          <TableCell>
                             <Badge variant="outline" className={difficultyConfig[diffKey]?.color ?? ''}>
                               {difficultyConfig[diffKey]?.label ?? diffKey}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="flex items-center gap-1 text-sm font-medium text-foreground">
+                              <Star className="w-3.5 h-3.5 text-yellow-500" />
+                              {q.points}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(q.createdAt).toLocaleDateString()}
+                            </p>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -470,7 +423,7 @@ const AdminQuestionBank = () => {
                                   <Edit2 className="w-4 h-4 mr-2" />Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDeleteQuestion(q.questionId)} className="text-destructive">
+                                <DropdownMenuItem onClick={() => handleDeleteQuestion(q.id)} className="text-destructive">
                                   <Trash2 className="w-4 h-4 mr-2" />Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -504,7 +457,7 @@ const AdminQuestionBank = () => {
               </TabsList>
 
               <div className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Chapter *</Label>
                     <Select value={formData.chapterId} onValueChange={(v) => setFormData({ ...formData, chapterId: v })}>
@@ -527,6 +480,16 @@ const AdminQuestionBank = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Points *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.points}
+                      onChange={(e) => setFormData({ ...formData, points: e.target.value })}
+                      placeholder="1"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -542,15 +505,27 @@ const AdminQuestionBank = () => {
                 {/* MCQ options */}
                 <TabsContent value="multiple_choice" className="mt-0 space-y-3">
                   <Label>Answer Options *</Label>
-                  <p className="text-xs text-muted-foreground">Check the correct answer</p>
+                  <p className="text-xs text-muted-foreground">Select the correct answer</p>
                   {formData.options.map((option, index) => (
                     <div key={index} className="flex items-center gap-3">
-                      <Checkbox checked={option.isCorrect} onCheckedChange={(checked) => handleOptionChange(index, 'isCorrect', !!checked)} />
+                      <Checkbox
+                        checked={formData.correctAnswer === option && option !== ''}
+                        onCheckedChange={(checked) => {
+                          setFormData({ ...formData, correctAnswer: checked ? option : '' });
+                        }}
+                      />
                       <span className="font-medium text-muted-foreground w-6">{String.fromCharCode(65 + index)}.</span>
                       <Input
                         placeholder={`Option ${String.fromCharCode(65 + index)}`}
-                        value={option.text}
-                        onChange={(e) => handleOptionChange(index, 'text', e.target.value)}
+                        value={option}
+                        onChange={(e) => {
+                          const newOptions = [...formData.options];
+                          const oldVal = newOptions[index];
+                          newOptions[index] = e.target.value;
+                          // Update correctAnswer if this was the selected one
+                          const newCorrect = formData.correctAnswer === oldVal ? e.target.value : formData.correctAnswer;
+                          setFormData({ ...formData, options: newOptions, correctAnswer: newCorrect });
+                        }}
                         className="flex-1"
                       />
                     </div>
@@ -560,7 +535,7 @@ const AdminQuestionBank = () => {
                 <TabsContent value="fill_blank" className="mt-0 space-y-3">
                   <div className="space-y-2">
                     <Label>Correct Answer *</Label>
-                    <p className="text-xs text-muted-foreground">Use ___ in the question to indicate the blank</p>
+                    <p className="text-xs text-muted-foreground">Use _____ in the question to indicate the blank</p>
                     <Input
                       placeholder="Enter the correct answer"
                       value={formData.correctAnswer}
@@ -574,11 +549,11 @@ const AdminQuestionBank = () => {
                     <Label>Correct Answer *</Label>
                     <RadioGroup value={formData.correctAnswer} onValueChange={(v) => setFormData({ ...formData, correctAnswer: v })} className="flex gap-6">
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="true" id="admin-true" />
+                        <RadioGroupItem value="TRUE" id="admin-true" />
                         <Label htmlFor="admin-true" className="font-normal cursor-pointer">True</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="false" id="admin-false" />
+                        <RadioGroupItem value="FALSE" id="admin-false" />
                         <Label htmlFor="admin-false" className="font-normal cursor-pointer">False</Label>
                       </div>
                     </RadioGroup>
@@ -596,19 +571,6 @@ const AdminQuestionBank = () => {
                       minHeight="150px"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Expected Output / Answer *</Label>
-                    <Textarea
-                      placeholder="Describe the expected output or solution..."
-                      rows={3}
-                      value={formData.options[0]?.text ?? ''}
-                      onChange={(e) => {
-                        const newOptions = [...formData.options];
-                        newOptions[0] = { ...newOptions[0], text: e.target.value, isCorrect: true };
-                        setFormData({ ...formData, options: newOptions });
-                      }}
-                    />
-                  </div>
                 </TabsContent>
 
                 <TabsContent value="writing" className="mt-0 space-y-3">
@@ -622,26 +584,13 @@ const AdminQuestionBank = () => {
                       onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Word Limit (optional)</Label>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 500"
-                      value={formData.options[0]?.text ?? ''}
-                      onChange={(e) => {
-                        const newOptions = [...formData.options];
-                        newOptions[0] = { ...newOptions[0], text: e.target.value, isCorrect: true };
-                        setFormData({ ...formData, options: newOptions });
-                      }}
-                    />
-                  </div>
                 </TabsContent>
               </div>
             </Tabs>
 
             <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSaveQuestion} disabled={!formData.chapterId || !formData.questionText || isSaving}>
+              <Button onClick={handleSaveQuestion} disabled={!formData.questionText || isSaving}>
                 {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {editingQuestion ? 'Save Changes' : 'Create Question'}
               </Button>
