@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import FileDropzone from '@/components/ui/file-dropzone';
 import { downloadQuestionTemplate } from '@/lib/downloadTemplate';
 import { 
   FileText, Plus, Search, Filter, Edit2, Trash2, 
   MoreHorizontal, CheckCircle2, Circle, ToggleLeft, Code, PenLine,
-  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2, Star
+  ChevronDown, Upload, Download, FileSpreadsheet, AlertCircle, Loader2, Star, X, Copy
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -71,6 +73,26 @@ const difficultyConfig: Record<string, { label: string; color: string }> = {
   hard: { label: 'Hard', color: 'bg-red-500/10 text-red-600 border-red-500/20' },
 };
 
+interface QuestionFormData {
+  chapterId: string;
+  type: QuestionType;
+  difficulty: string;
+  questionText: string;
+  points: string;
+  options: string[];
+  correctAnswer: string;
+}
+
+const emptyFormData: QuestionFormData = {
+  chapterId: '',
+  type: 'multiple_choice',
+  difficulty: 'medium',
+  questionText: '',
+  points: '1',
+  options: ['', '', '', ''],
+  correctAnswer: '',
+};
+
 const AdminQuestionBank = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -90,17 +112,12 @@ const AdminQuestionBank = () => {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    chapterId: '',
-    type: 'multiple_choice' as QuestionType,
-    difficulty: 'medium' as string,
-    questionText: '',
-    points: '1',
-    options: ['', '', '', ''] as string[],
-    correctAnswer: '',
-  });
+  // Batch create state
+  const [questionQueue, setQuestionQueue] = useState<QuestionFormData[]>([]);
+  const [activeQueueIndex, setActiveQueueIndex] = useState<number | null>(null);
 
+  // Form state
+  const [formData, setFormData] = useState<QuestionFormData>({ ...emptyFormData });
   // --- API hooks ---
   const { data: subjects = [], isLoading: subjectsLoading } = useAdminSubjects();
   const subjectIdNum = selectedSubjectId ? parseInt(selectedSubjectId) : null;
@@ -160,70 +177,100 @@ const AdminQuestionBank = () => {
           : ['', '', '', ''],
         correctAnswer: question.correctAnswer || '',
       });
+      setQuestionQueue([]);
+      setActiveQueueIndex(null);
     } else {
       setEditingQuestion(null);
-      setFormData({
-        chapterId: '',
-        type: 'multiple_choice',
-        difficulty: 'medium',
-        questionText: '',
-        points: '1',
-        options: ['', '', '', ''],
-        correctAnswer: '',
-      });
+      setFormData({ ...emptyFormData });
+      setQuestionQueue([]);
+      setActiveQueueIndex(null);
     }
     setIsDialogOpen(true);
   };
 
-  const buildPayload = (): CreateQuestionPayload => {
-    const apiType = localTypeToApi(formData.type);
+  const buildPayloadFromForm = useCallback((form: QuestionFormData): CreateQuestionPayload => {
+    const apiType = localTypeToApi(form.type);
     const base: CreateQuestionPayload = {
       subjectId: parseInt(selectedSubjectId),
-      chapterId: formData.chapterId ? parseInt(formData.chapterId) : (chapters[0]?.id ?? 0),
+      chapterId: form.chapterId ? parseInt(form.chapterId) : (chapters[0]?.id ?? 0),
       questionType: apiType,
-      questionContent: formData.questionText,
-      difficulty: localDiffToApi(formData.difficulty),
+      questionContent: form.questionText,
+      difficulty: localDiffToApi(form.difficulty),
       createdBy: user?.name ?? user?.id ?? 'admin',
-      score: parseInt(formData.points) || 1,
+      score: parseInt(form.points) || 1,
       correctAnswer: '',
       optionLists: [],
     };
 
     if (apiType === 'MULTIPLE_CHOICE') {
-      base.optionLists = formData.options.filter(o => o.trim());
-      base.correctAnswer = formData.correctAnswer;
+      base.optionLists = form.options.filter(o => o.trim());
+      base.correctAnswer = form.correctAnswer;
     } else if (apiType === 'TRUE_FALSE') {
       base.optionLists = ['TRUE', 'FALSE'];
-      base.correctAnswer = formData.correctAnswer.toUpperCase();
-    } else if (apiType === 'FILL_IN_THE_BLANK') {
-      base.optionLists = [];
-      base.correctAnswer = formData.correctAnswer;
-    } else if (apiType === 'CODING') {
-      base.optionLists = [];
-      base.correctAnswer = formData.correctAnswer;
+      base.correctAnswer = form.correctAnswer.toUpperCase();
     } else {
-      // WRITING
       base.optionLists = [];
-      base.correctAnswer = formData.correctAnswer;
+      base.correctAnswer = form.correctAnswer;
     }
 
     return base;
+  }, [selectedSubjectId, chapters, user]);
+
+  const handleAddToQueue = () => {
+    if (!formData.questionText.trim()) return;
+    if (activeQueueIndex !== null) {
+      // Update existing queue item
+      const updated = [...questionQueue];
+      updated[activeQueueIndex] = { ...formData };
+      setQuestionQueue(updated);
+      setActiveQueueIndex(null);
+    } else {
+      setQuestionQueue(prev => [...prev, { ...formData }]);
+    }
+    setFormData({ ...emptyFormData, chapterId: formData.chapterId, difficulty: formData.difficulty, type: formData.type, points: formData.points });
+  };
+
+  const handleEditQueueItem = (index: number) => {
+    setFormData({ ...questionQueue[index] });
+    setActiveQueueIndex(index);
+  };
+
+  const handleRemoveFromQueue = (index: number) => {
+    setQuestionQueue(prev => prev.filter((_, i) => i !== index));
+    if (activeQueueIndex === index) {
+      setActiveQueueIndex(null);
+      setFormData({ ...emptyFormData });
+    } else if (activeQueueIndex !== null && activeQueueIndex > index) {
+      setActiveQueueIndex(activeQueueIndex - 1);
+    }
   };
 
   const handleSaveQuestion = async () => {
-    const payload = buildPayload();
     try {
       if (editingQuestion) {
+        const payload = buildPayloadFromForm(formData);
         await updateMutation.mutateAsync({ questionId: editingQuestion.id, payload: payload as UpdateQuestionPayload });
         toast({ title: 'Question updated successfully' });
       } else {
-        await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payloads: [payload] });
-        toast({ title: 'Question created successfully' });
+        // Collect current form + queue
+        const allForms = [...questionQueue];
+        if (formData.questionText.trim()) {
+          allForms.push({ ...formData });
+        }
+        if (allForms.length === 0) {
+          toast({ title: 'No questions to create', variant: 'destructive' });
+          return;
+        }
+        const payloads = allForms.map(f => buildPayloadFromForm(f));
+        await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payloads });
+        toast({ title: `${payloads.length} question${payloads.length > 1 ? 's' : ''} created successfully` });
       }
       setIsDialogOpen(false);
       setEditingQuestion(null);
+      setQuestionQueue([]);
+      setActiveQueueIndex(null);
     } catch {
-      toast({ title: 'Failed to save question', variant: 'destructive' });
+      toast({ title: 'Failed to save question(s)', variant: 'destructive' });
     }
   };
 
@@ -440,11 +487,65 @@ const AdminQuestionBank = () => {
         </Card>
 
         {/* Add/Edit Question Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          if (!open) { setQuestionQueue([]); setActiveQueueIndex(null); }
+          setIsDialogOpen(open);
+        }}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingQuestion ? 'Edit Question' : 'Add New Question'}</DialogTitle>
+              <DialogTitle>
+                {editingQuestion ? 'Edit Question' : 'Add Questions'}
+                {!editingQuestion && questionQueue.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">{questionQueue.length} queued</Badge>
+                )}
+              </DialogTitle>
             </DialogHeader>
+
+            {/* Question Queue Preview (batch mode only) */}
+            {!editingQuestion && questionQueue.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Questions to create ({questionQueue.length})</Label>
+                  <Button variant="ghost" size="sm" onClick={() => { setQuestionQueue([]); setActiveQueueIndex(null); }} className="text-xs text-muted-foreground h-7">
+                    Clear All
+                  </Button>
+                </div>
+                <ScrollArea className="max-h-[140px]">
+                  <div className="space-y-1.5">
+                    {questionQueue.map((q, i) => {
+                      const typeConf = questionTypeConfig[q.type];
+                      return (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-2 p-2 rounded-md border text-sm cursor-pointer transition-colors ${
+                            activeQueueIndex === i ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                          }`}
+                          onClick={() => handleEditQueueItem(i)}
+                        >
+                          <span className="text-xs font-mono text-muted-foreground w-5">{i + 1}.</span>
+                          <Badge variant="outline" className={`${typeConf.color} text-[10px] px-1.5 py-0 shrink-0`}>
+                            {typeConf.label}
+                          </Badge>
+                          <p className="text-foreground truncate flex-1">{q.questionText}</p>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                            {q.points} pts
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveFromQueue(i); }}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+                <Separator />
+              </div>
+            )}
 
             <Tabs value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as QuestionType })}>
               <TabsList className="grid grid-cols-5 mb-4">
@@ -522,7 +623,6 @@ const AdminQuestionBank = () => {
                           const newOptions = [...formData.options];
                           const oldVal = newOptions[index];
                           newOptions[index] = e.target.value;
-                          // Update correctAnswer if this was the selected one
                           const newCorrect = formData.correctAnswer === oldVal ? e.target.value : formData.correctAnswer;
                           setFormData({ ...formData, options: newOptions, correctAnswer: newCorrect });
                         }}
@@ -588,11 +688,26 @@ const AdminQuestionBank = () => {
               </div>
             </Tabs>
 
-            <DialogFooter className="mt-6">
+            <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSaveQuestion} disabled={!formData.questionText || isSaving}>
+              {!editingQuestion && (
+                <Button
+                  variant="outline"
+                  onClick={handleAddToQueue}
+                  disabled={!formData.questionText.trim()}
+                  className="gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  {activeQueueIndex !== null ? 'Update in Queue' : 'Add & Continue'}
+                </Button>
+              )}
+              <Button onClick={handleSaveQuestion} disabled={(!formData.questionText.trim() && questionQueue.length === 0) || isSaving}>
                 {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {editingQuestion ? 'Save Changes' : 'Create Question'}
+                {editingQuestion
+                  ? 'Save Changes'
+                  : questionQueue.length > 0
+                    ? `Create ${questionQueue.length + (formData.questionText.trim() ? 1 : 0)} Question${(questionQueue.length + (formData.questionText.trim() ? 1 : 0)) > 1 ? 's' : ''}`
+                    : 'Create Question'}
               </Button>
             </DialogFooter>
           </DialogContent>
