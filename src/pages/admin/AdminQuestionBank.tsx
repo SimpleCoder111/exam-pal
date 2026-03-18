@@ -177,70 +177,100 @@ const AdminQuestionBank = () => {
           : ['', '', '', ''],
         correctAnswer: question.correctAnswer || '',
       });
+      setQuestionQueue([]);
+      setActiveQueueIndex(null);
     } else {
       setEditingQuestion(null);
-      setFormData({
-        chapterId: '',
-        type: 'multiple_choice',
-        difficulty: 'medium',
-        questionText: '',
-        points: '1',
-        options: ['', '', '', ''],
-        correctAnswer: '',
-      });
+      setFormData({ ...emptyFormData });
+      setQuestionQueue([]);
+      setActiveQueueIndex(null);
     }
     setIsDialogOpen(true);
   };
 
-  const buildPayload = (): CreateQuestionPayload => {
-    const apiType = localTypeToApi(formData.type);
+  const buildPayloadFromForm = useCallback((form: QuestionFormData): CreateQuestionPayload => {
+    const apiType = localTypeToApi(form.type);
     const base: CreateQuestionPayload = {
       subjectId: parseInt(selectedSubjectId),
-      chapterId: formData.chapterId ? parseInt(formData.chapterId) : (chapters[0]?.id ?? 0),
+      chapterId: form.chapterId ? parseInt(form.chapterId) : (chapters[0]?.id ?? 0),
       questionType: apiType,
-      questionContent: formData.questionText,
-      difficulty: localDiffToApi(formData.difficulty),
+      questionContent: form.questionText,
+      difficulty: localDiffToApi(form.difficulty),
       createdBy: user?.name ?? user?.id ?? 'admin',
-      score: parseInt(formData.points) || 1,
+      score: parseInt(form.points) || 1,
       correctAnswer: '',
       optionLists: [],
     };
 
     if (apiType === 'MULTIPLE_CHOICE') {
-      base.optionLists = formData.options.filter(o => o.trim());
-      base.correctAnswer = formData.correctAnswer;
+      base.optionLists = form.options.filter(o => o.trim());
+      base.correctAnswer = form.correctAnswer;
     } else if (apiType === 'TRUE_FALSE') {
       base.optionLists = ['TRUE', 'FALSE'];
-      base.correctAnswer = formData.correctAnswer.toUpperCase();
-    } else if (apiType === 'FILL_IN_THE_BLANK') {
-      base.optionLists = [];
-      base.correctAnswer = formData.correctAnswer;
-    } else if (apiType === 'CODING') {
-      base.optionLists = [];
-      base.correctAnswer = formData.correctAnswer;
+      base.correctAnswer = form.correctAnswer.toUpperCase();
     } else {
-      // WRITING
       base.optionLists = [];
-      base.correctAnswer = formData.correctAnswer;
+      base.correctAnswer = form.correctAnswer;
     }
 
     return base;
+  }, [selectedSubjectId, chapters, user]);
+
+  const handleAddToQueue = () => {
+    if (!formData.questionText.trim()) return;
+    if (activeQueueIndex !== null) {
+      // Update existing queue item
+      const updated = [...questionQueue];
+      updated[activeQueueIndex] = { ...formData };
+      setQuestionQueue(updated);
+      setActiveQueueIndex(null);
+    } else {
+      setQuestionQueue(prev => [...prev, { ...formData }]);
+    }
+    setFormData({ ...emptyFormData, chapterId: formData.chapterId, difficulty: formData.difficulty, type: formData.type, points: formData.points });
+  };
+
+  const handleEditQueueItem = (index: number) => {
+    setFormData({ ...questionQueue[index] });
+    setActiveQueueIndex(index);
+  };
+
+  const handleRemoveFromQueue = (index: number) => {
+    setQuestionQueue(prev => prev.filter((_, i) => i !== index));
+    if (activeQueueIndex === index) {
+      setActiveQueueIndex(null);
+      setFormData({ ...emptyFormData });
+    } else if (activeQueueIndex !== null && activeQueueIndex > index) {
+      setActiveQueueIndex(activeQueueIndex - 1);
+    }
   };
 
   const handleSaveQuestion = async () => {
-    const payload = buildPayload();
     try {
       if (editingQuestion) {
+        const payload = buildPayloadFromForm(formData);
         await updateMutation.mutateAsync({ questionId: editingQuestion.id, payload: payload as UpdateQuestionPayload });
         toast({ title: 'Question updated successfully' });
       } else {
-        await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payloads: [payload] });
-        toast({ title: 'Question created successfully' });
+        // Collect current form + queue
+        const allForms = [...questionQueue];
+        if (formData.questionText.trim()) {
+          allForms.push({ ...formData });
+        }
+        if (allForms.length === 0) {
+          toast({ title: 'No questions to create', variant: 'destructive' });
+          return;
+        }
+        const payloads = allForms.map(f => buildPayloadFromForm(f));
+        await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payloads });
+        toast({ title: `${payloads.length} question${payloads.length > 1 ? 's' : ''} created successfully` });
       }
       setIsDialogOpen(false);
       setEditingQuestion(null);
+      setQuestionQueue([]);
+      setActiveQueueIndex(null);
     } catch {
-      toast({ title: 'Failed to save question', variant: 'destructive' });
+      toast({ title: 'Failed to save question(s)', variant: 'destructive' });
     }
   };
 
