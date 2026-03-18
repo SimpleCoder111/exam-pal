@@ -183,7 +183,7 @@ const AdminQuestionBank = () => {
       questionType: apiType,
       questionContent: formData.questionText,
       difficulty: localDiffToApi(formData.difficulty),
-      createdBy: user?.username ?? user?.id ?? 'admin',
+      createdBy: user?.name ?? user?.id ?? 'admin',
       score: parseInt(formData.points) || 1,
       correctAnswer: '',
       optionLists: [],

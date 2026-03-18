@@ -161,7 +161,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-muted-foreground mt-1">Hard</p>
                 </div>
                 <div className="text-center p-3 rounded-lg bg-blue-500/10">
-                  <p className="text-2xl font-semibold text-blue-600">{questionSummary.totalMCQQuestions}</p>
+                  <p className="text-2xl font-semibold text-blue-600">{questionSummary.totalQcmQuestions}</p>
                   <p className="text-xs text-muted-foreground mt-1">MCQ</p>
                 </div>
                 <div className="text-center p-3 rounded-lg bg-purple-500/10">
