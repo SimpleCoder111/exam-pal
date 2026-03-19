@@ -28,7 +28,7 @@ const TeacherDashboard = () => {
   const { data: summary, isLoading: summaryLoading } = useQuestionSummary();
 
   const totalQuestions = summary?.totalQuestions ?? 0;
-  const totalStudents = classes?.reduce((sum, c) => sum + (c.studentCount ?? 0), 0) ?? 0;
+  const totalStudents = classes?.length ?? 0;
   const upcomingExams = exams?.filter(e => {
     try { return isFuture(parseISO(e.examDate)); } catch { return false; }
   }) ?? [];
@@ -198,13 +198,9 @@ const TeacherDashboard = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">{cls.className}</p>
-                        <p className="text-sm text-muted-foreground truncate">{cls.teacherName}</p>
+                        <p className="text-sm text-muted-foreground truncate">{cls.academicYear ?? ''}</p>
                       </div>
                       <div className="text-right">
-                        <div className="flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span className="font-medium text-foreground">{cls.studentCount}</span>
-                        </div>
                         <Badge variant="secondary" className="text-xs mt-1">{cls.classStatus}</Badge>
                       </div>
                     </div>

@@ -268,7 +268,7 @@ const TeacherExams = () => {
             <SelectContent>
               {classes?.map(cls => (
                 <SelectItem key={cls.classId} value={cls.classId.toString()}>
-                  {cls.className} ({cls.studentCount} students)
+                  {cls.className}
                 </SelectItem>
               ))}
             </SelectContent>

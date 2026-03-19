@@ -5,13 +5,13 @@ import { apiFetch } from '@/lib/api';
 export interface TeacherClass {
   classId: number;
   className: string;
+  subjectId: number;
+  teacherId: string;
   classStart: string;
   classEnd: string;
   classStatus: string;
-  classYear: string | null;
-  teacherId: string;
-  teacherName: string;
-  studentCount: number;
+  academicYear: string | null;
+  classToken: string;
 }
 
 export interface QRData {
@@ -28,6 +28,21 @@ export interface PendingRequest {
   status: string;
 }
 
+export interface EnrolledStudent {
+  id: number;
+  userId: string;
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  createdAt: string;
+  profileImageUrl: string | null;
+  displayProfileImageUrl: string;
+  status: string;
+}
+
 // Fetch teacher's classes
 export const useTeacherClasses = () => {
   const { user, accessToken } = useAuth();
@@ -35,7 +50,7 @@ export const useTeacherClasses = () => {
     queryKey: ['teacherClasses', user?.id],
     queryFn: async () => {
       const res = await apiFetch<{ code: string; data: TeacherClass[]; message: string }>(
-        `/api/v1/classes/${user?.id}`,
+        `/api/v1/teacher/classes/${user?.id}`,
         accessToken
       );
       return res.data;
@@ -76,6 +91,22 @@ export const usePendingRequests = (classId: number | null) => {
   });
 };
 
+// Fetch enrolled students for a class
+export const useClassEnrollments = (classId: number | null) => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['classEnrollments', classId],
+    queryFn: async () => {
+      const res = await apiFetch<{ code: string; data: EnrolledStudent[]; message: string }>(
+        `/api/v1/teacher/class/${classId}/enrollments`,
+        accessToken
+      );
+      return res.data;
+    },
+    enabled: !!classId && !!accessToken,
+  });
+};
+
 // Approve or reject enrollment
 export const useUpdateEnrollment = () => {
   const { accessToken } = useAuth();
@@ -97,6 +128,7 @@ export const useUpdateEnrollment = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pendingRequests'] });
       queryClient.invalidateQueries({ queryKey: ['teacherClasses'] });
+      queryClient.invalidateQueries({ queryKey: ['classEnrollments'] });
     },
   });
 };
