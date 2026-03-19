@@ -299,7 +299,7 @@ const AdminExams = () => {
           <Label>Subject *</Label>
           <Select 
             value={formData.subjectId?.toString() || ''} 
-            onValueChange={(v) => setFormData({ ...formData, subjectId: parseInt(v) })}
+            onValueChange={(v) => setFormData({ ...formData, subjectId: parseInt(v), classId: null })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select subject" />
