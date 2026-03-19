@@ -26,6 +26,7 @@ import TeacherExams from "./pages/teacher/TeacherExams";
 import TeacherReports from "./pages/teacher/TeacherReports";
 import TeacherSettings from "./pages/teacher/TeacherSettings";
 import TeacherStudents from "./pages/teacher/TeacherStudents";
+import TeacherSubjects from "./pages/teacher/TeacherSubjects";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentDashboardReal from "./pages/student/StudentDashboardReal";
 import StudentSubjects from "./pages/student/StudentSubjects";
