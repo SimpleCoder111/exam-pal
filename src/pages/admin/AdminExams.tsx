@@ -477,7 +477,7 @@ const AdminExams = () => {
                   className={selectedQuestionIds.includes(q.id) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
                   onClick={() => handleQuestionToggle(q.id)}
                 >
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedQuestionIds.includes(q.id)}
