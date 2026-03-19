@@ -454,34 +454,34 @@ const AdminExams = () => {
       ) : (
         <div className="max-h-[350px] overflow-y-auto border rounded-lg">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Question</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Difficulty</TableHead>
-                <TableHead>Chapter</TableHead>
+                <TableHead>Points</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredQuestions.map((q) => (
                 <TableRow
-                  key={q.questionId}
-                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
-                  onClick={() => handleQuestionToggle(q.questionId)}
+                  key={q.id}
+                  className={selectedQuestionIds.includes(q.id) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
+                  onClick={() => handleQuestionToggle(q.id)}
                 >
                   <TableCell>
                     <input
                       type="checkbox"
-                      checked={selectedQuestionIds.includes(q.questionId)}
-                      onChange={() => handleQuestionToggle(q.questionId)}
+                      checked={selectedQuestionIds.includes(q.id)}
+                      onChange={() => handleQuestionToggle(q.id)}
                       className="rounded"
                     />
                   </TableCell>
                   <TableCell className="font-medium max-w-[250px] truncate">{q.questionContent || '—'}</TableCell>
                   <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
                   <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{q.chapter || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{q.points || '—'}</TableCell>
                 </TableRow>
               ))}
               {filteredQuestions.length === 0 && questionSearch && (
