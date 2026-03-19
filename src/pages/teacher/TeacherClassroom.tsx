@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Users,
   QrCode,
@@ -20,7 +21,6 @@ import {
   X,
   Clock,
   History,
-  RefreshCw,
   Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +28,7 @@ import {
   useTeacherClasses,
   useClassQR,
   usePendingRequests,
+  useClassEnrollments,
   useUpdateEnrollment,
   type TeacherClass,
 } from '@/hooks/useTeacherClassrooms';
@@ -57,6 +58,7 @@ const TeacherClassroom = () => {
 
   const { data: qrData, isLoading: qrLoading } = useClassQR(showQRDialog ? effectiveClassId : null);
   const { data: pendingRequests = [], isLoading: requestsLoading } = usePendingRequests(effectiveClassId);
+  const { data: enrolledStudents = [], isLoading: enrollmentsLoading } = useClassEnrollments(effectiveClassId);
   const updateEnrollment = useUpdateEnrollment();
 
   // Derived data
@@ -189,12 +191,12 @@ const TeacherClassroom = () => {
                     <div className="grid gap-4 md:grid-cols-3">
                       <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                          <CardTitle className="text-sm font-medium">Enrolled Students</CardTitle>
                           <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold">{selectedClass.studentCount}</div>
-                          <p className="text-xs text-muted-foreground">Enrolled in class</p>
+                          <div className="text-2xl font-bold">{enrollmentsLoading ? '—' : enrolledStudents.length}</div>
+                          <p className="text-xs text-muted-foreground">Approved in class</p>
                         </CardContent>
                       </Card>
                       <Card>
@@ -203,7 +205,7 @@ const TeacherClassroom = () => {
                           <Clock className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                          <div className="text-sm font-semibold">{selectedClass.classStart} — {selectedClass.classEnd}</div>
+                          <div className="text-sm font-semibold">{selectedClass.classStart?.split('T')[0]} — {selectedClass.classEnd?.split('T')[0]}</div>
                           <p className="text-xs text-muted-foreground mt-1">{getStatusBadge(selectedClass.classStatus)}</p>
                         </CardContent>
                       </Card>
@@ -235,18 +237,9 @@ const TeacherClassroom = () => {
                           <div className="flex-1 space-y-2">
                             <Label>Invite Code</Label>
                             <div className="flex gap-2">
-                              <Input value={qrData?.token ?? '—'} readOnly className="font-mono text-lg" />
-                              <Button variant="outline" size="icon" onClick={copyInviteToken} disabled={!qrData?.token}>
+                              <Input value={selectedClass.classToken ?? '—'} readOnly className="font-mono text-lg" />
+                              <Button variant="outline" size="icon" onClick={copyInviteToken} disabled={!selectedClass.classToken}>
                                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex-1 space-y-2">
-                            <Label>Invite Link</Label>
-                            <div className="flex gap-2">
-                              <Input value={qrData?.joinUrl ?? '—'} readOnly className="text-sm" />
-                              <Button variant="outline" size="icon" onClick={copyInviteLink} disabled={!qrData?.joinUrl}>
-                                <Copy className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -364,6 +357,65 @@ const TeacherClassroom = () => {
                         </CardContent>
                       </Card>
                     )}
+
+                    {/* Enrolled Students */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Users className="h-5 w-5" />
+                          Enrolled Students
+                          {!enrollmentsLoading && <Badge variant="secondary">{enrolledStudents.length}</Badge>}
+                        </CardTitle>
+                        <CardDescription>
+                          Students currently enrolled in this class
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {enrollmentsLoading ? (
+                          <div className="space-y-3">
+                            {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                          </div>
+                        ) : enrolledStudents.length === 0 ? (
+                          <p className="text-muted-foreground text-sm text-center py-8">No students enrolled yet.</p>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Student</TableHead>
+                                <TableHead>Student ID</TableHead>
+                                <TableHead>Gender</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Phone</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {enrolledStudents.map((student) => (
+                                <TableRow key={student.id}>
+                                  <TableCell>
+                                    <div className="flex items-center gap-3">
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage
+                                          src={student.profileImageUrl ? `http://localhost:7000${student.profileImageUrl}` : undefined}
+                                          alt={student.name}
+                                        />
+                                        <AvatarFallback className="text-xs">
+                                          {student.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="font-medium">{student.name}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="font-mono text-sm">{student.userId}</TableCell>
+                                  <TableCell>{student.gender === 'M' ? 'Male' : student.gender === 'F' ? 'Female' : student.gender}</TableCell>
+                                  <TableCell>{student.email}</TableCell>
+                                  <TableCell>{student.phoneNumber}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </CardContent>
+                    </Card>
                   </>
                 )}
               </>
@@ -382,18 +434,18 @@ const TeacherClassroom = () => {
                         {getStatusBadge(cls.classStatus)}
                       </div>
                       <CardDescription>
-                        {cls.classStart} — {cls.classEnd}
+                        {cls.classStart?.split('T')[0]} — {cls.classEnd?.split('T')[0]}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-muted-foreground">Total Students</p>
-                          <p className="text-2xl font-bold">{cls.studentCount}</p>
+                          <p className="text-sm text-muted-foreground">Academic Year</p>
+                          <p className="text-sm font-medium">{cls.academicYear ?? '—'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Teacher</p>
-                          <p className="text-sm font-medium">{cls.teacherName}</p>
+                          <p className="text-sm text-muted-foreground">Status</p>
+                          <p className="text-sm font-medium">{cls.classStatus}</p>
                         </div>
                       </div>
                     </CardContent>
