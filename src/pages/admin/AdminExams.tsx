@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminExams, useCreateAdminExam, useDeleteAdminExam, useUpdateAdminExam, AdminExamResponse, CreateAdminExamPayload } from '@/hooks/useAdminExams';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
 import { useAdminClasses } from '@/hooks/useAdminClasses';
-import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
+import { useAdminQuestions } from '@/hooks/useAdminQuestions';
 
 interface ExamFormData {
   title: string;
@@ -83,13 +83,20 @@ const AdminExams = () => {
   const [questionSearch, setQuestionSearch] = useState('');
 
   // Fetch questions for manual mode when subject is selected
-  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
-  const allQuestions = questionsData?.questionData || [];
+  const { data: adminQuestions, isLoading: questionsLoading } = useAdminQuestions(formData.subjectId);
+  const allQuestions = adminQuestions || [];
   const filteredQuestions = allQuestions.filter(q =>
     !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
     q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase())
+  );
+
+  // Filter classes by selected subject
+  const filteredClasses = (classes || []).filter(cls =>
+    !formData.subjectId || cls.subjectId === formData.subjectId
+  );
+  const editFilteredClasses = (classes || []).filter(cls =>
+    !editFormData.subjectId || cls.subjectId === editFormData.subjectId
   );
 
   const handleQuestionToggle = (questionId: number) => {
@@ -292,7 +299,7 @@ const AdminExams = () => {
           <Label>Subject *</Label>
           <Select 
             value={formData.subjectId?.toString() || ''} 
-            onValueChange={(v) => setFormData({ ...formData, subjectId: parseInt(v) })}
+            onValueChange={(v) => setFormData({ ...formData, subjectId: parseInt(v), classId: null })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select subject" />
@@ -313,10 +320,10 @@ const AdminExams = () => {
             onValueChange={(v) => setFormData({ ...formData, classId: parseInt(v) })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a class" />
+              <SelectValue placeholder={formData.subjectId ? "Select a class" : "Select a subject first"} />
             </SelectTrigger>
             <SelectContent>
-              {classes?.map(cls => (
+              {filteredClasses.map(cls => (
                 <SelectItem key={cls.classId} value={cls.classId.toString()}>
                   {cls.className} ({cls.studentCount} students)
                 </SelectItem>
@@ -447,34 +454,34 @@ const AdminExams = () => {
       ) : (
         <div className="max-h-[350px] overflow-y-auto border rounded-lg">
           <Table>
-            <TableHeader>
+             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Question</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Difficulty</TableHead>
-                <TableHead>Chapter</TableHead>
+                <TableHead>Points</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredQuestions.map((q) => (
                 <TableRow
-                  key={q.questionId}
-                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
-                  onClick={() => handleQuestionToggle(q.questionId)}
+                  key={q.id}
+                  className={selectedQuestionIds.includes(q.id) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
+                  onClick={() => handleQuestionToggle(q.id)}
                 >
                   <TableCell>
                     <input
                       type="checkbox"
-                      checked={selectedQuestionIds.includes(q.questionId)}
-                      onChange={() => handleQuestionToggle(q.questionId)}
+                      checked={selectedQuestionIds.includes(q.id)}
+                      onChange={() => handleQuestionToggle(q.id)}
                       className="rounded"
                     />
                   </TableCell>
                   <TableCell className="font-medium max-w-[250px] truncate">{q.questionContent || '—'}</TableCell>
                   <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
                   <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{q.chapter || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{q.points || '—'}</TableCell>
                 </TableRow>
               ))}
               {filteredQuestions.length === 0 && questionSearch && (
@@ -884,7 +891,7 @@ const AdminExams = () => {
                     <Select value={editFormData.classId?.toString() || ''} onValueChange={(v) => setEditFormData({ ...editFormData, classId: parseInt(v) })}>
                       <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
                       <SelectContent>
-                        {classes?.map(cls => <SelectItem key={cls.classId} value={cls.classId.toString()}>{cls.className}</SelectItem>)}
+                        {editFilteredClasses.map(cls => <SelectItem key={cls.classId} value={cls.classId.toString()}>{cls.className}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
