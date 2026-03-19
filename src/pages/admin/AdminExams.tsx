@@ -83,13 +83,20 @@ const AdminExams = () => {
   const [questionSearch, setQuestionSearch] = useState('');
 
   // Fetch questions for manual mode when subject is selected
-  const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
-  const allQuestions = questionsData?.questionData || [];
+  const { data: adminQuestions, isLoading: questionsLoading } = useAdminQuestions(formData.subjectId);
+  const allQuestions = adminQuestions || [];
   const filteredQuestions = allQuestions.filter(q =>
     !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
     q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase())
+  );
+
+  // Filter classes by selected subject
+  const filteredClasses = (classes || []).filter(cls =>
+    !formData.subjectId || cls.subjectId === formData.subjectId
+  );
+  const editFilteredClasses = (classes || []).filter(cls =>
+    !editFormData.subjectId || cls.subjectId === editFormData.subjectId
   );
 
   const handleQuestionToggle = (questionId: number) => {
