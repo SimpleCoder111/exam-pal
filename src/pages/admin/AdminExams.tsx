@@ -891,7 +891,7 @@ const AdminExams = () => {
                     <Select value={editFormData.classId?.toString() || ''} onValueChange={(v) => setEditFormData({ ...editFormData, classId: parseInt(v) })}>
                       <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
                       <SelectContent>
-                        {classes?.map(cls => <SelectItem key={cls.classId} value={cls.classId.toString()}>{cls.className}</SelectItem>)}
+                        {editFilteredClasses.map(cls => <SelectItem key={cls.classId} value={cls.classId.toString()}>{cls.className}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
