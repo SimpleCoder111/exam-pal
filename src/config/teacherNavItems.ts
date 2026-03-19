@@ -2,6 +2,7 @@ import {
   LayoutDashboard, 
   Users, 
   School, 
+  BookOpen,
   HelpCircle, 
   FileText, 
   BarChart3, 
