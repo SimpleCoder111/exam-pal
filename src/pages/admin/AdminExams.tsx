@@ -320,10 +320,10 @@ const AdminExams = () => {
             onValueChange={(v) => setFormData({ ...formData, classId: parseInt(v) })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a class" />
+              <SelectValue placeholder={formData.subjectId ? "Select a class" : "Select a subject first"} />
             </SelectTrigger>
             <SelectContent>
-              {classes?.map(cls => (
+              {filteredClasses.map(cls => (
                 <SelectItem key={cls.classId} value={cls.classId.toString()}>
                   {cls.className} ({cls.studentCount} students)
                 </SelectItem>
