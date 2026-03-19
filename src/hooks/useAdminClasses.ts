@@ -13,7 +13,6 @@ export interface AdminClassResponse {
   teacherId: string;
   teacherName: string | null;
   studentCount: number;
-  subjectId: number;
 }
 
 interface ApiResponse<T> {

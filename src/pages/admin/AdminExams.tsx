@@ -91,13 +91,20 @@ const AdminExams = () => {
     q.difficulty.toLowerCase().includes(questionSearch.toLowerCase())
   );
 
-  // Filter classes by selected subject
-  const filteredClasses = (classes || []).filter(cls =>
-    !formData.subjectId || cls.subjectId === formData.subjectId
-  );
-  const editFilteredClasses = (classes || []).filter(cls =>
-    !editFormData.subjectId || cls.subjectId === editFormData.subjectId
-  );
+  // Filter classes by selected subject (className format: "Class - Subject")
+  const getSelectedSubjectName = (subjectId: number | null) =>
+    subjectId ? subjects?.find(s => s.id === subjectId)?.name?.toLowerCase() : null;
+
+  const filteredClasses = (classes || []).filter(cls => {
+    const subjectName = getSelectedSubjectName(formData.subjectId);
+    if (!subjectName) return true;
+    return cls.className?.toLowerCase().includes(subjectName);
+  });
+  const editFilteredClasses = (classes || []).filter(cls => {
+    const subjectName = getSelectedSubjectName(editFormData.subjectId);
+    if (!subjectName) return true;
+    return cls.className?.toLowerCase().includes(subjectName);
+  });
 
   const handleQuestionToggle = (questionId: number) => {
     setSelectedQuestionIds(prev =>
