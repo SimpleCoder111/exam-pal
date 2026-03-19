@@ -28,7 +28,7 @@ const TeacherDashboard = () => {
   const { data: summary, isLoading: summaryLoading } = useQuestionSummary();
 
   const totalQuestions = summary?.totalQuestions ?? 0;
-  const totalStudents = classes?.reduce((sum, c) => sum + (c.studentCount ?? 0), 0) ?? 0;
+  const totalStudents = classes?.length ?? 0;
   const upcomingExams = exams?.filter(e => {
     try { return isFuture(parseISO(e.examDate)); } catch { return false; }
   }) ?? [];
