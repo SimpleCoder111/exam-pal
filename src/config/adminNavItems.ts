@@ -16,7 +16,7 @@ export const adminNavItems = [
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Classes', href: '/admin/classes', icon: GraduationCap },
   { label: 'Subjects', href: '/admin/subjects', icon: BookOpen },
-  { label: 'Question Bank', href: '/admin/questions', icon: HelpCircle },
+  { label: 'Questions', href: '/admin/questions', icon: HelpCircle },
   { label: 'Exams', href: '/admin/exams', icon: FileText },
   { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
