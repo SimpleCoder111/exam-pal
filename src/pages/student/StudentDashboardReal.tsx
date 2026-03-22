@@ -305,13 +305,13 @@ const StudentDashboardReal = () => {
                     <Skeleton key={i} className="h-10 w-full" />
                   ))}
                 </div>
-              ) : !results || results.length === 0 ? (
+              ) : resultsArray.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No performance data yet.</p>
               ) : (
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Exams Taken</span>
-                    <span className="font-medium text-foreground">{results.length}</span>
+                    <span className="font-medium text-foreground">{resultsArray.length}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Average Score</span>
@@ -328,13 +328,15 @@ const StudentDashboardReal = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Pass Rate (≥50%)</span>
                     <span className="font-medium text-foreground">
-                      {Math.round((results.filter(r => r.score >= 50).length / results.length) * 100)}%
+                      {Math.round((resultsArray.filter(r => r.score >= 50).length / resultsArray.length) * 100)}%
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Avg. Time Taken</span>
                     <span className="font-medium text-foreground">
-                      {Math.round(results.reduce((s, r) => s + r.timeTaken, 0) / results.length)} min
+                      {Math.round(resultsArray.reduce((s, r) => s + (r.timeTaken ?? 0), 0) / resultsArray.length)} min
+                    </span>
+                  </div>
                     </span>
                   </div>
                 </div>
