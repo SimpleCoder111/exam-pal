@@ -5,6 +5,7 @@ import {
   BookOpen,
   HelpCircle, 
   FileText, 
+  ClipboardCheck,
   BarChart3, 
   Settings 
 } from 'lucide-react';
@@ -17,6 +18,7 @@ export const teacherNavItems = [
   { label: 'Subjects', href: '/teacher/subjects', icon: BookOpen },
   { label: 'Questions', href: '/teacher/questions', icon: HelpCircle },
   { label: 'Exams', href: '/teacher/exams', icon: FileText },
+  { label: 'Grading', href: '/teacher/grading', icon: ClipboardCheck },
   { label: 'Reports', href: '/teacher/reports', icon: BarChart3 },
   { label: 'Settings', href: '/teacher/settings', icon: Settings },
 ];
