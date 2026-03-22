@@ -207,7 +207,8 @@ const Results = () => {
             </h2>
             <div className="space-y-4">
               {sortedGradeDetails.map((detail, index) => {
-                const isPendingReview = detail.correctAnswer === "Waiting for teacher to review";
+                const isManualGradeType = detail.questionType === "CODING" || detail.questionType === "WRITING";
+                const isPendingReview = isManualGradeType || detail.correctAnswer === "Waiting for teacher to review";
                 const TypeIcon = getTypeIcon(detail.questionType);
 
                 return (
@@ -242,9 +243,20 @@ const Results = () => {
                             <TypeIcon className="w-3 h-3" />
                             {getTypeLabel(detail.questionType)}
                           </Badge>
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            {detail.pointsObtained}/{detail.pointsPossible} pts
-                          </span>
+                          {!isManualGradeType && (
+                            <span className="text-xs ml-auto">
+                              {detail.correct ? (
+                                <span className="text-green-600 dark:text-green-400 font-medium">Correct</span>
+                              ) : (
+                                <span className="text-destructive font-medium">Incorrect</span>
+                              )}
+                            </span>
+                          )}
+                          {isManualGradeType && (
+                            <span className="text-xs text-muted-foreground ml-auto font-medium">
+                              Pending Review
+                            </span>
+                          )}
                         </div>
 
                         {/* Question text */}
@@ -266,7 +278,7 @@ const Results = () => {
                               Your Answer
                             </span>
                             {detail.studentAnswer ? (
-                              (detail.questionType === "CODING" || detail.questionType === "WRITING") ? (
+                              isManualGradeType ? (
                                 <pre className="whitespace-pre-wrap text-foreground font-mono text-xs leading-relaxed">
                                   {detail.studentAnswer}
                                 </pre>
@@ -278,7 +290,7 @@ const Results = () => {
                             )}
                           </div>
 
-                          {/* Correct answer or pending review */}
+                          {/* Status or correct answer */}
                           {isPendingReview ? (
                             <div className="px-4 py-2.5 rounded-lg text-sm border border-border bg-secondary/30">
                               <span className="text-xs font-medium text-muted-foreground block mb-1">
