@@ -29,6 +29,7 @@ import { adminNavItems } from '@/config/adminNavItems';
 import {
   useAdminClasses, useCreateClass, useDeleteClass, useUpdateClass,
   useAdminClassEnrollments, useAdminPendingEnrollments, useAdminUpdateEnrollment,
+  useAdminEnrollStudent,
   AdminClassResponse,
 } from '@/hooks/useAdminClasses';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
