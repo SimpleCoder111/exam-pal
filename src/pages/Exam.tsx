@@ -20,6 +20,7 @@ import SecurityWarning from "@/components/exam/SecurityWarning";
 import ExamStatusBar from "@/components/exam/ExamStatusBar";
 import { useExamSecurity, SecurityViolation } from "@/hooks/useExamSecurity";
 import { useExamCache } from "@/hooks/useExamCache";
+import { useNetworkLatency } from "@/hooks/useNetworkLatency";
 import { useSaveProgress, buildSaveProgressPayload } from "@/hooks/useSaveProgress";
 import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
 import { toast } from "sonner";
