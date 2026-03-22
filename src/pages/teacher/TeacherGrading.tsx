@@ -113,6 +113,54 @@ const TeacherGrading = () => {
     });
   };
 
+  const handleAiGrade = useCallback(async (detail: QuestionGradeDetail) => {
+    if (!detail.studentAnswer || !accessToken) return;
+    
+    setAiLoading(prev => ({ ...prev, [detail.questionId]: true }));
+    try {
+      interface AiGradeResponse {
+        obtainedScore: number;
+        totalPossibleScore: number;
+        summaryMessage: string;
+        details: Array<{
+          pointsObtained: number;
+          correctAnswer: string;
+        }>;
+      }
+
+      const res = await apiPost<AiGradeResponse>(
+        '/api/v1/ai/grade-code',
+        accessToken,
+        {
+          problemDesc: `Question (${detail.pointsPossible} points): The student was asked to answer a ${detail.questionType.toLowerCase()} question.`,
+          code: detail.studentAnswer,
+        }
+      );
+
+      const suggestedScore = Math.round((res.obtainedScore / res.totalPossibleScore) * detail.pointsPossible);
+      const clampedScore = Math.min(detail.pointsPossible, Math.max(0, suggestedScore));
+
+      setAiSuggestions(prev => ({
+        ...prev,
+        [detail.questionId]: { score: clampedScore, message: res.summaryMessage },
+      }));
+      setGradeInputs(prev => ({ ...prev, [detail.questionId]: clampedScore }));
+
+      toast({
+        title: 'AI Suggestion Ready',
+        description: `Suggested ${clampedScore}/${detail.pointsPossible} points`,
+      });
+    } catch (err) {
+      toast({
+        title: 'AI Grading Failed',
+        description: 'Could not get AI suggestion. Please grade manually.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAiLoading(prev => ({ ...prev, [detail.questionId]: false }));
+    }
+  }, [accessToken, toast]);
+
   const handleSaveGrades = () => {
     // TODO: Integrate with grading API when available
     toast({
