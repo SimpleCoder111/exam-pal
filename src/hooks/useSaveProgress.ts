@@ -53,10 +53,11 @@ export const buildSaveProgressPayload = (
   answers: Record<number, number>,
   textAnswers: Record<number, string> = {}
 ): SaveProgressPayload => {
+  const textTypes = ['FILL_IN_THE_BLANK', 'WRITING', 'CODING'];
   const questionLists: SaveProgressQuestion[] = examData.questionLists.map((q) => {
     let studentAnswer: string | null = null;
 
-    if (q.questionType === 'FILL_BLANK') {
+    if (textTypes.includes(q.questionType)) {
       studentAnswer = textAnswers[q.questionId]?.trim() || null;
     } else {
       const answerIndex = answers[q.questionId];

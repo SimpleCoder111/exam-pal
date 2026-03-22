@@ -299,8 +299,9 @@ const Exam = () => {
     );
   }
 
+  const isTextType = (type: string) => ["FILL_IN_THE_BLANK", "WRITING", "CODING"].includes(type);
   const answeredCount = questions.filter((q) =>
-    q.questionType === "FILL_BLANK"
+    isTextType(q.questionType)
       ? !!textAnswers[q.id]?.trim()
       : answers[q.id] !== undefined
   ).length;
