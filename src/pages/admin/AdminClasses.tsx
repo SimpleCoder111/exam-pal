@@ -18,15 +18,21 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  GraduationCap, Plus, Search, MoreHorizontal, Edit, Trash2, Calendar, Clock, UserCheck, Users,
+  GraduationCap, Plus, Search, MoreHorizontal, Edit, Trash2, Calendar, Clock, Users, UserPlus, Check, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { adminNavItems } from '@/config/adminNavItems';
-import { useAdminClasses, useCreateClass, useDeleteClass, useUpdateClass, AdminClassResponse } from '@/hooks/useAdminClasses';
+import {
+  useAdminClasses, useCreateClass, useDeleteClass, useUpdateClass,
+  useAdminClassEnrollments, useAdminPendingEnrollments, useAdminUpdateEnrollment,
+  AdminClassResponse,
+} from '@/hooks/useAdminClasses';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
-import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { useAdminUsers, useAdminUsersByRole } from '@/hooks/useAdminUsers';
 
 const statusColors: Record<string, string> = {
   ONGOING: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -43,6 +49,7 @@ const AdminClasses = () => {
   const createClass = useCreateClass();
   const updateClass = useUpdateClass();
   const deleteClass = useDeleteClass();
+  const updateEnrollment = useAdminUpdateEnrollment();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -51,6 +58,7 @@ const AdminClasses = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isStudentsDialogOpen, setIsStudentsDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<AdminClassResponse | null>(null);
 
   // Form states
@@ -63,6 +71,18 @@ const AdminClasses = () => {
     teacherId: '',
     academicYear: '2025-2026',
   });
+
+  // Enrollment data
+  const { data: enrolledStudents = [], isLoading: enrolledLoading } = useAdminClassEnrollments(
+    isStudentsDialogOpen ? selectedClass?.classId ?? null : null
+  );
+  const { data: pendingRequests = [], isLoading: pendingLoading } = useAdminPendingEnrollments(
+    isStudentsDialogOpen ? selectedClass?.classId ?? null : null
+  );
+
+  // Student search for "Add Student" (uses role ID 3 = student)
+  const { data: allStudents = [] } = useAdminUsersByRole(isStudentsDialogOpen ? 3 : 0);
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Filter classes
   const filteredClasses = classes.filter(cls => {
@@ -155,6 +175,31 @@ const AdminClasses = () => {
     });
     setIsEditDialogOpen(true);
   };
+
+  const openStudentsDialog = (cls: AdminClassResponse) => {
+    setSelectedClass(cls);
+    setStudentSearch('');
+    setIsStudentsDialogOpen(true);
+  };
+
+  const handleEnrollmentAction = (classEnrolledId: number, isApproved: boolean) => {
+    updateEnrollment.mutate({ classEnrolledId, isApproved }, {
+      onSuccess: () => {
+        toast.success(isApproved ? 'Student approved!' : 'Request rejected.');
+      },
+      onError: (err) => toast.error(err.message),
+    });
+  };
+
+  // Filter available students (not already enrolled)
+  const enrolledUserIds = new Set(enrolledStudents.map(s => s.userId));
+  const availableStudents = (Array.isArray(allStudents) ? allStudents : [])
+    .filter(s => s.status === 'ACTIVE' && !enrolledUserIds.has(s.userId))
+    .filter(s => {
+      if (!studentSearch) return true;
+      const term = studentSearch.toLowerCase();
+      return s.name.toLowerCase().includes(term) || s.userId.toLowerCase().includes(term);
+    });
 
   return (
     <DashboardLayout navItems={adminNavItems} role="admin">
@@ -288,9 +333,15 @@ const AdminClasses = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => openStudentsDialog(cls)}
+                          >
+                            <Users className="h-3.5 w-3.5" />
                             {cls.studentCount ?? 0} students
-                          </Badge>
+                          </Button>
                         </TableCell>
                         <TableCell>
                           <Badge className={statusColors[cls.classStatus] || ''}>
@@ -305,6 +356,10 @@ const AdminClasses = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openStudentsDialog(cls)}>
+                                <Users className="mr-2 h-4 w-4" />
+                                Manage Students
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openEditDialog(cls)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
@@ -450,6 +505,154 @@ const AdminClasses = () => {
                 {deleteClass.isPending ? 'Deleting...' : 'Delete'}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Student Management Dialog */}
+        <Dialog open={isStudentsDialogOpen} onOpenChange={(open) => {
+          if (!open) { setIsStudentsDialogOpen(false); setSelectedClass(null); setStudentSearch(''); }
+        }}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {selectedClass?.className}
+              </DialogTitle>
+              <DialogDescription>Manage enrolled students and pending requests</DialogDescription>
+            </DialogHeader>
+
+            <Tabs defaultValue="enrolled" className="flex-1 overflow-hidden flex flex-col">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="enrolled" className="gap-1">
+                  Enrolled
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{enrolledStudents.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="gap-1">
+                  Pending
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{pendingRequests.length}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="add">
+                  <UserPlus className="h-3.5 w-3.5 mr-1" />
+                  All Students
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Enrolled Students Tab */}
+              <TabsContent value="enrolled" className="flex-1 overflow-auto mt-4">
+                {enrolledLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                  </div>
+                ) : enrolledStudents.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                    <p>No enrolled students yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {enrolledStudents.map((student) => (
+                      <div key={student.userId} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={student.displayProfileImageUrl?.startsWith('/uploads') ? `http://localhost:7000${student.displayProfileImageUrl}` : undefined} />
+                          <AvatarFallback className="text-xs">{student.name?.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{student.name}</p>
+                          <p className="text-xs text-muted-foreground">{student.userId} • {student.email}</p>
+                        </div>
+                        <Badge variant={student.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-xs">
+                          {student.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Pending Requests Tab */}
+              <TabsContent value="pending" className="flex-1 overflow-auto mt-4">
+                {pendingLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+                  </div>
+                ) : pendingRequests.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Clock className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                    <p>No pending requests</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {pendingRequests.map((req) => (
+                      <div key={req.classEnrolledId} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback className="text-xs">{req.studentName?.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{req.studentName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {req.studentEmail} • Requested {req.requestAt ? format(new Date(req.requestAt), 'MMM d, yyyy') : '—'}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleEnrollmentAction(req.classEnrolledId, true)}
+                            disabled={updateEnrollment.isPending}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleEnrollmentAction(req.classEnrolledId, false)}
+                            disabled={updateEnrollment.isPending}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* All Students Tab */}
+              <TabsContent value="add" className="flex-1 overflow-hidden flex flex-col mt-4">
+                <div className="relative mb-3">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search students by name or ID..."
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div className="flex-1 overflow-auto space-y-2">
+                  {availableStudents.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="text-sm">No available students found</p>
+                    </div>
+                  ) : (
+                    availableStudents.slice(0, 50).map((student) => (
+                      <div key={student.userId} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={student.displayProfileImageUrl?.startsWith('/uploads') ? `http://localhost:7000${student.displayProfileImageUrl}` : undefined} />
+                          <AvatarFallback className="text-xs">{student.name?.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{student.name}</p>
+                          <p className="text-xs text-muted-foreground">{student.userId} • {student.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{student.gender === 'M' ? 'Male' : 'Female'}</Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
