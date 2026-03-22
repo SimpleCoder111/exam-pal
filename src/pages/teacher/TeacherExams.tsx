@@ -623,8 +623,16 @@ const TeacherExams = () => {
                               <Monitor className="h-4 w-4 text-primary" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="View Results"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/teacher/grading?examId=${exam.id}&title=${encodeURIComponent(exam.examTitle)}`);
+                            }}
+                          >
+                            <ClipboardCheck className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
