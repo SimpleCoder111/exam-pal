@@ -101,9 +101,14 @@ const Exam = () => {
 
   const questions = examData ? transformQuestions(examData.questionLists) : [];
 
+  // Pre-populate saved answers from API response
+  const initialAnswers = examData
+    ? extractSavedAnswers(examData.questionLists)
+    : { savedAnswers: {}, savedTextAnswers: {} };
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [textAnswers, setTextAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, number>>(initialAnswers.savedAnswers);
+  const [textAnswers, setTextAnswers] = useState<Record<number, string>>(initialAnswers.savedTextAnswers);
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [timeLeft, setTimeLeft] = useState(examDuration * 60);
   const [showNavigator, setShowNavigator] = useState(false);
