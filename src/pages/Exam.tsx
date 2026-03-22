@@ -139,28 +139,61 @@ const Exam = () => {
     }
   }, [examId, loadFromCache]);
 
-  // Auto-save effect (local cache + server)
+  // Local cache save every 5s
   useEffect(() => {
-    if (!examStarted || !examData) return;
+    if (!examStarted) return;
 
-    const interval = setInterval(() => {
-      // Save to local cache
+    const cacheInterval = setInterval(() => {
       saveToCache({
         answers,
         flagged: Array.from(flagged),
         currentQuestion,
         timeLeft,
       });
-
-      // Save to server if online and has answers
-      if (navigator.onLine && (Object.keys(answers).length > 0 || Object.keys(textAnswers).length > 0)) {
-        const payload = buildSaveProgressPayload(examData, answers, textAnswers);
-        saveProgressMutation.mutate(payload);
-      }
     }, 5000);
 
-    return () => clearInterval(interval);
-  }, [examStarted, answers, flagged, currentQuestion, timeLeft, saveToCache, examData]);
+    return () => clearInterval(cacheInterval);
+  }, [examStarted, answers, flagged, currentQuestion, timeLeft, saveToCache]);
+
+  // Server save every 30s (or sync when coming back online)
+  const serverSaveRef = useCallback(() => {
+    if (!examData) return;
+    if (Object.keys(answers).length === 0 && Object.keys(textAnswers).length === 0) return;
+
+    if (navigator.onLine) {
+      const payload = buildSaveProgressPayload(examData, answers, textAnswers);
+      saveProgressMutation.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Progress saved to server", { duration: 2000, id: "save-progress" });
+        },
+        onError: () => {
+          toast.warning("Server save failed — answers cached locally", { duration: 3000, id: "save-progress" });
+        },
+      });
+    } else {
+      toast.info("You're offline — answers saved locally and will sync when reconnected", { duration: 3000, id: "save-offline" });
+    }
+  }, [examData, answers, textAnswers, saveProgressMutation]);
+
+  useEffect(() => {
+    if (!examStarted || !examData) return;
+
+    const serverInterval = setInterval(serverSaveRef, 30000);
+    return () => clearInterval(serverInterval);
+  }, [examStarted, examData, serverSaveRef]);
+
+  // Sync to server when coming back online
+  useEffect(() => {
+    if (!examStarted || !examData) return;
+
+    const handleOnline = () => {
+      toast.info("Connection restored — syncing your answers...", { duration: 3000, id: "reconnect" });
+      serverSaveRef();
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [examStarted, examData, serverSaveRef]);
 
   // Timer effect
   useEffect(() => {
