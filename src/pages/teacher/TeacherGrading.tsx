@@ -166,9 +166,9 @@ const TeacherGrading = () => {
                 <TableBody>
                   {filteredExams.map(exam => (
                     <TableRow
-                      key={exam.id}
+                      key={exam.examId || exam.id}
                       className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSearchParams({ examId: String(exam.id), title: exam.examTitle })}
+                      onClick={() => setSearchParams({ examId: String(exam.examId || exam.id), title: exam.examTitle })}
                     >
                       <TableCell className="font-medium">{exam.examTitle}</TableCell>
                       <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
