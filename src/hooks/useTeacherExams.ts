@@ -4,6 +4,7 @@ import { apiFetch } from '@/lib/api';
 
 export interface TeacherExam {
   id: number;
+  examId?: number;
   examTitle: string;
   classId: number;
   subjectId: number;
