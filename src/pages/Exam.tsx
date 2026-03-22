@@ -156,16 +156,26 @@ const Exam = () => {
     },
   });
 
-  // Load cached data on mount
+  // Notify if answers were restored from API
+  useEffect(() => {
+    const hasRestoredAnswers =
+      Object.keys(initialAnswers.savedAnswers).length > 0 ||
+      Object.keys(initialAnswers.savedTextAnswers).length > 0;
+    if (hasRestoredAnswers) {
+      toast.info("📝 Your previously saved answers have been restored.", { duration: 4000 });
+    }
+  }, []);
+
+  // Load cached data on mount (merge with API answers, cache takes priority for fresher data)
   useEffect(() => {
     const cached = loadFromCache();
     if (cached && cached.examId === examId) {
-      setAnswers(cached.answers);
+      setAnswers((prev) => ({ ...prev, ...cached.answers }));
       setFlagged(new Set(cached.flagged));
       setCurrentQuestion(cached.currentQuestion);
       setTimeLeft(cached.timeLeft);
       setExamStarted(true);
-      toast.info("Your previous progress has been restored.");
+      toast.info("Your local progress has been restored.");
     }
   }, [examId, loadFromCache]);
 
