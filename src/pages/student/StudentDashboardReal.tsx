@@ -337,8 +337,6 @@ const StudentDashboardReal = () => {
                       {Math.round(resultsArray.reduce((s, r) => s + (r.timeTaken ?? 0), 0) / resultsArray.length)} min
                     </span>
                   </div>
-                    </span>
-                  </div>
                 </div>
               )}
             </CardContent>
