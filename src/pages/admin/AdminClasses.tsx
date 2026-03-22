@@ -668,6 +668,7 @@ const AdminClasses = () => {
                           <UserPlus className="h-3 w-3 mr-1" />
                           Enroll
                         </Button>
+                      </div>
                     ))
                   )}
                 </div>
