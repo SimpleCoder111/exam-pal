@@ -61,7 +61,7 @@ export const buildSubmitPayload = (
       const answerIndex = answers[q.questionId];
       studentAnswer =
         answerIndex !== undefined && q.optionLists[answerIndex]
-          ? String(q.optionLists[answerIndex].optionId)
+          ? q.optionLists[answerIndex]
           : null;
     }
 
@@ -71,10 +71,7 @@ export const buildSubmitPayload = (
       questionType: q.questionType,
       chapterId: q.chapterId,
       chapterName: q.chapterName,
-      optionLists: q.optionLists.map((o) => ({
-        optionId: o.optionId,
-        optionText: o.optionText,
-      })),
+      optionLists: q.optionLists,
       studentAnswer,
     };
   });
