@@ -466,6 +466,7 @@ const Exam = () => {
         isOffline={isOffline}
         lastSaved={lastSaved}
         isSaving={isSaving}
+        latency={latency}
       />
     </div>
   );
