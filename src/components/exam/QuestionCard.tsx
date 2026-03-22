@@ -71,7 +71,7 @@ const QuestionCard = ({
       </h2>
 
       {/* Options / Input */}
-      {question.questionType === "FILL_BLANK" ? (
+      {question.questionType === "FILL_IN_THE_BLANK" ? (
         <div className="space-y-3">
           <label className="text-sm font-medium text-muted-foreground">
             Type your answer below
