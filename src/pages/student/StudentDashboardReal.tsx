@@ -37,17 +37,30 @@ const StudentDashboardReal = () => {
   const { data: results, isLoading: resultsLoading } = useStudentResults();
   const { data: exams, isLoading: examsLoading } = useStudentExams();
 
+  console.log('[StudentDashboard] profile:', profile, 'subjects:', subjects, 'results:', results, 'exams:', exams);
+  console.log('[StudentDashboard] loading:', { profileLoading, subjectsLoading, resultsLoading, examsLoading });
+  console.log('[StudentDashboard] errors:', { profileError });
+
   // Computed stats from real data
-  const averageScore = results?.length
-    ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
+  const resultsArray = Array.isArray(results) ? results : [];
+  const examsArray = Array.isArray(exams) ? exams : [];
+
+  const averageScore = resultsArray.length
+    ? Math.round(resultsArray.reduce((sum, r) => sum + (r.score ?? 0), 0) / resultsArray.length)
     : null;
 
-  const upcomingExams = exams?.filter(e => e.examStatus === 'UPCOMING' || isFuture(parseISO(e.examDate))) ?? [];
+  const upcomingExams = examsArray.filter(e => {
+    try {
+      return e.examStatus === 'UPCOMING' || isFuture(parseISO(e.examDate));
+    } catch {
+      return false;
+    }
+  });
 
-  const recentResults = results?.slice(0, 4) ?? [];
+  const recentResults = resultsArray.slice(0, 4);
 
   // Best score for "rank" placeholder
-  const bestScore = results?.length ? Math.max(...results.map(r => r.score)) : null;
+  const bestScore = resultsArray.length ? Math.max(...resultsArray.map(r => r.score ?? 0)) : null;
 
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
