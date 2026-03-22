@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Separator } from '@/components/ui/separator';
 import { useTeacherExamResults, type ParsedExamResult, type QuestionGradeDetail } from '@/hooks/useTeacherResults';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
