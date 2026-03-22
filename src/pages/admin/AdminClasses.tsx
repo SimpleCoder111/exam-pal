@@ -29,6 +29,7 @@ import { adminNavItems } from '@/config/adminNavItems';
 import {
   useAdminClasses, useCreateClass, useDeleteClass, useUpdateClass,
   useAdminClassEnrollments, useAdminPendingEnrollments, useAdminUpdateEnrollment,
+  useAdminEnrollStudent,
   AdminClassResponse,
 } from '@/hooks/useAdminClasses';
 import { useAdminSubjects } from '@/hooks/useAdminSubjects';
@@ -50,6 +51,7 @@ const AdminClasses = () => {
   const updateClass = useUpdateClass();
   const deleteClass = useDeleteClass();
   const updateEnrollment = useAdminUpdateEnrollment();
+  const enrollStudent = useAdminEnrollStudent();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -647,6 +649,25 @@ const AdminClasses = () => {
                           <p className="text-xs text-muted-foreground">{student.userId} • {student.email}</p>
                         </div>
                         <Badge variant="outline" className="text-xs">{student.gender === 'M' ? 'Male' : 'Female'}</Badge>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            if (!selectedClass?.classId) return;
+                            enrollStudent.mutate(
+                              { studentId: student.userId, classId: selectedClass.classId },
+                              {
+                                onSuccess: () => toast.success(`${student.name} enrolled successfully`),
+                                onError: (err) => toast.error(err.message || 'Failed to enroll student'),
+                              }
+                            );
+                          }}
+                          disabled={enrollStudent.isPending}
+                        >
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          Enroll
+                        </Button>
                       </div>
                     ))
                   )}

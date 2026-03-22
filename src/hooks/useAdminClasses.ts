@@ -249,3 +249,27 @@ export const useAdminUpdateEnrollment = () => {
     },
   });
 };
+
+// POST enroll student to class
+export const useAdminEnrollStudent = () => {
+  const { accessToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ studentId, classId }: { studentId: string; classId: number }) => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/enroll`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ studentId, classId }),
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-class-enrollments'] });
+      qc.invalidateQueries({ queryKey: ['admin-classes'] });
+    },
+  });
+};
