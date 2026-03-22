@@ -28,6 +28,8 @@ import {
   Eye,
   Search,
   FileText,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 const QUESTION_TYPE_ORDER = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_THE_BLANK', 'CODING', 'WRITING'];
