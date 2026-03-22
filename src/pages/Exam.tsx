@@ -85,6 +85,9 @@ const Exam = () => {
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
+  // Network latency monitoring
+  const latency = useNetworkLatency({ enabled: examStarted, interval: 15000 });
+
   // Exam cache for auto-save (local)
   const {
     saveToCache,
