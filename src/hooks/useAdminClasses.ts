@@ -31,6 +31,29 @@ interface CreateClassPayload {
   academicYear: string;
 }
 
+export interface EnrolledStudent {
+  id: number;
+  userId: string;
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  createdAt: string;
+  profileImageUrl: string | null;
+  displayProfileImageUrl: string;
+  status: string;
+}
+
+export interface PendingEnrollment {
+  classEnrolledId: number;
+  studentName: string;
+  studentEmail: string;
+  requestAt: string;
+  status: string;
+}
+
 // GET all classes
 export const useAdminClasses = () => {
   const { accessToken } = useAuth();
@@ -160,23 +183,69 @@ export const useAdminClassTeachers = () => {
   });
 };
 
-// GET student lists for class assignment
-export const useAdminClassStudents = () => {
+// GET enrolled students for a class
+export const useAdminClassEnrollments = (classId: number | null) => {
   const { accessToken } = useAuth();
   return useQuery({
-    queryKey: ['admin-class-students'],
+    queryKey: ['admin-class-enrollments', classId],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/students`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/${classId}/enrollments`, {
         headers: {
           'Content-Type': 'application/json',
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
       });
       if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const json: ApiResponse<any[]> = await res.json();
-      if (json.code !== '0') throw new Error(json.message);
+      const json: ApiResponse<EnrolledStudent[]> = await res.json();
+      if (json.code !== '200' && json.code !== '0') throw new Error(json.message);
       return json.data;
     },
-    enabled: !!accessToken,
+    enabled: !!classId && !!accessToken,
+  });
+};
+
+// GET pending enrollment requests for a class
+export const useAdminPendingEnrollments = (classId: number | null) => {
+  const { accessToken } = useAuth();
+  return useQuery({
+    queryKey: ['admin-pending-enrollments', classId],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/enrollment/pending?classId=${classId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json: ApiResponse<PendingEnrollment[]> = await res.json();
+      if (json.code !== '200' && json.code !== '0') throw new Error(json.message);
+      return json.data;
+    },
+    enabled: !!classId && !!accessToken,
+  });
+};
+
+// PUT update enrollment status (approve/reject)
+export const useAdminUpdateEnrollment = () => {
+  const { accessToken } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ classEnrolledId, isApproved }: { classEnrolledId: number; isApproved: boolean }) => {
+      const res = await fetch(`${API_BASE_URL}/api/v1/admin/class/enrollment/update_status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({ classEnrolledId, isApproved }),
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-pending-enrollments'] });
+      qc.invalidateQueries({ queryKey: ['admin-class-enrollments'] });
+      qc.invalidateQueries({ queryKey: ['admin-classes'] });
+    },
   });
 };
