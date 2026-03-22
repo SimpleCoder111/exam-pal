@@ -158,28 +158,40 @@ const Exam = () => {
   // Server save every 30s (or sync when coming back online)
   const serverSaveRef = useCallback(() => {
     if (!examData) return;
-    if (Object.keys(answers).length === 0 && Object.keys(textAnswers).length === 0) return;
+
+    const hasAnswers = Object.keys(answers).length > 0 || Object.keys(textAnswers).length > 0;
 
     if (navigator.onLine) {
       const payload = buildSaveProgressPayload(examData, answers, textAnswers);
       saveProgressMutation.mutate(payload, {
         onSuccess: () => {
-          toast.success("Progress saved to server", { duration: 2000, id: "save-progress" });
+          toast.success(
+            hasAnswers
+              ? "✅ Your answers have been saved to the server"
+              : "✅ Session synced with server",
+            { duration: 2500, id: "save-progress" }
+          );
         },
         onError: () => {
-          toast.warning("Server save failed — answers cached locally", { duration: 3000, id: "save-progress" });
+          toast.warning("⚠️ Server save failed — your answers are safely cached locally", { duration: 3000, id: "save-progress" });
         },
       });
     } else {
-      toast.info("You're offline — answers saved locally and will sync when reconnected", { duration: 3000, id: "save-offline" });
+      toast.info("📴 You're offline — answers saved locally and will sync when reconnected", { duration: 3000, id: "save-offline" });
     }
   }, [examData, answers, textAnswers, saveProgressMutation]);
 
+  // First save after 10s, then every 30s
   useEffect(() => {
     if (!examStarted || !examData) return;
 
+    const initialTimeout = setTimeout(serverSaveRef, 10000);
     const serverInterval = setInterval(serverSaveRef, 30000);
-    return () => clearInterval(serverInterval);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(serverInterval);
+    };
   }, [examStarted, examData, serverSaveRef]);
 
   // Sync to server when coming back online
