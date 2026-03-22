@@ -26,7 +26,8 @@ import {
   Edit,
   Trash2,
   Play,
-  Monitor
+  Monitor,
+  ClipboardCheck
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
