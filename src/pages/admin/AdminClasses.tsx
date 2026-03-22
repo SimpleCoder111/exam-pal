@@ -51,6 +51,7 @@ const AdminClasses = () => {
   const updateClass = useUpdateClass();
   const deleteClass = useDeleteClass();
   const updateEnrollment = useAdminUpdateEnrollment();
+  const enrollStudent = useAdminEnrollStudent();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
