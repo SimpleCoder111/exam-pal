@@ -445,6 +445,8 @@ const TeacherGrading = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </>
+      )}
       </div>
     </DashboardLayout>
   );
