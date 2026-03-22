@@ -1,4 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -63,6 +73,7 @@ const Exam = () => {
   const [showNavigator, setShowNavigator] = useState(false);
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   // Exam cache for auto-save (local)
   const {
@@ -359,7 +370,7 @@ const Exam = () => {
 
           <div className="flex gap-2">
             {answeredCount === questions.length && (
-              <Button variant="success" onClick={handleSubmit} disabled={submitExamMutation.isPending}>
+              <Button variant="success" onClick={() => setShowSubmitDialog(true)} disabled={submitExamMutation.isPending}>
                 {submitExamMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
                 ) : (
@@ -368,6 +379,24 @@ const Exam = () => {
               </Button>
             )}
           </div>
+
+          {/* Submit Confirmation Dialog */}
+          <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Submit Exam?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You have answered {answeredCount} of {questions.length} questions.
+                  {flagged.size > 0 && ` You still have ${flagged.size} flagged question(s).`}
+                  {" "}Once submitted, you cannot make any changes.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Review Again</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSubmit}>Confirm Submit</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <Button
             variant="outline"
