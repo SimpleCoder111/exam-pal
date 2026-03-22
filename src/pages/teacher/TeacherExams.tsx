@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { useTeacherExams, useCreateExam, useDeleteExam, type CreateExamPayload } from '@/hooks/useTeacherExams';
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useTeacherClasses } from '@/hooks/useTeacherClassrooms';
