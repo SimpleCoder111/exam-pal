@@ -1,6 +1,8 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Home, Trophy, Target, Clock, Award } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Home, Trophy, Target, Clock, Award, CheckCircle, XCircle, Hourglass, Code, PenLine, Type } from "lucide-react";
+import type { QuestionGradeDetail } from "@/hooks/useSubmitExam";
 import type { Question } from "@/pages/Exam";
 
 interface ResultsState {
@@ -16,7 +18,36 @@ interface ResultsState {
   subjectName: string;
   questions: Question[];
   answers: Record<number, number>;
+  questionGradeDetails?: QuestionGradeDetail[];
 }
+
+const QUESTION_TYPE_ORDER: Record<string, number> = {
+  MULTIPLE_CHOICE: 0,
+  TRUE_FALSE: 1,
+  FILL_IN_THE_BLANK: 2,
+  CODING: 3,
+  WRITING: 4,
+};
+
+const getTypeLabel = (type: string) => {
+  switch (type) {
+    case "MULTIPLE_CHOICE": return "Multiple Choice";
+    case "TRUE_FALSE": return "True / False";
+    case "FILL_IN_THE_BLANK": return "Fill in the Blank";
+    case "CODING": return "Coding";
+    case "WRITING": return "Writing";
+    default: return type;
+  }
+};
+
+const getTypeIcon = (type: string) => {
+  switch (type) {
+    case "CODING": return Code;
+    case "WRITING": return PenLine;
+    case "FILL_IN_THE_BLANK": return Type;
+    default: return Target;
+  }
+};
 
 const Results = () => {
   const location = useLocation();
@@ -47,6 +78,7 @@ const Results = () => {
     subjectName,
     questions,
     answers,
+    questionGradeDetails = [],
   } = state;
 
   const percentage = totalPossibleScore > 0
@@ -54,7 +86,7 @@ const Results = () => {
     : 0;
 
   const getGrade = () => {
-    if (percentage >= 90) return { grade: "A", color: "text-green-500" };
+    if (percentage >= 90) return { grade: "A", color: "text-green-600 dark:text-green-400" };
     if (percentage >= 80) return { grade: "B", color: "text-primary" };
     if (percentage >= 70) return { grade: "C", color: "text-accent-foreground" };
     if (percentage >= 60) return { grade: "D", color: "text-muted-foreground" };
@@ -62,10 +94,27 @@ const Results = () => {
   };
 
   const { grade, color } = getGrade();
+  const formattedDate = submittedAt ? new Date(submittedAt).toLocaleString() : "—";
 
-  const formattedDate = submittedAt
-    ? new Date(submittedAt).toLocaleString()
-    : "—";
+  const pendingReviewCount = questionGradeDetails.filter(
+    (d) => d.correctAnswer === "Waiting for teacher to review"
+  ).length;
+
+  const correctCount = questionGradeDetails.filter((d) => d.correct).length;
+  const incorrectCount = questionGradeDetails.filter(
+    (d) => !d.correct && d.correctAnswer !== "Waiting for teacher to review"
+  ).length;
+
+  // Sort grade details by question type order
+  const sortedGradeDetails = [...questionGradeDetails].sort(
+    (a, b) => (QUESTION_TYPE_ORDER[a.questionType] ?? 99) - (QUESTION_TYPE_ORDER[b.questionType] ?? 99)
+  );
+
+  // Find matching question text from the questions array
+  const getQuestionText = (questionId: number) => {
+    const q = questions.find((q) => q.id === questionId);
+    return q?.question || `Question #${questionId}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +132,7 @@ const Results = () => {
 
       <main className="container mx-auto px-6 py-12 max-w-4xl">
         {/* Score Card */}
-        <div className="bg-card rounded-2xl shadow-elevated p-8 md:p-12 text-center mb-12 animate-scale-in">
+        <div className="bg-card rounded-2xl shadow-elevated p-8 md:p-12 text-center mb-12 animate-scale-in border border-border">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <Trophy className="w-10 h-10 text-primary" />
           </div>
@@ -94,7 +143,7 @@ const Results = () => {
             {examTitle} — {subjectName}
           </p>
           {isLate && (
-            <p className="text-sm text-destructive font-medium mb-4">⚠ Submitted late</p>
+            <Badge variant="destructive" className="mb-4">⚠ Submitted Late</Badge>
           )}
           <p className="text-xs text-muted-foreground mb-8">
             <Clock className="w-3 h-3 inline mr-1" />
@@ -120,9 +169,26 @@ const Results = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-8">
-            <Award className="w-4 h-4" />
-            <span>{answeredCount} of {totalQuestions} questions answered</span>
+          {/* Summary badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Award className="w-4 h-4" />
+              <span>{answeredCount}/{totalQuestions} answered</span>
+            </div>
+            <Badge variant="outline" className="gap-1">
+              <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
+              {correctCount} correct
+            </Badge>
+            <Badge variant="outline" className="gap-1">
+              <XCircle className="w-3 h-3 text-destructive" />
+              {incorrectCount} incorrect
+            </Badge>
+            {pendingReviewCount > 0 && (
+              <Badge variant="secondary" className="gap-1">
+                <Hourglass className="w-3 h-3" />
+                {pendingReviewCount} pending review
+              </Badge>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -133,46 +199,104 @@ const Results = () => {
           </div>
         </div>
 
-        {/* Question Review */}
-        {questions && questions.length > 0 && (
+        {/* Question-by-Question Review */}
+        {sortedGradeDetails.length > 0 && (
           <div>
             <h2 className="font-heading text-2xl font-semibold text-foreground mb-6">
               Answer Review
             </h2>
             <div className="space-y-4">
-              {questions.map((q, index) => {
-                const userAnswer = answers[q.id];
+              {sortedGradeDetails.map((detail, index) => {
+                const isPendingReview = detail.correctAnswer === "Waiting for teacher to review";
+                const TypeIcon = getTypeIcon(detail.questionType);
 
                 return (
                   <div
-                    key={q.id}
+                    key={detail.questionId}
                     className="bg-card rounded-xl p-6 border border-border transition-all animate-slide-up"
-                    style={{ animationDelay: `${index * 0.05}s` }}
+                    style={{ animationDelay: `${index * 0.04}s` }}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-sm font-medium text-foreground">
-                        {index + 1}
+                      {/* Status indicator */}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        isPendingReview
+                          ? "bg-secondary"
+                          : detail.correct
+                          ? "bg-green-100 dark:bg-green-900/30"
+                          : "bg-destructive/10"
+                      }`}>
+                        {isPendingReview ? (
+                          <Hourglass className="w-5 h-5 text-muted-foreground" />
+                        ) : detail.correct ? (
+                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-destructive" />
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground mb-3">{q.question}</p>
-                        <div className="grid gap-2">
-                          {q.options.map((option, optIndex) => {
-                            const isUserAnswer = optIndex === userAnswer;
 
-                            return (
-                              <div
-                                key={optIndex}
-                                className={`px-4 py-2 rounded-lg text-sm ${
-                                  isUserAnswer
-                                    ? "bg-primary/10 text-primary border border-primary/30 font-medium"
-                                    : "bg-secondary/50 text-muted-foreground"
-                                }`}
-                              >
-                                {option}
-                                {isUserAnswer && <span className="ml-2 text-xs">(Your answer)</span>}
-                              </div>
-                            );
-                          })}
+                      <div className="flex-1 min-w-0">
+                        {/* Question header */}
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="text-xs font-medium text-muted-foreground">Q{index + 1}</span>
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <TypeIcon className="w-3 h-3" />
+                            {getTypeLabel(detail.questionType)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {detail.pointsObtained}/{detail.pointsPossible} pts
+                          </span>
+                        </div>
+
+                        {/* Question text */}
+                        <p className="font-medium text-foreground mb-3 text-sm">
+                          {getQuestionText(detail.questionId)}
+                        </p>
+
+                        {/* Answer details */}
+                        <div className="space-y-2">
+                          {/* Student answer */}
+                          <div className={`px-4 py-2.5 rounded-lg text-sm border ${
+                            isPendingReview
+                              ? "border-border bg-secondary/50"
+                              : detail.correct
+                              ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20"
+                              : "border-destructive/30 bg-destructive/5"
+                          }`}>
+                            <span className="text-xs font-medium text-muted-foreground block mb-1">
+                              Your Answer
+                            </span>
+                            {detail.studentAnswer ? (
+                              (detail.questionType === "CODING" || detail.questionType === "WRITING") ? (
+                                <pre className="whitespace-pre-wrap text-foreground font-mono text-xs leading-relaxed">
+                                  {detail.studentAnswer}
+                                </pre>
+                              ) : (
+                                <span className="text-foreground">{detail.studentAnswer}</span>
+                              )
+                            ) : (
+                              <span className="text-muted-foreground italic">No answer provided</span>
+                            )}
+                          </div>
+
+                          {/* Correct answer or pending review */}
+                          {isPendingReview ? (
+                            <div className="px-4 py-2.5 rounded-lg text-sm border border-border bg-secondary/30">
+                              <span className="text-xs font-medium text-muted-foreground block mb-1">
+                                Status
+                              </span>
+                              <span className="text-muted-foreground flex items-center gap-1.5">
+                                <Hourglass className="w-3.5 h-3.5" />
+                                Waiting for teacher to review
+                              </span>
+                            </div>
+                          ) : !detail.correct ? (
+                            <div className="px-4 py-2.5 rounded-lg text-sm border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+                              <span className="text-xs font-medium text-muted-foreground block mb-1">
+                                Correct Answer
+                              </span>
+                              <span className="text-foreground">{detail.correctAnswer}</span>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>
