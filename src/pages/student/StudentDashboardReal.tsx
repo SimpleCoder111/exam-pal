@@ -37,17 +37,30 @@ const StudentDashboardReal = () => {
   const { data: results, isLoading: resultsLoading } = useStudentResults();
   const { data: exams, isLoading: examsLoading } = useStudentExams();
 
+  console.log('[StudentDashboard] profile:', profile, 'subjects:', subjects, 'results:', results, 'exams:', exams);
+  console.log('[StudentDashboard] loading:', { profileLoading, subjectsLoading, resultsLoading, examsLoading });
+  console.log('[StudentDashboard] errors:', { profileError });
+
   // Computed stats from real data
-  const averageScore = results?.length
-    ? Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
+  const resultsArray = Array.isArray(results) ? results : [];
+  const examsArray = Array.isArray(exams) ? exams : [];
+
+  const averageScore = resultsArray.length
+    ? Math.round(resultsArray.reduce((sum, r) => sum + (r.score ?? 0), 0) / resultsArray.length)
     : null;
 
-  const upcomingExams = exams?.filter(e => e.examStatus === 'UPCOMING' || isFuture(parseISO(e.examDate))) ?? [];
+  const upcomingExams = examsArray.filter(e => {
+    try {
+      return e.examStatus === 'UPCOMING' || isFuture(parseISO(e.examDate));
+    } catch {
+      return false;
+    }
+  });
 
-  const recentResults = results?.slice(0, 4) ?? [];
+  const recentResults = resultsArray.slice(0, 4);
 
   // Best score for "rank" placeholder
-  const bestScore = results?.length ? Math.max(...results.map(r => r.score)) : null;
+  const bestScore = resultsArray.length ? Math.max(...resultsArray.map(r => r.score ?? 0)) : null;
 
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
@@ -226,9 +239,9 @@ const StudentDashboardReal = () => {
                   {recentResults.map((r) => (
                     <div key={r.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground text-sm truncate">{r.exam.examTitle}</p>
+                        <p className="font-medium text-foreground text-sm truncate">{r.exam?.examTitle ?? 'Exam'}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(parseISO(r.gradedAt), 'MMM d, yyyy')}
+                          {r.gradedAt ? format(parseISO(r.gradedAt), 'MMM d, yyyy') : '—'}
                         </p>
                       </div>
                       <span className={`text-lg font-semibold ${getScoreColor(r.score)}`}>
@@ -292,13 +305,13 @@ const StudentDashboardReal = () => {
                     <Skeleton key={i} className="h-10 w-full" />
                   ))}
                 </div>
-              ) : !results || results.length === 0 ? (
+              ) : resultsArray.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No performance data yet.</p>
               ) : (
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total Exams Taken</span>
-                    <span className="font-medium text-foreground">{results.length}</span>
+                    <span className="font-medium text-foreground">{resultsArray.length}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Average Score</span>
@@ -315,13 +328,13 @@ const StudentDashboardReal = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Pass Rate (≥50%)</span>
                     <span className="font-medium text-foreground">
-                      {Math.round((results.filter(r => r.score >= 50).length / results.length) * 100)}%
+                      {Math.round((resultsArray.filter(r => r.score >= 50).length / resultsArray.length) * 100)}%
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Avg. Time Taken</span>
                     <span className="font-medium text-foreground">
-                      {Math.round(results.reduce((s, r) => s + r.timeTaken, 0) / results.length)} min
+                      {Math.round(resultsArray.reduce((s, r) => s + (r.timeTaken ?? 0), 0) / resultsArray.length)} min
                     </span>
                   </div>
                 </div>
