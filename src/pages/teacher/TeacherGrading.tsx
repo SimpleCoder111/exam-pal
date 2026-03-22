@@ -450,10 +450,42 @@ const TeacherGrading = () => {
                         {/* Grading input for manual types */}
                         {isManual && isPending && (
                           <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
-                            <p className="text-sm font-semibold flex items-center gap-2">
-                              <PenLine className="w-4 h-4" />
-                              Grade this answer
-                            </p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold flex items-center gap-2">
+                                <PenLine className="w-4 h-4" />
+                                Grade this answer
+                              </p>
+                              {detail.studentAnswer && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2"
+                                  disabled={aiLoading[detail.questionId]}
+                                  onClick={() => handleAiGrade(detail)}
+                                >
+                                  {aiLoading[detail.questionId] ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Sparkles className="w-4 h-4" />
+                                  )}
+                                  {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
+                                </Button>
+                              )}
+                            </div>
+
+                            {/* AI Suggestion feedback */}
+                            {aiSuggestions[detail.questionId] && (
+                              <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg space-y-2">
+                                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                                  <Sparkles className="w-4 h-4" />
+                                  AI Suggestion: {aiSuggestions[detail.questionId].score}/{detail.pointsPossible} pts
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  {aiSuggestions[detail.questionId].message}
+                                </p>
+                              </div>
+                            )}
+
                             <div className="flex items-center gap-3">
                               <label className="text-sm text-muted-foreground whitespace-nowrap">
                                 Points (max {detail.pointsPossible}):
