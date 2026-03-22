@@ -54,6 +54,7 @@ interface AutoBuilderConfig {
 
 const TeacherExams = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // API hooks
   const { data: exams, isLoading: examsLoading } = useTeacherExams();
