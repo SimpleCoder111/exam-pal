@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useTeacherExamResults, type ParsedExamResult, type QuestionGradeDetail } from '@/hooks/useTeacherResults';
+import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -24,6 +25,7 @@ import {
   ClipboardCheck,
   Eye,
   Search,
+  FileText,
 } from 'lucide-react';
 
 const QUESTION_TYPE_ORDER = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_THE_BLANK', 'CODING', 'WRITING'];
@@ -59,22 +61,28 @@ const getStatusBadge = (status: string) => {
 };
 
 const TeacherGrading = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const examId = searchParams.get('examId') ? parseInt(searchParams.get('examId')!) : null;
   const examTitle = searchParams.get('title') || 'Exam Results';
 
+  const { data: exams, isLoading: examsLoading } = useTeacherExams();
   const { data: results, isLoading, error } = useTeacherExamResults(examId);
 
   const [selectedStudent, setSelectedStudent] = useState<ParsedExamResult | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [gradeInputs, setGradeInputs] = useState<Record<number, number>>({});
   const [studentSearch, setStudentSearch] = useState('');
+  const [examSearch, setExamSearch] = useState('');
 
   const filteredResults = results?.filter(r =>
     !studentSearch || r.studentId.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+
+  const filteredExams = exams?.filter(e =>
+    !examSearch || e.examTitle.toLowerCase().includes(examSearch.toLowerCase())
   );
 
   const openStudentDetail = (result: ParsedExamResult) => {
