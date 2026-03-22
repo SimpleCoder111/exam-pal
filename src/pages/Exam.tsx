@@ -65,6 +65,31 @@ const transformQuestions = (apiQuestions: TakeExamQuestion[]): Question[] => {
     }));
 };
 
+// Extract previously saved answers from API response
+const extractSavedAnswers = (apiQuestions: TakeExamQuestion[]) => {
+  const savedAnswers: Record<number, number> = {};
+  const savedTextAnswers: Record<number, string> = {};
+
+  apiQuestions.forEach((q) => {
+    if (!q.studentAnswer) return;
+
+    const isText = ["FILL_IN_THE_BLANK", "WRITING", "CODING"].includes(q.questionType);
+    if (isText) {
+      savedTextAnswers[q.questionId] = q.studentAnswer;
+    } else {
+      // MCQ / TRUE_FALSE — match option text to find index
+      const idx = q.optionLists.findIndex(
+        (opt) => opt.toLowerCase() === q.studentAnswer!.toLowerCase()
+      );
+      if (idx !== -1) {
+        savedAnswers[q.questionId] = idx;
+      }
+    }
+  });
+
+  return { savedAnswers, savedTextAnswers };
+};
+
 const Exam = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,9 +101,14 @@ const Exam = () => {
 
   const questions = examData ? transformQuestions(examData.questionLists) : [];
 
+  // Pre-populate saved answers from API response
+  const initialAnswers = examData
+    ? extractSavedAnswers(examData.questionLists)
+    : { savedAnswers: {}, savedTextAnswers: {} };
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [textAnswers, setTextAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, number>>(initialAnswers.savedAnswers);
+  const [textAnswers, setTextAnswers] = useState<Record<number, string>>(initialAnswers.savedTextAnswers);
   const [flagged, setFlagged] = useState<Set<number>>(new Set());
   const [timeLeft, setTimeLeft] = useState(examDuration * 60);
   const [showNavigator, setShowNavigator] = useState(false);
@@ -126,16 +156,26 @@ const Exam = () => {
     },
   });
 
-  // Load cached data on mount
+  // Notify if answers were restored from API
+  useEffect(() => {
+    const hasRestoredAnswers =
+      Object.keys(initialAnswers.savedAnswers).length > 0 ||
+      Object.keys(initialAnswers.savedTextAnswers).length > 0;
+    if (hasRestoredAnswers) {
+      toast.info("📝 Your previously saved answers have been restored.", { duration: 4000 });
+    }
+  }, []);
+
+  // Load cached data on mount (merge with API answers, cache takes priority for fresher data)
   useEffect(() => {
     const cached = loadFromCache();
     if (cached && cached.examId === examId) {
-      setAnswers(cached.answers);
+      setAnswers((prev) => ({ ...prev, ...cached.answers }));
       setFlagged(new Set(cached.flagged));
       setCurrentQuestion(cached.currentQuestion);
       setTimeLeft(cached.timeLeft);
       setExamStarted(true);
-      toast.info("Your previous progress has been restored.");
+      toast.info("Your local progress has been restored.");
     }
   }, [examId, loadFromCache]);
 
