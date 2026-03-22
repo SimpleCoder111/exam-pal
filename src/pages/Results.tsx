@@ -137,46 +137,37 @@ const Results = () => {
             Submitted at {formattedDate}
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-lg mx-auto mb-8">
-            <div>
-              <div className="font-heading text-3xl font-bold text-foreground">{obtainedScore}</div>
-              <div className="text-sm text-muted-foreground">Score</div>
+          {/* Summary Stats */}
+          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
+            <div className="bg-secondary/50 rounded-xl p-4">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Award className="w-4 h-4 text-primary" />
+              </div>
+              <div className="font-heading text-2xl font-bold text-foreground">{answeredCount}/{totalQuestions}</div>
+              <div className="text-xs text-muted-foreground">Answered</div>
             </div>
-            <div>
-              <div className="font-heading text-3xl font-bold text-muted-foreground">{totalPossibleScore}</div>
-              <div className="text-sm text-muted-foreground">Total</div>
+            <div className="bg-secondary/50 rounded-xl p-4">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="font-heading text-2xl font-bold text-foreground">{correctCount}</div>
+              <div className="text-xs text-muted-foreground">Correct</div>
             </div>
-            <div>
-              <div className={`font-heading text-3xl font-bold ${color}`}>{grade}</div>
-              <div className="text-sm text-muted-foreground">Grade</div>
-            </div>
-            <div>
-              <div className="font-heading text-3xl font-bold text-foreground">{percentage}%</div>
-              <div className="text-sm text-muted-foreground">Percentage</div>
+            <div className="bg-secondary/50 rounded-xl p-4">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <XCircle className="w-4 h-4 text-destructive" />
+              </div>
+              <div className="font-heading text-2xl font-bold text-foreground">{incorrectCount}</div>
+              <div className="text-xs text-muted-foreground">Incorrect</div>
             </div>
           </div>
 
-          {/* Summary badges */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Award className="w-4 h-4" />
-              <span>{answeredCount}/{totalQuestions} answered</span>
+          {pendingReviewCount > 0 && (
+            <div className="bg-secondary/30 border border-border rounded-xl px-5 py-3 mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <Hourglass className="w-4 h-4" />
+              <span><strong className="text-foreground">{pendingReviewCount}</strong> question{pendingReviewCount > 1 ? 's' : ''} pending teacher review — final grade will be available after review</span>
             </div>
-            <Badge variant="outline" className="gap-1">
-              <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
-              {correctCount} correct
-            </Badge>
-            <Badge variant="outline" className="gap-1">
-              <XCircle className="w-3 h-3 text-destructive" />
-              {incorrectCount} incorrect
-            </Badge>
-            {pendingReviewCount > 0 && (
-              <Badge variant="secondary" className="gap-1">
-                <Hourglass className="w-3 h-3" />
-                {pendingReviewCount} pending review
-              </Badge>
-            )}
-          </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="default" size="lg" onClick={() => navigate("/student/exams")}>
