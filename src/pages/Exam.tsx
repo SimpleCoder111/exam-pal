@@ -370,7 +370,7 @@ const Exam = () => {
 
           <div className="flex gap-2">
             {answeredCount === questions.length && (
-              <Button variant="success" onClick={handleSubmit} disabled={submitExamMutation.isPending}>
+              <Button variant="success" onClick={() => setShowSubmitDialog(true)} disabled={submitExamMutation.isPending}>
                 {submitExamMutation.isPending ? (
                   <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
                 ) : (
@@ -379,6 +379,24 @@ const Exam = () => {
               </Button>
             )}
           </div>
+
+          {/* Submit Confirmation Dialog */}
+          <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Submit Exam?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You have answered {answeredCount} of {questions.length} questions.
+                  {flagged.size > 0 && ` You still have ${flagged.size} flagged question(s).`}
+                  {" "}Once submitted, you cannot make any changes.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Review Again</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSubmit}>Confirm Submit</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <Button
             variant="outline"
