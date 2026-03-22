@@ -151,8 +151,7 @@ const Exam = () => {
       toast.error(`Warning ${count}/${MAX_VIOLATIONS + 1}: ${violation.message}`);
     },
     onMaxViolations: () => {
-      toast.error("Maximum violations reached. Your exam has been auto-submitted.");
-      handleSubmit();
+      toast.error("Maximum violations reached. Your exam may be flagged for review.");
     },
   });
 
