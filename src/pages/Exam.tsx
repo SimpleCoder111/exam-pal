@@ -39,7 +39,7 @@ export interface Question {
   questionType: string;
 }
 
-const MAX_VIOLATIONS = 999;
+const MAX_VIOLATIONS = 5;
 
 const QUESTION_TYPE_ORDER: Record<string, number> = {
   MULTIPLE_CHOICE: 0,
