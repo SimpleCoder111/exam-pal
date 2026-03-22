@@ -73,6 +73,7 @@ const Exam = () => {
   const [showNavigator, setShowNavigator] = useState(false);
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   // Exam cache for auto-save (local)
   const {
