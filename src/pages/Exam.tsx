@@ -20,6 +20,7 @@ import SecurityWarning from "@/components/exam/SecurityWarning";
 import ExamStatusBar from "@/components/exam/ExamStatusBar";
 import { useExamSecurity, SecurityViolation } from "@/hooks/useExamSecurity";
 import { useExamCache } from "@/hooks/useExamCache";
+import { useNetworkLatency } from "@/hooks/useNetworkLatency";
 import { useSaveProgress, buildSaveProgressPayload } from "@/hooks/useSaveProgress";
 import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
 import { toast } from "sonner";
@@ -84,6 +85,9 @@ const Exam = () => {
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+
+  // Network latency monitoring
+  const latency = useNetworkLatency({ enabled: examStarted, interval: 15000 });
 
   // Exam cache for auto-save (local)
   const {
@@ -462,6 +466,7 @@ const Exam = () => {
         isOffline={isOffline}
         lastSaved={lastSaved}
         isSaving={isSaving}
+        latency={latency}
       />
     </div>
   );

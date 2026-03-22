@@ -1,4 +1,4 @@
-import { Shield, Wifi, WifiOff, Save, CheckCircle2 } from "lucide-react";
+import { Shield, Wifi, WifiOff, Save, CheckCircle2, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ExamStatusBarProps {
@@ -7,7 +7,15 @@ interface ExamStatusBarProps {
   isOffline: boolean;
   lastSaved: Date | null;
   isSaving: boolean;
+  latency?: number | null;
 }
+
+const getLatencyInfo = (latency: number) => {
+  if (latency < 100) return { label: "Good", className: "text-green-500" };
+  if (latency < 300) return { label: "Fair", className: "text-yellow-500" };
+  if (latency < 600) return { label: "Slow", className: "text-orange-500" };
+  return { label: "Poor", className: "text-destructive" };
+};
 
 const ExamStatusBar = ({
   remainingChances,
@@ -15,6 +23,7 @@ const ExamStatusBar = ({
   isOffline,
   lastSaved,
   isSaving,
+  latency,
 }: ExamStatusBarProps) => {
   const formatLastSaved = (date: Date) => {
     const now = new Date();
@@ -26,6 +35,8 @@ const ExamStatusBar = ({
     const diffMins = Math.floor(diffSecs / 60);
     return `${diffMins}m ago`;
   };
+
+  const latencyInfo = latency != null ? getLatencyInfo(latency) : null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border py-2 px-4">
@@ -51,7 +62,7 @@ const ExamStatusBar = ({
           </div>
         </div>
 
-        {/* Connection & Save Status */}
+        {/* Connection, Latency & Save Status */}
         <div className="flex items-center gap-4">
           {/* Network Status */}
           <Badge variant={isOffline ? "destructive" : "secondary"} className="gap-1">
@@ -67,6 +78,17 @@ const ExamStatusBar = ({
               </>
             )}
           </Badge>
+
+          {/* Latency */}
+          {!isOffline && latencyInfo && latency != null && (
+            <div className="flex items-center gap-1.5">
+              <Activity className={`w-3.5 h-3.5 ${latencyInfo.className}`} />
+              <span className={`font-medium ${latencyInfo.className}`}>
+                {latency}ms
+              </span>
+              <span className="text-muted-foreground text-xs">({latencyInfo.label})</span>
+            </div>
+          )}
 
           {/* Save Status */}
           <div className="flex items-center gap-2 text-muted-foreground">
