@@ -68,6 +68,7 @@ const TeacherGrading = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { accessToken } = useAuth();
 
   const examId = searchParams.get('examId') ? parseInt(searchParams.get('examId')!) : null;
   const examTitle = searchParams.get('title') || 'Exam Results';
@@ -80,6 +81,8 @@ const TeacherGrading = () => {
   const [gradeInputs, setGradeInputs] = useState<Record<number, number>>({});
   const [studentSearch, setStudentSearch] = useState('');
   const [examSearch, setExamSearch] = useState('');
+  const [aiLoading, setAiLoading] = useState<Record<number, boolean>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string }>>({});
 
   const filteredResults = results?.filter(r =>
     !studentSearch || r.studentId.toLowerCase().includes(studentSearch.toLowerCase())
