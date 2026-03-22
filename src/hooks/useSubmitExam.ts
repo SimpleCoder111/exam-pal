@@ -26,6 +26,16 @@ interface SubmitExamPayload {
   questionLists: SubmitExamQuestion[];
 }
 
+export interface QuestionGradeDetail {
+  questionId: number;
+  questionType: string;
+  pointsPossible: number;
+  pointsObtained: number;
+  studentAnswer: string | null;
+  correctAnswer: string;
+  correct: boolean;
+}
+
 export interface SubmitExamResult {
   examSessionId: number;
   status: string;
@@ -36,6 +46,7 @@ export interface SubmitExamResult {
   totalQuestions: number;
   message: string;
   isLate: boolean;
+  questionGradeDetails: QuestionGradeDetail[];
 }
 
 interface SubmitExamResponse {

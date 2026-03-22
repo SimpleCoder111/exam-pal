@@ -267,6 +267,7 @@ const Exam = () => {
             subjectName: examData.subjectName,
             questions,
             answers,
+            questionGradeDetails: result.questionGradeDetails,
           },
         });
       },
