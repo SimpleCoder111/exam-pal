@@ -654,9 +654,9 @@ const AdminClasses = () => {
                           variant="default"
                           className="h-7 text-xs"
                           onClick={() => {
-                            if (!studentDialogClassId) return;
+                            if (!selectedClass?.classId) return;
                             enrollStudent.mutate(
-                              { studentId: student.userId, classId: studentDialogClassId },
+                              { studentId: student.userId, classId: selectedClass.classId },
                               {
                                 onSuccess: () => toast.success(`${student.name} enrolled successfully`),
                                 onError: (err) => toast.error(err.message || 'Failed to enroll student'),
