@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useTeacherExamResults, type ParsedExamResult, type QuestionGradeDetail } from '@/hooks/useTeacherResults';
+import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -24,6 +25,7 @@ import {
   ClipboardCheck,
   Eye,
   Search,
+  FileText,
 } from 'lucide-react';
 
 const QUESTION_TYPE_ORDER = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_THE_BLANK', 'CODING', 'WRITING'];
@@ -59,22 +61,28 @@ const getStatusBadge = (status: string) => {
 };
 
 const TeacherGrading = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const examId = searchParams.get('examId') ? parseInt(searchParams.get('examId')!) : null;
   const examTitle = searchParams.get('title') || 'Exam Results';
 
+  const { data: exams, isLoading: examsLoading } = useTeacherExams();
   const { data: results, isLoading, error } = useTeacherExamResults(examId);
 
   const [selectedStudent, setSelectedStudent] = useState<ParsedExamResult | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [gradeInputs, setGradeInputs] = useState<Record<number, number>>({});
   const [studentSearch, setStudentSearch] = useState('');
+  const [examSearch, setExamSearch] = useState('');
 
   const filteredResults = results?.filter(r =>
     !studentSearch || r.studentId.toLowerCase().includes(studentSearch.toLowerCase())
+  );
+
+  const filteredExams = exams?.filter(e =>
+    !examSearch || e.examTitle.toLowerCase().includes(examSearch.toLowerCase())
   );
 
   const openStudentDetail = (result: ParsedExamResult) => {
@@ -113,9 +121,76 @@ const TeacherGrading = () => {
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
       <div className="space-y-6">
+      {!examId ? (
+        /* Exam Selector View */
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Select an Exam to Grade</CardTitle>
+                <CardDescription>Choose an exam to view student submissions and grade answers</CardDescription>
+              </div>
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search exams..."
+                  value={examSearch}
+                  onChange={e => setExamSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {examsLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : !filteredExams?.length ? (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  {examSearch ? `No exams matching "${examSearch}"` : 'No exams found.'}
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Exam Title</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredExams.map(exam => (
+                    <TableRow
+                      key={exam.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSearchParams({ examId: String(exam.id), title: exam.examTitle })}
+                    >
+                      <TableCell className="font-medium">{exam.examTitle}</TableCell>
+                      <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
+                      <TableCell>{exam.duration} min</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" className="gap-2">
+                          <Eye className="h-4 w-4" />
+                          View Results
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/teacher/exams')}>
+          <Button variant="ghost" size="icon" onClick={() => { setSearchParams({}); }}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -373,6 +448,8 @@ const TeacherGrading = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </>
+      )}
       </div>
     </DashboardLayout>
   );
