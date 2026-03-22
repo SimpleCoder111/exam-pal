@@ -648,7 +648,25 @@ const AdminClasses = () => {
                           <p className="text-xs text-muted-foreground">{student.userId} • {student.email}</p>
                         </div>
                         <Badge variant="outline" className="text-xs">{student.gender === 'M' ? 'Male' : 'Female'}</Badge>
-                      </div>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            if (!studentDialogClassId) return;
+                            enrollStudent.mutate(
+                              { studentId: student.userId, classId: studentDialogClassId },
+                              {
+                                onSuccess: () => toast.success(`${student.name} enrolled successfully`),
+                                onError: (err) => toast.error(err.message || 'Failed to enroll student'),
+                              }
+                            );
+                          }}
+                          disabled={enrollStudent.isPending}
+                        >
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          Enroll
+                        </Button>
                     ))
                   )}
                 </div>
