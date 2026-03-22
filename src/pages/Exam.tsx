@@ -379,15 +379,13 @@ const Exam = () => {
           </Button>
 
           <div className="flex gap-2">
-            {answeredCount === questions.length && (
-              <Button variant="success" onClick={() => setShowSubmitDialog(true)} disabled={submitExamMutation.isPending}>
-                {submitExamMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
-                ) : (
-                  "Submit Exam"
-                )}
-              </Button>
-            )}
+            <Button variant="success" onClick={() => setShowSubmitDialog(true)} disabled={submitExamMutation.isPending}>
+              {submitExamMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Submitting...</>
+              ) : (
+                "Submit Exam"
+              )}
+            </Button>
           </div>
 
           {/* Submit Confirmation Dialog */}
@@ -395,10 +393,21 @@ const Exam = () => {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Submit Exam?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  You have answered {answeredCount} of {questions.length} questions.
-                  {flagged.size > 0 && ` You still have ${flagged.size} flagged question(s).`}
-                  {" "}Once submitted, you cannot make any changes.
+                <AlertDialogDescription asChild>
+                  <div className="space-y-2">
+                    <p>You have answered {answeredCount} of {questions.length} questions.</p>
+                    {answeredCount < questions.length && (
+                      <p className="text-destructive font-medium">
+                        ⚠ You have {questions.length - answeredCount} unanswered question(s). They will be marked as blank.
+                      </p>
+                    )}
+                    {flagged.size > 0 && (
+                      <p className="text-yellow-600 font-medium">
+                        You still have {flagged.size} flagged question(s) to review.
+                      </p>
+                    )}
+                    <p>Once submitted, you cannot make any changes.</p>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
