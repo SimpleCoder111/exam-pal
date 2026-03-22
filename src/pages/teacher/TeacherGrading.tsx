@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { teacherNavItems } from '@/config/teacherNavItems';
@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Separator } from '@/components/ui/separator';
 import { useTeacherExamResults, type ParsedExamResult, type QuestionGradeDetail } from '@/hooks/useTeacherResults';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiPost } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -26,6 +28,8 @@ import {
   Eye,
   Search,
   FileText,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 const QUESTION_TYPE_ORDER = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_THE_BLANK', 'CODING', 'WRITING'];
@@ -64,6 +68,7 @@ const TeacherGrading = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { accessToken } = useAuth();
 
   const examId = searchParams.get('examId') ? parseInt(searchParams.get('examId')!) : null;
   const examTitle = searchParams.get('title') || 'Exam Results';
@@ -76,6 +81,8 @@ const TeacherGrading = () => {
   const [gradeInputs, setGradeInputs] = useState<Record<number, number>>({});
   const [studentSearch, setStudentSearch] = useState('');
   const [examSearch, setExamSearch] = useState('');
+  const [aiLoading, setAiLoading] = useState<Record<number, boolean>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string }>>({});
 
   const filteredResults = results?.filter(r =>
     !studentSearch || r.studentId.toLowerCase().includes(studentSearch.toLowerCase())
@@ -105,6 +112,54 @@ const TeacherGrading = () => {
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
   };
+
+  const handleAiGrade = useCallback(async (detail: QuestionGradeDetail) => {
+    if (!detail.studentAnswer || !accessToken) return;
+    
+    setAiLoading(prev => ({ ...prev, [detail.questionId]: true }));
+    try {
+      interface AiGradeResponse {
+        obtainedScore: number;
+        totalPossibleScore: number;
+        summaryMessage: string;
+        details: Array<{
+          pointsObtained: number;
+          correctAnswer: string;
+        }>;
+      }
+
+      const res = await apiPost<AiGradeResponse>(
+        '/api/v1/ai/grade-code',
+        accessToken,
+        {
+          problemDesc: `Question (${detail.pointsPossible} points): The student was asked to answer a ${detail.questionType.toLowerCase()} question.`,
+          code: detail.studentAnswer,
+        }
+      );
+
+      const suggestedScore = Math.round((res.obtainedScore / res.totalPossibleScore) * detail.pointsPossible);
+      const clampedScore = Math.min(detail.pointsPossible, Math.max(0, suggestedScore));
+
+      setAiSuggestions(prev => ({
+        ...prev,
+        [detail.questionId]: { score: clampedScore, message: res.summaryMessage },
+      }));
+      setGradeInputs(prev => ({ ...prev, [detail.questionId]: clampedScore }));
+
+      toast({
+        title: 'AI Suggestion Ready',
+        description: `Suggested ${clampedScore}/${detail.pointsPossible} points`,
+      });
+    } catch (err) {
+      toast({
+        title: 'AI Grading Failed',
+        description: 'Could not get AI suggestion. Please grade manually.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAiLoading(prev => ({ ...prev, [detail.questionId]: false }));
+    }
+  }, [accessToken, toast]);
 
   const handleSaveGrades = () => {
     // TODO: Integrate with grading API when available
@@ -395,10 +450,42 @@ const TeacherGrading = () => {
                         {/* Grading input for manual types */}
                         {isManual && isPending && (
                           <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
-                            <p className="text-sm font-semibold flex items-center gap-2">
-                              <PenLine className="w-4 h-4" />
-                              Grade this answer
-                            </p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold flex items-center gap-2">
+                                <PenLine className="w-4 h-4" />
+                                Grade this answer
+                              </p>
+                              {detail.studentAnswer && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2"
+                                  disabled={aiLoading[detail.questionId]}
+                                  onClick={() => handleAiGrade(detail)}
+                                >
+                                  {aiLoading[detail.questionId] ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Sparkles className="w-4 h-4" />
+                                  )}
+                                  {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
+                                </Button>
+                              )}
+                            </div>
+
+                            {/* AI Suggestion feedback */}
+                            {aiSuggestions[detail.questionId] && (
+                              <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg space-y-2">
+                                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                                  <Sparkles className="w-4 h-4" />
+                                  AI Suggestion: {aiSuggestions[detail.questionId].score}/{detail.pointsPossible} pts
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  {aiSuggestions[detail.questionId].message}
+                                </p>
+                              </div>
+                            )}
+
                             <div className="flex items-center gap-3">
                               <label className="text-sm text-muted-foreground whitespace-nowrap">
                                 Points (max {detail.pointsPossible}):
