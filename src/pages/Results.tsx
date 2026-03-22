@@ -97,13 +97,13 @@ const Results = () => {
   const formattedDate = submittedAt ? new Date(submittedAt).toLocaleString() : "—";
 
   const pendingReviewCount = questionGradeDetails.filter(
-    (d) => d.correctAnswer === "Waiting for teacher to review"
+    (d) => d.questionType === "CODING" || d.questionType === "WRITING" || d.correctAnswer === "Waiting for teacher to review"
   ).length;
 
-  const correctCount = questionGradeDetails.filter((d) => d.correct).length;
-  const incorrectCount = questionGradeDetails.filter(
-    (d) => !d.correct && d.correctAnswer !== "Waiting for teacher to review"
-  ).length;
+  const manualTypes = ["CODING", "WRITING"];
+  const autoGraded = questionGradeDetails.filter((d) => !manualTypes.includes(d.questionType) && d.correctAnswer !== "Waiting for teacher to review");
+  const correctCount = autoGraded.filter((d) => d.correct).length;
+  const incorrectCount = autoGraded.filter((d) => !d.correct).length;
 
   // Sort grade details by question type order
   const sortedGradeDetails = [...questionGradeDetails].sort(
