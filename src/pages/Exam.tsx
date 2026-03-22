@@ -65,6 +65,31 @@ const transformQuestions = (apiQuestions: TakeExamQuestion[]): Question[] => {
     }));
 };
 
+// Extract previously saved answers from API response
+const extractSavedAnswers = (apiQuestions: TakeExamQuestion[]) => {
+  const savedAnswers: Record<number, number> = {};
+  const savedTextAnswers: Record<number, string> = {};
+
+  apiQuestions.forEach((q) => {
+    if (!q.studentAnswer) return;
+
+    const isText = ["FILL_IN_THE_BLANK", "WRITING", "CODING"].includes(q.questionType);
+    if (isText) {
+      savedTextAnswers[q.questionId] = q.studentAnswer;
+    } else {
+      // MCQ / TRUE_FALSE — match option text to find index
+      const idx = q.optionLists.findIndex(
+        (opt) => opt.toLowerCase() === q.studentAnswer!.toLowerCase()
+      );
+      if (idx !== -1) {
+        savedAnswers[q.questionId] = idx;
+      }
+    }
+  });
+
+  return { savedAnswers, savedTextAnswers };
+};
+
 const Exam = () => {
   const navigate = useNavigate();
   const location = useLocation();
