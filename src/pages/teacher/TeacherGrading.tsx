@@ -198,6 +198,9 @@ const TeacherGrading = () => {
             <p className="text-muted-foreground">View student submissions and grade answers</p>
           </div>
         </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6 text-center">
               <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
