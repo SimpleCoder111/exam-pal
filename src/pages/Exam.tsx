@@ -40,18 +40,28 @@ export interface Question {
 
 const MAX_VIOLATIONS = 3;
 
+const QUESTION_TYPE_ORDER: Record<string, number> = {
+  MULTIPLE_CHOICE: 0,
+  TRUE_FALSE: 1,
+  FILL_IN_THE_BLANK: 2,
+  CODING: 3,
+  WRITING: 4,
+};
+
 const transformQuestions = (apiQuestions: TakeExamQuestion[]): Question[] => {
-  return apiQuestions.map((q) => ({
-    id: q.questionId,
-    question: q.questionText || "—",
-    options: q.optionLists,
-    optionIds: q.optionLists.map((_, i) => i),
-    correctAnswer: -1,
-    difficulty: "MEDIUM" as const,
-    chapter: q.chapterName || "—",
-    chapterId: q.chapterId,
-    questionType: q.questionType,
-  }));
+  return [...apiQuestions]
+    .sort((a, b) => (QUESTION_TYPE_ORDER[a.questionType] ?? 99) - (QUESTION_TYPE_ORDER[b.questionType] ?? 99))
+    .map((q) => ({
+      id: q.questionId,
+      question: q.questionText || "—",
+      options: q.optionLists,
+      optionIds: q.optionLists.map((_, i) => i),
+      correctAnswer: -1,
+      difficulty: "MEDIUM" as const,
+      chapter: q.chapterName || "—",
+      chapterId: q.chapterId,
+      questionType: q.questionType,
+    }));
 };
 
 const Exam = () => {
