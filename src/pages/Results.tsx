@@ -81,19 +81,6 @@ const Results = () => {
     questionGradeDetails = [],
   } = state;
 
-  const percentage = totalPossibleScore > 0
-    ? Math.round((obtainedScore / totalPossibleScore) * 100)
-    : 0;
-
-  const getGrade = () => {
-    if (percentage >= 90) return { grade: "A", color: "text-green-600 dark:text-green-400" };
-    if (percentage >= 80) return { grade: "B", color: "text-primary" };
-    if (percentage >= 70) return { grade: "C", color: "text-accent-foreground" };
-    if (percentage >= 60) return { grade: "D", color: "text-muted-foreground" };
-    return { grade: "F", color: "text-destructive" };
-  };
-
-  const { grade, color } = getGrade();
   const formattedDate = submittedAt ? new Date(submittedAt).toLocaleString() : "—";
 
   const pendingReviewCount = questionGradeDetails.filter(
