@@ -26,10 +26,12 @@ import {
   Edit,
   Trash2,
   Play,
-  Monitor
+  Monitor,
+  ClipboardCheck
 } from 'lucide-react';
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { useTeacherExams, useCreateExam, useDeleteExam, type CreateExamPayload } from '@/hooks/useTeacherExams';
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useTeacherClasses } from '@/hooks/useTeacherClassrooms';
@@ -53,6 +55,7 @@ interface AutoBuilderConfig {
 
 const TeacherExams = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // API hooks
   const { data: exams, isLoading: examsLoading } = useTeacherExams();
@@ -621,8 +624,16 @@ const TeacherExams = () => {
                               <Monitor className="h-4 w-4 text-primary" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="View Results"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/teacher/grading?examId=${exam.id}&title=${encodeURIComponent(exam.examTitle)}`);
+                            }}
+                          >
+                            <ClipboardCheck className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
