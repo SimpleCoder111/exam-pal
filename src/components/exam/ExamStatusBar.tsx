@@ -94,8 +94,13 @@ const ExamStatusBar = ({
           <div className="flex items-center gap-2 text-muted-foreground">
             {isSaving ? (
               <>
-                <Save className="w-4 h-4 animate-pulse" />
-                <span>Saving...</span>
+                <Save className="w-4 h-4 animate-pulse text-primary" />
+                <span className="text-primary font-medium">Syncing to server...</span>
+              </>
+            ) : isOffline && lastSaved ? (
+              <>
+                <Save className="w-4 h-4 text-yellow-500" />
+                <span className="text-yellow-500 font-medium">Saved locally • Will sync when online</span>
               </>
             ) : lastSaved ? (
               <>
@@ -105,7 +110,7 @@ const ExamStatusBar = ({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>Auto-save enabled</span>
+                <span>Auto-save every 30s</span>
               </>
             )}
           </div>
