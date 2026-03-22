@@ -1,19 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface TakeExamOption {
-  optionId: number;
-  optionText: string;
-}
-
 export interface TakeExamQuestion {
   questionId: number;
   questionText: string;
   questionType: string;
   chapterId: number;
   chapterName: string;
-  optionLists: TakeExamOption[];
-  studentAnswer: number | null;
+  optionLists: string[];
+  studentAnswer: string | null;
 }
 
 export interface TakeExamData {

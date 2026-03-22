@@ -8,10 +8,7 @@ interface SubmitExamQuestion {
   questionType: string;
   chapterId: number;
   chapterName: string;
-  optionLists: {
-    optionId: number;
-    optionText: string;
-  }[];
+  optionLists: string[];
   studentAnswer: string | null;
 }
 

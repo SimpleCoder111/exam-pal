@@ -34,10 +34,10 @@ const transformQuestions = (apiQuestions: TakeExamQuestion[]): Question[] => {
   return apiQuestions.map((q) => ({
     id: q.questionId,
     question: q.questionText || "—",
-    options: q.optionLists.map((o) => o.optionText),
-    optionIds: q.optionLists.map((o) => o.optionId),
-    correctAnswer: -1, // Server doesn't reveal correct answer
-    difficulty: "MEDIUM" as const, // Not provided by take-exam API
+    options: q.optionLists,
+    optionIds: q.optionLists.map((_, i) => i),
+    correctAnswer: -1,
+    difficulty: "MEDIUM" as const,
     chapter: q.chapterName || "—",
     chapterId: q.chapterId,
     questionType: q.questionType,
