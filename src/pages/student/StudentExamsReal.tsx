@@ -69,6 +69,9 @@ const isActiveExam = (exam: StudentExam) => {
 
 const StudentExamsReal = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterSubjectId = searchParams.get('subjectId');
+  const filterSubjectName = searchParams.get('subjectName');
   const { data: exams, isLoading, error } = useStudentExams();
   const [selectedExam, setSelectedExam] = useState<StudentExam | null>(null);
   const [showRulesDialog, setShowRulesDialog] = useState(false);
@@ -78,8 +81,12 @@ const StudentExamsReal = () => {
   const takeExamMutation = useTakeExam();
   const [isStarting, setIsStarting] = useState(false);
 
-  const upcomingExams = (exams ?? []).filter(e => e.examStatus === 'UP_COMING' || isActiveExam(e));
-  const completedExams = (exams ?? []).filter(e => e.examStatus === 'COMPLETED' || e.examStatus === 'DONE' || e.examStatus === 'MISSED');
+  const filteredExams = filterSubjectId
+    ? (exams ?? []).filter(e => String(e.subjectId) === filterSubjectId)
+    : (exams ?? []);
+
+  const upcomingExams = filteredExams.filter(e => e.examStatus === 'UP_COMING' || isActiveExam(e));
+  const completedExams = filteredExams.filter(e => e.examStatus === 'COMPLETED' || e.examStatus === 'DONE' || e.examStatus === 'MISSED');
 
   const handleEnterExam = (exam: StudentExam) => {
     setSelectedExam(exam);
