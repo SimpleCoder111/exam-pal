@@ -40,16 +40,16 @@ import {
   Save,
 } from 'lucide-react';
 
-const formatTimeTaken = (seconds: number): string => {
-  if (!seconds || seconds === 0) return '—';
-  const abs = Math.abs(seconds);
-  const h = Math.floor(abs / 3600);
-  const m = Math.floor((abs % 3600) / 60);
-  const s = abs % 60;
-  const ms = Math.round((s % 1) * 1000);
-  const sInt = Math.floor(s);
-  const sign = seconds < 0 ? '-' : '';
-  return `${sign}${h}h ${String(m).padStart(2, '0')}mn ${String(sInt).padStart(2, '0')}.${String(ms).padStart(3, '0')}s`;
+const formatTimeTaken = (ms: number): string => {
+  if (!ms || ms === 0) return '—';
+  const absMs = Math.abs(ms);
+  const totalSeconds = Math.floor(absMs / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const millis = absMs % 1000;
+  const sign = ms < 0 ? '-' : '';
+  return `${sign}${h}h ${String(m).padStart(2, '0')}mn ${String(s).padStart(2, '0')}.${String(millis).padStart(3, '0')}s`;
 };
 
 const QUESTION_TYPE_ORDER = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_THE_BLANK', 'CODING', 'WRITING'];
