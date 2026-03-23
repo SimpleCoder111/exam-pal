@@ -7,7 +7,7 @@ import {
   CheckCircle,
   Star,
   AlertTriangle,
-  Users,
+  
   TrendingUp,
   FileText,
   Hourglass,
@@ -24,7 +24,6 @@ import { useStudentProfile } from '@/hooks/useStudentProfile';
 import { useStudentSubjects } from '@/hooks/useStudentSubjects';
 import { useStudentResults } from '@/hooks/useStudentResults';
 import { useStudentExams } from '@/hooks/useStudentExams';
-import { useStudentClassrooms } from '@/hooks/useStudentClassrooms';
 import { format, parseISO, isFuture } from 'date-fns';
 
 const formatName = (name?: string | null) => {
@@ -62,11 +61,9 @@ const StudentDashboardReal = () => {
   const { data: subjects, isLoading: subjectsLoading } = useStudentSubjects();
   const { data: results, isLoading: resultsLoading } = useStudentResults();
   const { data: exams, isLoading: examsLoading } = useStudentExams();
-  const { data: classrooms, isLoading: classroomsLoading } = useStudentClassrooms();
 
   const resultsArray = Array.isArray(results) ? results : [];
   const examsArray = Array.isArray(exams) ? exams : [];
-  const classroomsArray = Array.isArray(classrooms) ? classrooms : [];
 
   const averageScore = resultsArray.length
     ? Math.round(resultsArray.reduce((sum, r) => sum + (r.score ?? 0), 0) / resultsArray.length)
@@ -174,7 +171,7 @@ const StudentDashboardReal = () => {
         </Card>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Link to="/student/classes" className="block">
             <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
               <CardContent className="p-4 text-center">
@@ -185,19 +182,6 @@ const StudentDashboardReal = () => {
                   {subjectsLoading ? <Skeleton className="h-7 w-8 mx-auto" /> : (subjects?.length ?? 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">Subjects</p>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to="/student/classes" className="block">
-            <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mx-auto mb-2">
-                  <Users className="w-6 h-6 text-accent-foreground" />
-                </div>
-                <p className="text-2xl font-semibold text-foreground">
-                  {classroomsLoading ? <Skeleton className="h-7 w-8 mx-auto" /> : classroomsArray.length}
-                </p>
-                <p className="text-sm text-muted-foreground">Classrooms</p>
               </CardContent>
             </Card>
           </Link>
