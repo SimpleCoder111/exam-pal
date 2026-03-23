@@ -120,6 +120,18 @@ const StudentExamsReal = () => {
           <p className="text-muted-foreground">View and take your scheduled examinations</p>
         </div>
 
+        {filterSubjectName && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 text-sm">
+              <BookOpen className="w-3.5 h-3.5" />
+              Filtered by: {filterSubjectName}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => setSearchParams({})}>
+              Clear filter
+            </Button>
+          </div>
+        )}
+
         {/* Active exam alert */}
         {upcomingExams.some(isActiveExam) && (
           <Card className="border-green-500/30 bg-green-500/5">

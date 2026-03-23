@@ -89,13 +89,13 @@ const StudentSubjectsReal = () => {
 
                     {/* Quick Links */}
                     <div className="pt-2 border-t border-border flex gap-2">
-                      <Link to="/student/exams" className="flex-1">
+                      <Link to={`/student/exams?subjectId=${subject.subjectId}&subjectName=${encodeURIComponent(subject.subjectName)}`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full gap-1.5">
                           <FileText className="w-3.5 h-3.5" />
                           Exams
                         </Button>
                       </Link>
-                      <Link to="/student/results" className="flex-1">
+                      <Link to={`/student/results?subjectId=${subject.subjectId}&subjectName=${encodeURIComponent(subject.subjectName)}`} className="flex-1">
                         <Button variant="outline" size="sm" className="w-full gap-1.5">
                           <Trophy className="w-3.5 h-3.5" />
                           Results
