@@ -299,17 +299,7 @@ const TeacherGrading = () => {
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
 
-const formatTimeTaken = (seconds: number): string => {
-  if (!seconds || seconds === 0) return '—';
-  const abs = Math.abs(seconds);
-  const h = Math.floor(abs / 3600);
-  const m = Math.floor((abs % 3600) / 60);
-  const s = abs % 60;
-  const ms = Math.round((s % 1) * 1000);
-  const sInt = Math.floor(s);
-  const sign = seconds < 0 ? '-' : '';
-  return `${sign}${h}h ${String(m).padStart(2, '0')}mn ${String(sInt).padStart(2, '0')}.${String(ms).padStart(3, '0')}s`;
-};
+
 
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
