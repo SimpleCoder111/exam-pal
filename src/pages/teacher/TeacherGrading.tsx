@@ -465,7 +465,7 @@ const TeacherGrading = () => {
                           <TableCell>{result.score}</TableCell>
                           <TableCell>{getStatusBadge(result.status)}</TableCell>
                           <TableCell>{formatTimeTaken(result.timeTaken)}</TableCell>
-                          <TableCell>{new Date(result.gradedAt).toLocaleString()}</TableCell>
+                          <TableCell>{new Date(result.gradedAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })} {new Date(result.gradedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="icon">
                               <Eye className="h-4 w-4" />
