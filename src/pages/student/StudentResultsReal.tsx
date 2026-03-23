@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Trophy, Target, BookOpen, TrendingUp, Star, Calendar, Clock, Eye, CheckCircle2, Hourglass, ArrowLeft, Code, PenLine, XCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
