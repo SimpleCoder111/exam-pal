@@ -583,16 +583,8 @@ const TeacherGrading = () => {
                               </div>
                             )}
 
-                            {/* Points display for auto-graded */}
-                            {!isManual && !noAnswer && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-muted-foreground">Points:</span>
-                                <span className="font-bold">{detail.pointsObtained} / {detail.pointsPossible}</span>
-                              </div>
-                            )}
-
-                            {/* Grading input for manual types (CODING/WRITING) */}
-                            {isManual && (
+                            {/* Grading input for all question types */}
+                            {(
                               <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
                                 <div className="flex items-center justify-between">
                                   <p className="text-sm font-semibold flex items-center gap-2">
