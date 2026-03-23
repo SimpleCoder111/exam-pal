@@ -221,9 +221,9 @@ const StudentResultsReal = () => {
                     {results.map(result => {
                       const isMissing = result.status === 'MISSING';
                       return (
-                        <TableRow key={result.id} className={isMissing ? 'opacity-75' : ''}>
-                          <TableCell className="font-medium">{result.examName}</TableCell>
-                          <TableCell className="text-center font-bold">
+                        <TableRow key={result.id} className={isMissing ? 'bg-destructive/5' : ''}>
+                          <TableCell className={`font-medium ${isMissing ? 'text-destructive' : ''}`}>{result.examName}</TableCell>
+                          <TableCell className={`text-center font-bold ${isMissing ? 'text-destructive' : ''}`}>
                             {isMissing ? '0' : result.score}
                           </TableCell>
                           <TableCell className="text-center">
