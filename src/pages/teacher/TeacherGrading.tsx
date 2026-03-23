@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { teacherNavItems } from '@/config/teacherNavItems';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
@@ -15,10 +17,11 @@ import {
   useTeacherGradingDetails,
   type ExamResultListItem,
   type GradingDetail,
+  type GradingDetailsData,
 } from '@/hooks/useTeacherResults';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiPost } from '@/lib/api';
+import { apiPost, apiPut } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft,
@@ -34,6 +37,7 @@ import {
   FileText,
   Sparkles,
   Loader2,
+  Save,
 } from 'lucide-react';
 
 const QUESTION_TYPE_ORDER = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_THE_BLANK', 'CODING', 'WRITING'];
@@ -81,10 +85,25 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+const getGradeBadge = (grade: string) => {
+  if (!grade || grade === 'PENDING') {
+    return <Badge variant="outline" className="text-amber-600 border-amber-300">Pending</Badge>;
+  }
+  const colorMap: Record<string, string> = {
+    'A': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300',
+    'B': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+    'C': 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+    'D': 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300',
+    'F': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300',
+  };
+  return <Badge className={colorMap[grade] || ''}>{grade}</Badge>;
+};
+
 const TeacherGrading = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { accessToken } = useAuth();
+  const queryClient = useQueryClient();
 
   const examId = searchParams.get('examId') ? parseInt(searchParams.get('examId')!) : null;
   const examTitle = searchParams.get('title') || 'Exam Results';
@@ -92,7 +111,6 @@ const TeacherGrading = () => {
   const { data: exams, isLoading: examsLoading } = useTeacherExams();
   const { data: results, isLoading, error } = useTeacherExamResults(examId);
 
-  // Grading detail dialog state
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const { data: gradingDetails, isLoading: detailsLoading } = useTeacherGradingDetails(
@@ -101,10 +119,30 @@ const TeacherGrading = () => {
   );
 
   const [gradeInputs, setGradeInputs] = useState<Record<number, number>>({});
+  const [summaryInputs, setSummaryInputs] = useState<Record<number, string>>({});
+  const [correctAnswerInputs, setCorrectAnswerInputs] = useState<Record<number, string>>({});
   const [studentSearch, setStudentSearch] = useState('');
   const [examSearch, setExamSearch] = useState('');
   const [aiLoading, setAiLoading] = useState<Record<number, boolean>>({});
   const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string }>>({});
+  const [saving, setSaving] = useState(false);
+
+  // Pre-fill inputs when grading details load
+  useEffect(() => {
+    if (gradingDetails?.details) {
+      const points: Record<number, number> = {};
+      const summaries: Record<number, string> = {};
+      const corrects: Record<number, string> = {};
+      gradingDetails.details.forEach(d => {
+        points[d.questionId] = d.pointsObtained;
+        summaries[d.questionId] = d.summaryMessage || '';
+        corrects[d.questionId] = d.correctAnswer || '';
+      });
+      setGradeInputs(points);
+      setSummaryInputs(summaries);
+      setCorrectAnswerInputs(corrects);
+    }
+  }, [gradingDetails]);
 
   const filteredResults = results?.filter(r =>
     !studentSearch || r.studentId.toLowerCase().includes(studentSearch.toLowerCase())
@@ -117,11 +155,12 @@ const TeacherGrading = () => {
   const openStudentDetail = (result: ExamResultListItem) => {
     setSelectedStudentId(result.studentId);
     setGradeInputs({});
+    setSummaryInputs({});
+    setCorrectAnswerInputs({});
     setAiSuggestions({});
     setShowDetailDialog(true);
   };
 
-  // Pre-fill grade inputs when grading details load
   const currentDetails = gradingDetails?.details || [];
   const sortedDetails = [...currentDetails].sort((a, b) => {
     const ai = QUESTION_TYPE_ORDER.indexOf(a.questionType);
@@ -157,6 +196,7 @@ const TeacherGrading = () => {
         [detail.questionId]: { score: clampedScore, message: res.summaryMessage },
       }));
       setGradeInputs(prev => ({ ...prev, [detail.questionId]: clampedScore }));
+      setSummaryInputs(prev => ({ ...prev, [detail.questionId]: res.summaryMessage }));
 
       toast({
         title: 'AI Suggestion Ready',
@@ -173,22 +213,89 @@ const TeacherGrading = () => {
     }
   }, [accessToken, toast]);
 
-  const handleSaveGrades = () => {
-    toast({
-      title: 'Grades Saved (Local)',
-      description: 'Grading API integration coming soon.',
-    });
-    setShowDetailDialog(false);
-  };
+  const handleSaveGrades = useCallback(async () => {
+    if (!gradingDetails || !accessToken) return;
+
+    setSaving(true);
+    try {
+      // Build the payload matching the PUT API format
+      const updatedDetails = gradingDetails.details.map(d => {
+        const isManual = d.questionType === 'CODING' || d.questionType === 'WRITING';
+        const isPending = d.summaryMessage === 'Waiting for teacher to review' || d.summaryMessage === 'No answer provided.';
+        const wasEdited = isManual && (
+          gradeInputs[d.questionId] !== d.pointsObtained ||
+          summaryInputs[d.questionId] !== d.summaryMessage ||
+          correctAnswerInputs[d.questionId] !== d.correctAnswer
+        );
+
+        return {
+          questionId: d.questionId,
+          questionType: d.questionType,
+          questionContent: d.questionContent,
+          questionDifficulty: d.questionDifficulty,
+          pointsPossible: d.pointsPossible,
+          pointsObtained: isManual ? (gradeInputs[d.questionId] ?? d.pointsObtained) : d.pointsObtained,
+          summaryMessage: isManual ? (summaryInputs[d.questionId] ?? d.summaryMessage) : d.summaryMessage,
+          studentAnswer: d.studentAnswer,
+          correctAnswer: isManual ? (correctAnswerInputs[d.questionId] ?? d.correctAnswer) : d.correctAnswer,
+          scoreEdit: wasEdited || d.scoreEdit,
+          correct: d.correct,
+          score: d.score,
+        };
+      });
+
+      const payload: GradingDetailsData = {
+        id: gradingDetails.id,
+        examId: gradingDetails.examId,
+        examName: gradingDetails.examName,
+        classId: gradingDetails.classId,
+        studentId: gradingDetails.studentId,
+        grade: gradingDetails.grade,
+        score: updatedDetails.reduce((sum, d) => sum + d.pointsObtained, 0),
+        status: gradingDetails.status,
+        timeTaken: gradingDetails.timeTaken,
+        gradedAt: gradingDetails.gradedAt,
+        details: updatedDetails,
+      };
+
+      await apiPut(
+        '/api/v1/teacher/result/grade-student',
+        accessToken,
+        payload
+      );
+
+      toast({
+        title: 'Grades Saved Successfully',
+        description: 'Student grades have been submitted to the server.',
+      });
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['teacherExamResults', examId] });
+      queryClient.invalidateQueries({ queryKey: ['teacherGradingDetails', examId, selectedStudentId] });
+
+      setShowDetailDialog(false);
+    } catch (err) {
+      toast({
+        title: 'Failed to Save Grades',
+        description: 'An error occurred while saving. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [gradingDetails, accessToken, gradeInputs, summaryInputs, correctAnswerInputs, examId, selectedStudentId, queryClient, toast]);
 
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
+
+  const hasEditableQuestions = sortedDetails.some(
+    d => (d.questionType === 'CODING' || d.questionType === 'WRITING')
+  );
 
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
       <div className="space-y-6">
         {!examId ? (
-          /* Exam Selector View */
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -254,7 +361,6 @@ const TeacherGrading = () => {
           </Card>
         ) : (
           <>
-            {/* Header */}
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" onClick={() => setSearchParams({})}>
                 <ArrowLeft className="h-5 w-5" />
@@ -265,7 +371,6 @@ const TeacherGrading = () => {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6 text-center">
@@ -299,7 +404,6 @@ const TeacherGrading = () => {
               </Card>
             </div>
 
-            {/* Student list */}
             <Card>
               <CardHeader>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -373,9 +477,10 @@ const TeacherGrading = () => {
             }}>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
+                  <DialogTitle className="flex items-center gap-2 flex-wrap">
                     Student: {gradingDetails?.studentId || selectedStudentId}
                     {gradingDetails && getStatusBadge(gradingDetails.status)}
+                    {gradingDetails && getGradeBadge(gradingDetails.grade)}
                   </DialogTitle>
                   <DialogDescription>
                     {gradingDetails
@@ -411,13 +516,19 @@ const TeacherGrading = () => {
                                   {detail.pointsPossible} pts
                                 </span>
                               </div>
-                              <div>
+                              <div className="flex items-center gap-2">
+                                {detail.scoreEdit && (
+                                  <Badge variant="outline" className="text-blue-600 border-blue-300 dark:text-blue-400 gap-1">
+                                    <PenLine className="w-3 h-3" />
+                                    Edited
+                                  </Badge>
+                                )}
                                 {isPending ? (
                                   <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 gap-1">
                                     <Hourglass className="w-3 h-3" />
                                     Pending Review
                                   </Badge>
-                                ) : noAnswer ? (
+                                ) : noAnswer && isManual ? (
                                   <Badge variant="secondary" className="gap-1">No Answer</Badge>
                                 ) : detail.correct ? (
                                   <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 gap-1">
@@ -479,28 +590,30 @@ const TeacherGrading = () => {
                               </div>
                             )}
 
-                            {/* Grading input for manual types that are pending */}
-                            {isManual && isPending && detail.studentAnswer && (
+                            {/* Grading input for manual types (CODING/WRITING) */}
+                            {isManual && (
                               <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
                                 <div className="flex items-center justify-between">
                                   <p className="text-sm font-semibold flex items-center gap-2">
                                     <PenLine className="w-4 h-4" />
-                                    Grade this answer
+                                    {isPending ? 'Grade this answer' : 'Edit grade'}
                                   </p>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-2"
-                                    disabled={aiLoading[detail.questionId]}
-                                    onClick={() => handleAiGrade(detail)}
-                                  >
-                                    {aiLoading[detail.questionId] ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Sparkles className="w-4 h-4" />
-                                    )}
-                                    {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
-                                  </Button>
+                                  {detail.studentAnswer && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="gap-2"
+                                      disabled={aiLoading[detail.questionId]}
+                                      onClick={() => handleAiGrade(detail)}
+                                    >
+                                      {aiLoading[detail.questionId] ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Sparkles className="w-4 h-4" />
+                                      )}
+                                      {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
+                                    </Button>
+                                  )}
                                 </div>
 
                                 {/* AI Suggestion feedback */}
@@ -535,14 +648,34 @@ const TeacherGrading = () => {
                                     className="w-24"
                                   />
                                 </div>
-                              </div>
-                            )}
 
-                            {/* Already graded manual */}
-                            {isManual && !isPending && detail.studentAnswer && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-muted-foreground">Points awarded:</span>
-                                <span className="font-bold">{detail.pointsObtained} / {detail.pointsPossible}</span>
+                                <div>
+                                  <label className="text-sm text-muted-foreground">Summary / Feedback</label>
+                                  <Textarea
+                                    placeholder="Add feedback for the student..."
+                                    value={summaryInputs[detail.questionId] ?? ''}
+                                    onChange={e => setSummaryInputs(prev => ({
+                                      ...prev,
+                                      [detail.questionId]: e.target.value,
+                                    }))}
+                                    className="mt-1"
+                                    rows={2}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-sm text-muted-foreground">Correct Answer / Notes</label>
+                                  <Textarea
+                                    placeholder="Provide the correct answer or notes..."
+                                    value={correctAnswerInputs[detail.questionId] ?? ''}
+                                    onChange={e => setCorrectAnswerInputs(prev => ({
+                                      ...prev,
+                                      [detail.questionId]: e.target.value,
+                                    }))}
+                                    className="mt-1"
+                                    rows={2}
+                                  />
+                                </div>
                               </div>
                             )}
                           </CardContent>
@@ -554,16 +687,16 @@ const TeacherGrading = () => {
                   <p className="text-center text-destructive py-8">Failed to load grading details.</p>
                 )}
 
-                <DialogFooter>
+                <DialogFooter className="gap-2">
                   <Button variant="outline" onClick={() => setShowDetailDialog(false)}>Close</Button>
-                  {sortedDetails.some(
-                    d => (d.questionType === 'CODING' || d.questionType === 'WRITING') &&
-                         d.summaryMessage === 'Waiting for teacher to review' &&
-                         d.studentAnswer
-                  ) && (
-                    <Button onClick={handleSaveGrades}>
-                      <ClipboardCheck className="mr-2 h-4 w-4" />
-                      Save Grades
+                  {hasEditableQuestions && (
+                    <Button onClick={handleSaveGrades} disabled={saving}>
+                      {saving ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                      )}
+                      {saving ? 'Saving...' : 'Save Grades'}
                     </Button>
                   )}
                 </DialogFooter>
