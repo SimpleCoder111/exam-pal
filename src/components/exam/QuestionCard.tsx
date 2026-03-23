@@ -65,60 +65,40 @@ const QuestionCard = ({
         </Button>
       </div>
 
-      {/* Question Text */}
-      <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground mb-8">
-        {question.question}
-      </h2>
-
-      {/* Options / Input */}
-      {question.questionType === "FILL_IN_THE_BLANK" ? (
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Type your answer below
-          </label>
-          <Input
-            value={textAnswer ?? ""}
-            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
-            placeholder="Enter your answer…"
-            className="text-base py-5 rounded-xl border-2 border-border focus:border-primary"
-          />
-          {textAnswer && (
+      {/* WRITING type: side-by-side layout */}
+      {question.questionType === "WRITING" ? (
+        <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-20rem)]">
+          {/* Left: Question */}
+          <div className="md:w-1/2 overflow-y-auto pr-2">
+            <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground mb-4">
+              {question.question}
+            </h2>
+          </div>
+          {/* Right: Answer */}
+          <div className="md:w-1/2 flex flex-col gap-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              Write your response below
+            </label>
+            <Textarea
+              value={textAnswer ?? ""}
+              onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+              placeholder="Write your answer here..."
+              className="flex-1 text-base rounded-xl border-2 border-border focus:border-primary resize-none min-h-[200px]"
+            />
             <p className="text-xs text-muted-foreground">
-              Your answer: <span className="font-medium text-foreground">{textAnswer}</span>
+              Word count: <span className="font-medium text-foreground">{(textAnswer ?? '').trim().split(/\s+/).filter(Boolean).length}</span>
             </p>
-          )}
-        </div>
-      ) : question.questionType === "CODING" ? (
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Write your code below
-          </label>
-          <CodeEditor
-            value={textAnswer ?? ""}
-            onChange={(val) => onTextAnswerChange(question.id, val)}
-            placeholder="// Write your code here..."
-            minHeight="200px"
-          />
-        </div>
-      ) : question.questionType === "WRITING" ? (
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Write your response below
-          </label>
-          <Textarea
-            value={textAnswer ?? ""}
-            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
-            placeholder="Write your answer here..."
-            rows={6}
-            className="text-base rounded-xl border-2 border-border focus:border-primary"
-          />
-          {textAnswer && (
-            <p className="text-xs text-muted-foreground">
-              Word count: <span className="font-medium text-foreground">{textAnswer.trim().split(/\s+/).filter(Boolean).length}</span>
-            </p>
-          )}
+          </div>
         </div>
       ) : (
+        <>
+        {/* Question Text */}
+        <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground mb-8">
+          {question.question}
+        </h2>
+
+        {/* Options / Input */}
+        {question.questionType === "FILL_IN_THE_BLANK" ? (
         <div className="space-y-3">
           {question.options.map((option, index) => {
             const isSelected = selectedAnswer === index;
