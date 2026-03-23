@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Trophy, Target, BookOpen, TrendingUp, Star, Calendar, Clock, Eye, CheckCircle2, Hourglass, ArrowLeft, Code, PenLine, XCircle, CheckCircle } from 'lucide-react';
+import { Trophy, Target, BookOpen, TrendingUp, Star, Calendar, Clock, Eye, CheckCircle2, Hourglass, ArrowLeft, Code, PenLine, XCircle, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ const getGradeColor = (grade: string) => {
   if (grade === 'B' || grade === 'B+') return 'text-primary';
   if (grade === 'C' || grade === 'C+') return 'text-amber-600 dark:text-amber-400';
   if (grade === 'PENDING') return 'text-muted-foreground';
+  if (grade === 'MISSING' || grade === 'N/A') return 'text-amber-600 dark:text-amber-400';
   return 'text-destructive';
 };
 
@@ -81,13 +82,36 @@ const StudentResultsReal = () => {
   const { data: exams } = useStudentExams();
   const [selectedResult, setSelectedResult] = useState<StudentResultItem | null>(null);
 
+  // Build missing exam entries for completed exams with no result
+  const resultExamIds = new Set(allResults.map(r => String(r.examId)));
+  const missingResults: StudentResultItem[] = (exams ?? [])
+    .filter(e => {
+      const isPast = new Date(e.examDate) < new Date();
+      return isPast && !resultExamIds.has(String(e.examId));
+    })
+    .map(e => ({
+      id: -e.examId,
+      examId: String(e.examId),
+      examName: e.examTitle,
+      classId: String(e.classId),
+      studentId: user?.id ?? '',
+      studentName: '',
+      score: 0,
+      grade: 'N/A',
+      status: 'MISSING',
+      timeTaken: 0,
+      gradedAt: '',
+    }));
+
+  const combinedResults = [...allResults, ...missingResults];
+
   // Cross-reference: find examIds belonging to the filtered subject
   const subjectExamIds = filterSubjectId && exams
     ? exams.filter(e => String(e.subjectId) === filterSubjectId).map(e => String(e.examId))
     : null;
   const results = subjectExamIds
-    ? allResults.filter(r => subjectExamIds.includes(String(r.examId)))
-    : allResults;
+    ? combinedResults.filter(r => subjectExamIds.includes(String(r.examId)))
+    : combinedResults;
 
   // Detail view
   const { data: gradingData, isLoading: detailsLoading } = useStudentGradingDetails(
@@ -194,33 +218,51 @@ const StudentResultsReal = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map(result => (
-                      <TableRow key={result.id}>
-                        <TableCell className="font-medium">{result.examName}</TableCell>
-                        <TableCell className="text-center font-bold">{result.score}</TableCell>
-                        <TableCell className="text-center">
-                          <span className={`font-bold ${getGradeColor(result.grade)}`}>{result.grade}</span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={result.status === 'GRADED' ? 'default' : 'secondary'} className="gap-1">
-                            {result.status === 'GRADED' ? (
-                              <CheckCircle2 className="w-3 h-3" />
+                    {results.map(result => {
+                      const isMissing = result.status === 'MISSING';
+                      return (
+                        <TableRow key={result.id} className={isMissing ? 'opacity-75' : ''}>
+                          <TableCell className="font-medium">{result.examName}</TableCell>
+                          <TableCell className="text-center font-bold">
+                            {isMissing ? '0' : result.score}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className={`font-bold ${getGradeColor(result.grade)}`}>
+                              {result.grade}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {isMissing ? (
+                              <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400">
+                                <AlertTriangle className="w-3 h-3" />
+                                Missing
+                              </Badge>
                             ) : (
-                              <Hourglass className="w-3 h-3" />
+                              <Badge variant={result.status === 'GRADED' ? 'default' : 'secondary'} className="gap-1">
+                                {result.status === 'GRADED' ? (
+                                  <CheckCircle2 className="w-3 h-3" />
+                                ) : (
+                                  <Hourglass className="w-3 h-3" />
+                                )}
+                                {result.status === 'GRADED' ? 'Graded' : 'Pending'}
+                              </Badge>
                             )}
-                            {result.status === 'GRADED' ? 'Graded' : 'Pending'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-muted-foreground">
-                          {formatTimestamp(result.gradedAt)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button variant="ghost" size="icon" onClick={() => setSelectedResult(result)} title="View details">
-                            <Eye className="h-4 w-4 text-primary" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell className="text-center text-sm text-muted-foreground">
+                            {isMissing ? '—' : formatTimestamp(result.gradedAt)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {isMissing ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : (
+                              <Button variant="ghost" size="icon" onClick={() => setSelectedResult(result)} title="View details">
+                                <Eye className="h-4 w-4 text-primary" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
