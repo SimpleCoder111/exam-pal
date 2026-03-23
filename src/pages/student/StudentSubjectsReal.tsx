@@ -1,11 +1,13 @@
-import { BookOpen, User, Calendar, ChevronRight } from 'lucide-react';
+import { BookOpen, User, Calendar, Trophy, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentSubjects } from '@/hooks/useStudentSubjects';
 import { format, parseISO } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 const StudentSubjectsReal = () => {
   const { data: subjects, isLoading, error } = useStudentSubjects();
@@ -53,7 +55,7 @@ const StudentSubjectsReal = () => {
             {subjects.map((subject) => (
               <Card
                 key={subject.subjectId}
-                className="transition-all hover:shadow-lg hover:border-primary/50 cursor-pointer"
+                className="transition-all hover:shadow-lg hover:border-primary/50"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -85,16 +87,20 @@ const StudentSubjectsReal = () => {
                       )}
                     </div>
 
-                    {/* Placeholder sections for future API data */}
-                    <div className="pt-2 border-t border-border space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="text-xs text-muted-foreground italic">Coming soon</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Avg Score</span>
-                        <span className="text-xs text-muted-foreground italic">Coming soon</span>
-                      </div>
+                    {/* Quick Links */}
+                    <div className="pt-2 border-t border-border flex gap-2">
+                      <Link to="/student/exams" className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full gap-1.5">
+                          <FileText className="w-3.5 h-3.5" />
+                          Exams
+                        </Button>
+                      </Link>
+                      <Link to="/student/results" className="flex-1">
+                        <Button variant="outline" size="sm" className="w-full gap-1.5">
+                          <Trophy className="w-3.5 h-3.5" />
+                          Results
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
