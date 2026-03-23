@@ -125,6 +125,18 @@ const StudentResultsReal = () => {
           <p className="text-muted-foreground mt-1">Track your exam performance and progress</p>
         </div>
 
+        {filterSubjectName && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 text-sm">
+              <BookOpen className="w-3.5 h-3.5" />
+              Filtered by: {filterSubjectName}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => setSearchParams({})}>
+              Clear filter
+            </Button>
+          </div>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
