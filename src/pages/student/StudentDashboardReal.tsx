@@ -188,7 +188,7 @@ const StudentDashboardReal = () => {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/student/classrooms" className="block">
+          <Link to="/student/classes" className="block">
             <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
               <CardContent className="p-4 text-center">
                 <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mx-auto mb-2">
