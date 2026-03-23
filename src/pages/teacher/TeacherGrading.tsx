@@ -221,12 +221,10 @@ const TeacherGrading = () => {
     try {
       // Build the payload matching the PUT API format
       const updatedDetails = gradingDetails.details.map(d => {
-        const isManual = d.questionType === 'CODING' || d.questionType === 'WRITING';
-        const isPending = d.summaryMessage === 'Waiting for teacher to review' || d.summaryMessage === 'No answer provided.';
-        const wasEdited = isManual && (
-          gradeInputs[d.questionId] !== d.pointsObtained ||
-          summaryInputs[d.questionId] !== d.summaryMessage ||
-          correctAnswerInputs[d.questionId] !== d.correctAnswer
+        const wasEdited = (
+          (gradeInputs[d.questionId] ?? d.pointsObtained) !== d.pointsObtained ||
+          (summaryInputs[d.questionId] ?? d.summaryMessage) !== d.summaryMessage ||
+          (correctAnswerInputs[d.questionId] ?? d.correctAnswer) !== d.correctAnswer
         );
 
         return {
@@ -235,10 +233,10 @@ const TeacherGrading = () => {
           questionContent: d.questionContent,
           questionDifficulty: d.questionDifficulty,
           pointsPossible: d.pointsPossible,
-          pointsObtained: isManual ? (gradeInputs[d.questionId] ?? d.pointsObtained) : d.pointsObtained,
-          summaryMessage: isManual ? (summaryInputs[d.questionId] ?? d.summaryMessage) : d.summaryMessage,
+          pointsObtained: gradeInputs[d.questionId] ?? d.pointsObtained,
+          summaryMessage: summaryInputs[d.questionId] ?? d.summaryMessage,
           studentAnswer: d.studentAnswer,
-          correctAnswer: isManual ? (correctAnswerInputs[d.questionId] ?? d.correctAnswer) : d.correctAnswer,
+          correctAnswer: correctAnswerInputs[d.questionId] ?? d.correctAnswer,
           scoreEdit: wasEdited || d.scoreEdit,
           correct: d.correct,
           score: d.score,
@@ -289,9 +287,6 @@ const TeacherGrading = () => {
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
 
-  const hasEditableQuestions = sortedDetails.some(
-    d => (d.questionType === 'CODING' || d.questionType === 'WRITING')
-  );
 
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
@@ -583,16 +578,8 @@ const TeacherGrading = () => {
                               </div>
                             )}
 
-                            {/* Points display for auto-graded */}
-                            {!isManual && !noAnswer && (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-muted-foreground">Points:</span>
-                                <span className="font-bold">{detail.pointsObtained} / {detail.pointsPossible}</span>
-                              </div>
-                            )}
-
-                            {/* Grading input for manual types (CODING/WRITING) */}
-                            {isManual && (
+                            {/* Grading input for all question types */}
+                            {(
                               <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
                                 <div className="flex items-center justify-between">
                                   <p className="text-sm font-semibold flex items-center gap-2">
@@ -635,17 +622,23 @@ const TeacherGrading = () => {
                                     Points (max {detail.pointsPossible}):
                                   </label>
                                   <Input
-                                    type="number"
-                                    min={0}
-                                    max={detail.pointsPossible}
-                                    value={gradeInputs[detail.questionId] ?? 0}
-                                    onChange={e => setGradeInputs(prev => ({
-                                      ...prev,
-                                      [detail.questionId]: Math.min(
-                                        detail.pointsPossible,
-                                        Math.max(0, parseInt(e.target.value) || 0)
-                                      ),
-                                    }))}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={gradeInputs[detail.questionId] === undefined ? '' : String(gradeInputs[detail.questionId])}
+                                    onChange={e => {
+                                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                                      if (raw === '') {
+                                        setGradeInputs(prev => ({ ...prev, [detail.questionId]: undefined as any }));
+                                        return;
+                                      }
+                                      const num = Math.min(detail.pointsPossible, Math.max(0, parseInt(raw)));
+                                      setGradeInputs(prev => ({ ...prev, [detail.questionId]: num }));
+                                    }}
+                                    onBlur={() => {
+                                      if (gradeInputs[detail.questionId] === undefined || isNaN(gradeInputs[detail.questionId])) {
+                                        setGradeInputs(prev => ({ ...prev, [detail.questionId]: 0 }));
+                                      }
+                                    }}
                                     className="w-24"
                                   />
                                 </div>
@@ -690,7 +683,7 @@ const TeacherGrading = () => {
 
                 <DialogFooter className="gap-2">
                   <Button variant="outline" onClick={() => setShowDetailDialog(false)}>Close</Button>
-                  {hasEditableQuestions && (
+                  {gradingDetails && (
                     <Button onClick={handleSaveGrades} disabled={saving}>
                       {saving ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
