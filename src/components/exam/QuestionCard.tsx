@@ -68,24 +68,22 @@ const QuestionCard = ({
       </div>
 
       {isWriting ? (
-        /* WRITING: side-by-side layout to avoid scrolling */
-        <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-20rem)]">
-          <div className="md:w-1/2 overflow-y-auto pr-2">
-            <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground">
-              {question.question}
-            </h2>
-          </div>
-          <div className="md:w-1/2 flex flex-col gap-2">
-            <label className="text-sm font-medium text-muted-foreground">
+        /* WRITING: question on top, tall textarea below */
+        <div className="flex flex-col gap-4 h-[calc(100vh-18rem)]">
+          <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground shrink-0">
+            {question.question}
+          </h2>
+          <div className="flex flex-col gap-2 flex-1 min-h-0">
+            <label className="text-sm font-medium text-muted-foreground shrink-0">
               Write your response below
             </label>
             <Textarea
               value={textAnswer ?? ""}
               onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
               placeholder="Write your answer here..."
-              className="flex-1 text-base rounded-xl border-2 border-border focus:border-primary resize-none min-h-[200px]"
+              className="flex-1 text-base rounded-xl border-2 border-border focus:border-primary resize-none"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground shrink-0">
               Word count: <span className="font-medium text-foreground">{(textAnswer ?? '').trim().split(/\s+/).filter(Boolean).length}</span>
             </p>
           </div>
