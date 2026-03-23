@@ -10,6 +10,7 @@ export interface ExamResultListItem {
   classId: string;
   studentId: string;
   score: number;
+  grade: string;
   status: string;
   timeTaken: number;
   gradedAt: string;

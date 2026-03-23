@@ -448,6 +448,7 @@ const TeacherGrading = () => {
                       <TableRow>
                         <TableHead>Student ID</TableHead>
                         <TableHead>Score</TableHead>
+                        <TableHead>Grade</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Time Taken</TableHead>
                         <TableHead>Graded At</TableHead>
@@ -463,6 +464,7 @@ const TeacherGrading = () => {
                         >
                           <TableCell className="font-medium">{result.studentId}</TableCell>
                           <TableCell>{result.score}</TableCell>
+                          <TableCell>{getGradeBadge(result.grade)}</TableCell>
                           <TableCell>{getStatusBadge(result.status)}</TableCell>
                           <TableCell>{formatTimeTaken(result.timeTaken)}</TableCell>
                           <TableCell>{new Date(result.gradedAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })} {new Date(result.gradedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</TableCell>
