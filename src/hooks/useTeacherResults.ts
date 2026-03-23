@@ -9,6 +9,7 @@ export interface ExamResultListItem {
   examName: string;
   classId: string;
   studentId: string;
+  studentName: string;
   score: number;
   grade: string;
   status: string;
