@@ -7,7 +7,7 @@ import {
   CheckCircle,
   Star,
   AlertTriangle,
-  Users,
+  
   TrendingUp,
   FileText,
   Hourglass,
