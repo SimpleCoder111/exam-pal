@@ -239,7 +239,7 @@ const StudentDashboardReal = () => {
                   {recentResults.map((r) => (
                     <div key={r.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground text-sm truncate">{r.exam?.examTitle ?? 'Exam'}</p>
+                        <p className="font-medium text-foreground text-sm truncate">{(r as any).exam?.examTitle ?? (r as any).examName ?? 'Exam'}</p>
                         <p className="text-xs text-muted-foreground">
                           {r.gradedAt ? format(parseISO(r.gradedAt), 'MMM d, yyyy') : '—'}
                         </p>
