@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Trophy, Target, BookOpen, TrendingUp, Star, Calendar, Clock, Eye, CheckCircle2, Hourglass, ArrowLeft, Code, PenLine, XCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentResults, useStudentGradingDetails, type StudentResultItem } from '@/hooks/useStudentResults';
+import { useStudentExams } from '@/hooks/useStudentExams';
 import { useAuth } from '@/contexts/AuthContext';
 
 const QUESTION_TYPE_ORDER: Record<string, number> = {
@@ -72,8 +74,20 @@ const formatTimeTaken = (ms: number): string => {
 
 const StudentResultsReal = () => {
   const { user } = useAuth();
-  const { data: results = [], isLoading, error } = useStudentResults();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterSubjectId = searchParams.get('subjectId');
+  const filterSubjectName = searchParams.get('subjectName');
+  const { data: allResults = [], isLoading, error } = useStudentResults();
+  const { data: exams } = useStudentExams();
   const [selectedResult, setSelectedResult] = useState<StudentResultItem | null>(null);
+
+  // Cross-reference: find examIds belonging to the filtered subject
+  const subjectExamIds = filterSubjectId && exams
+    ? exams.filter(e => String(e.subjectId) === filterSubjectId).map(e => String(e.examId))
+    : null;
+  const results = subjectExamIds
+    ? allResults.filter(r => subjectExamIds.includes(String(r.examId)))
+    : allResults;
 
   // Detail view
   const { data: gradingData, isLoading: detailsLoading } = useStudentGradingDetails(
@@ -110,6 +124,18 @@ const StudentResultsReal = () => {
           <h1 className="font-heading text-3xl font-bold text-foreground">My Results</h1>
           <p className="text-muted-foreground mt-1">Track your exam performance and progress</p>
         </div>
+
+        {filterSubjectName && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 text-sm">
+              <BookOpen className="w-3.5 h-3.5" />
+              Filtered by: {filterSubjectName}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => setSearchParams({})}>
+              Clear filter
+            </Button>
+          </div>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

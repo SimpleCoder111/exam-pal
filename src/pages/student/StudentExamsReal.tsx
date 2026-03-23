@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTakeExam } from '@/hooks/useTakeExam';
 import { toast } from 'sonner';
@@ -69,6 +69,9 @@ const isActiveExam = (exam: StudentExam) => {
 
 const StudentExamsReal = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterSubjectId = searchParams.get('subjectId');
+  const filterSubjectName = searchParams.get('subjectName');
   const { data: exams, isLoading, error } = useStudentExams();
   const [selectedExam, setSelectedExam] = useState<StudentExam | null>(null);
   const [showRulesDialog, setShowRulesDialog] = useState(false);
@@ -78,8 +81,12 @@ const StudentExamsReal = () => {
   const takeExamMutation = useTakeExam();
   const [isStarting, setIsStarting] = useState(false);
 
-  const upcomingExams = (exams ?? []).filter(e => e.examStatus === 'UP_COMING' || isActiveExam(e));
-  const completedExams = (exams ?? []).filter(e => e.examStatus === 'COMPLETED' || e.examStatus === 'DONE' || e.examStatus === 'MISSED');
+  const filteredExams = filterSubjectId
+    ? (exams ?? []).filter(e => String(e.subjectId) === filterSubjectId)
+    : (exams ?? []);
+
+  const upcomingExams = filteredExams.filter(e => e.examStatus === 'UP_COMING' || isActiveExam(e));
+  const completedExams = filteredExams.filter(e => e.examStatus === 'COMPLETED' || e.examStatus === 'DONE' || e.examStatus === 'MISSED');
 
   const handleEnterExam = (exam: StudentExam) => {
     setSelectedExam(exam);
@@ -112,6 +119,18 @@ const StudentExamsReal = () => {
           <h1 className="text-3xl font-display font-bold text-foreground mb-2">My Exams</h1>
           <p className="text-muted-foreground">View and take your scheduled examinations</p>
         </div>
+
+        {filterSubjectName && (
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 text-sm">
+              <BookOpen className="w-3.5 h-3.5" />
+              Filtered by: {filterSubjectName}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => setSearchParams({})}>
+              Clear filter
+            </Button>
+          </div>
+        )}
 
         {/* Active exam alert */}
         {upcomingExams.some(isActiveExam) && (
