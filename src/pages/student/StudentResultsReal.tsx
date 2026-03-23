@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentResults, useStudentGradingDetails, type StudentResultItem } from '@/hooks/useStudentResults';
+import { useStudentExams } from '@/hooks/useStudentExams';
 import { useAuth } from '@/contexts/AuthContext';
 
 const QUESTION_TYPE_ORDER: Record<string, number> = {
