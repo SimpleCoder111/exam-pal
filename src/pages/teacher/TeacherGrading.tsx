@@ -136,7 +136,8 @@ const TeacherGrading = () => {
       gradingDetails.details.forEach(d => {
         points[d.questionId] = d.pointsObtained;
         summaries[d.questionId] = d.summaryMessage || '';
-        corrects[d.questionId] = d.correctAnswer || '';
+        const isManualType = d.questionType === 'CODING' || d.questionType === 'WRITING';
+        corrects[d.questionId] = (isManualType && d.correctAnswer === 'N/A') ? '' : (d.correctAnswer || '');
       });
       setGradeInputs(points);
       setSummaryInputs(summaries);
