@@ -88,18 +88,15 @@ export const useExamSecurity = ({
     if (!enabled) return;
 
     const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-      addViolation("copy_paste", "Copy action detected and blocked");
+      addViolation("copy_paste", "Copy action detected");
     };
 
     const handlePaste = (e: ClipboardEvent) => {
-      e.preventDefault();
-      addViolation("copy_paste", "Paste action detected and blocked");
+      addViolation("copy_paste", "Paste action detected");
     };
 
     const handleCut = (e: ClipboardEvent) => {
-      e.preventDefault();
-      addViolation("copy_paste", "Cut action detected and blocked");
+      addViolation("copy_paste", "Cut action detected");
     };
 
     document.addEventListener("copy", handleCopy);
