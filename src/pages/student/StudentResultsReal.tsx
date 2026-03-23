@@ -41,6 +41,7 @@ const getGradeColor = (grade: string) => {
   if (grade === 'B' || grade === 'B+') return 'text-primary';
   if (grade === 'C' || grade === 'C+') return 'text-amber-600 dark:text-amber-400';
   if (grade === 'PENDING') return 'text-muted-foreground';
+  if (grade === 'MISSING' || grade === 'N/A') return 'text-amber-600 dark:text-amber-400';
   return 'text-destructive';
 };
 
