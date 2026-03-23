@@ -73,8 +73,20 @@ const formatTimeTaken = (ms: number): string => {
 
 const StudentResultsReal = () => {
   const { user } = useAuth();
-  const { data: results = [], isLoading, error } = useStudentResults();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterSubjectId = searchParams.get('subjectId');
+  const filterSubjectName = searchParams.get('subjectName');
+  const { data: allResults = [], isLoading, error } = useStudentResults();
+  const { data: exams } = useStudentExams();
   const [selectedResult, setSelectedResult] = useState<StudentResultItem | null>(null);
+
+  // Cross-reference: find examIds belonging to the filtered subject
+  const subjectExamIds = filterSubjectId && exams
+    ? exams.filter(e => String(e.subjectId) === filterSubjectId).map(e => String(e.examId))
+    : null;
+  const results = subjectExamIds
+    ? allResults.filter(r => subjectExamIds.includes(String(r.examId)))
+    : allResults;
 
   // Detail view
   const { data: gradingData, isLoading: detailsLoading } = useStudentGradingDetails(
