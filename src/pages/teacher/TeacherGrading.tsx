@@ -586,7 +586,7 @@ const TeacherGrading = () => {
                                     <PenLine className="w-4 h-4" />
                                     {isPending ? 'Grade this answer' : 'Edit grade'}
                                   </p>
-                                  {detail.studentAnswer && (
+                                  {isManual && detail.studentAnswer && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -605,7 +605,7 @@ const TeacherGrading = () => {
                                 </div>
 
                                 {/* AI Suggestion feedback */}
-                                {aiSuggestions[detail.questionId] && (
+                                {isManual && aiSuggestions[detail.questionId] && (
                                   <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg space-y-2">
                                     <div className="flex items-center gap-2 text-sm font-medium text-primary">
                                       <Sparkles className="w-4 h-4" />
