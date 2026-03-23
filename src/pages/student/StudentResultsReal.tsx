@@ -221,19 +221,23 @@ const StudentResultsReal = () => {
                     {results.map(result => {
                       const isMissing = result.status === 'MISSING';
                       return (
-                        <TableRow key={result.id} className={isMissing ? 'opacity-75' : ''}>
-                          <TableCell className="font-medium">{result.examName}</TableCell>
-                          <TableCell className="text-center font-bold">
+                        <TableRow key={result.id} className={isMissing ? 'bg-destructive/5' : ''}>
+                          <TableCell className={`font-medium ${isMissing ? 'text-destructive' : ''}`}>{result.examName}</TableCell>
+                          <TableCell className={`text-center font-bold ${isMissing ? 'text-destructive' : ''}`}>
                             {isMissing ? '0' : result.score}
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className={`font-bold ${getGradeColor(result.grade)}`}>
-                              {result.grade}
-                            </span>
+                            {isMissing ? (
+                              <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className={`font-bold ${getGradeColor(result.grade)}`}>
+                                {result.grade}
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             {isMissing ? (
-                              <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400">
+                              <Badge variant="outline" className="gap-1 border-destructive/50 text-destructive">
                                 <AlertTriangle className="w-3 h-3" />
                                 Missing
                               </Badge>
