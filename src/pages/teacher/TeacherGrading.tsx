@@ -447,6 +447,7 @@ const TeacherGrading = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Student ID</TableHead>
+                        <TableHead>Student Name</TableHead>
                         <TableHead>Score</TableHead>
                         <TableHead>Grade</TableHead>
                         <TableHead>Status</TableHead>
@@ -463,14 +464,19 @@ const TeacherGrading = () => {
                           onClick={() => openStudentDetail(result)}
                         >
                           <TableCell className="font-medium">{result.studentId}</TableCell>
+                          <TableCell>{result.studentName || '—'}</TableCell>
                           <TableCell>{result.score}</TableCell>
                           <TableCell>{getGradeBadge(result.grade)}</TableCell>
                           <TableCell>{getStatusBadge(result.status)}</TableCell>
                           <TableCell>{formatTimeTaken(result.timeTaken)}</TableCell>
                           <TableCell>{new Date(result.gradedAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })} {new Date(result.gradedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" title={result.status === 'GRADED' ? 'View grades' : 'Grade student'}>
+                              {result.status === 'GRADED' ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <PenLine className="h-4 w-4 text-amber-600" />
+                              )}
                             </Button>
                           </TableCell>
                         </TableRow>
