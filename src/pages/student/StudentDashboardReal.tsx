@@ -175,7 +175,7 @@ const StudentDashboardReal = () => {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <Link to="/student/subjects" className="block">
+          <Link to="/student/classes" className="block">
             <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
               <CardContent className="p-4 text-center">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
@@ -188,7 +188,7 @@ const StudentDashboardReal = () => {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/student/classrooms" className="block">
+          <Link to="/student/classes" className="block">
             <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
               <CardContent className="p-4 text-center">
                 <div className="w-12 h-12 rounded-full bg-accent/50 flex items-center justify-center mx-auto mb-2">
@@ -260,8 +260,8 @@ const StudentDashboardReal = () => {
           {/* Enrolled Subjects with links */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-heading">My Subjects</CardTitle>
-              <Link to="/student/subjects">
+              <CardTitle className="font-heading">My Classes</CardTitle>
+              <Link to="/student/classes">
                 <Button variant="ghost" size="sm" className="gap-1">
                   View All <ArrowRight className="w-3 h-3" />
                 </Button>

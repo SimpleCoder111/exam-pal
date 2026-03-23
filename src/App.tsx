@@ -31,9 +31,8 @@ import TeacherGrading from "./pages/teacher/TeacherGrading";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentDashboardReal from "./pages/student/StudentDashboardReal";
 import StudentSubjects from "./pages/student/StudentSubjects";
-import StudentSubjectsReal from "./pages/student/StudentSubjectsReal";
+import StudentClassesReal from "./pages/student/StudentClassesReal";
 import StudentClassrooms from "./pages/student/StudentClassrooms";
-import StudentClassroomsReal from "./pages/student/StudentClassroomsReal";
 import StudentExams from "./pages/student/StudentExams";
 import StudentExamsReal from "./pages/student/StudentExamsReal";
 import StudentResults from "./pages/student/StudentResults";
@@ -163,19 +162,24 @@ const App = () => (
                   <StudentDashboard />
                 </ProtectedRoute>
               } />
+              <Route path="/student/classes" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentClassesReal />
+                </ProtectedRoute>
+              } />
               <Route path="/student/subjects" element={
                 <ProtectedRoute allowedRoles={['student']}>
-                  <StudentSubjectsReal />
+                  <StudentClassesReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/classrooms" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentClassesReal />
                 </ProtectedRoute>
               } />
               <Route path="/student/subjects-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentSubjects />
-                </ProtectedRoute>
-              } />
-              <Route path="/student/classrooms" element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <StudentClassroomsReal />
                 </ProtectedRoute>
               } />
               <Route path="/student/classrooms-mock" element={
