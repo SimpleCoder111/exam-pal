@@ -221,12 +221,10 @@ const TeacherGrading = () => {
     try {
       // Build the payload matching the PUT API format
       const updatedDetails = gradingDetails.details.map(d => {
-        const isManual = d.questionType === 'CODING' || d.questionType === 'WRITING';
-        const isPending = d.summaryMessage === 'Waiting for teacher to review' || d.summaryMessage === 'No answer provided.';
-        const wasEdited = isManual && (
-          gradeInputs[d.questionId] !== d.pointsObtained ||
-          summaryInputs[d.questionId] !== d.summaryMessage ||
-          correctAnswerInputs[d.questionId] !== d.correctAnswer
+        const wasEdited = (
+          (gradeInputs[d.questionId] ?? d.pointsObtained) !== d.pointsObtained ||
+          (summaryInputs[d.questionId] ?? d.summaryMessage) !== d.summaryMessage ||
+          (correctAnswerInputs[d.questionId] ?? d.correctAnswer) !== d.correctAnswer
         );
 
         return {
@@ -235,10 +233,10 @@ const TeacherGrading = () => {
           questionContent: d.questionContent,
           questionDifficulty: d.questionDifficulty,
           pointsPossible: d.pointsPossible,
-          pointsObtained: isManual ? (gradeInputs[d.questionId] ?? d.pointsObtained) : d.pointsObtained,
-          summaryMessage: isManual ? (summaryInputs[d.questionId] ?? d.summaryMessage) : d.summaryMessage,
+          pointsObtained: gradeInputs[d.questionId] ?? d.pointsObtained,
+          summaryMessage: summaryInputs[d.questionId] ?? d.summaryMessage,
           studentAnswer: d.studentAnswer,
-          correctAnswer: isManual ? (correctAnswerInputs[d.questionId] ?? d.correctAnswer) : d.correctAnswer,
+          correctAnswer: correctAnswerInputs[d.questionId] ?? d.correctAnswer,
           scoreEdit: wasEdited || d.scoreEdit,
           correct: d.correct,
           score: d.score,
