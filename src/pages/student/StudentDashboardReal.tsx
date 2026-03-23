@@ -260,8 +260,8 @@ const StudentDashboardReal = () => {
           {/* Enrolled Subjects with links */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-heading">My Subjects</CardTitle>
-              <Link to="/student/subjects">
+              <CardTitle className="font-heading">My Classes</CardTitle>
+              <Link to="/student/classes">
                 <Button variant="ghost" size="sm" className="gap-1">
                   View All <ArrowRight className="w-3 h-3" />
                 </Button>
