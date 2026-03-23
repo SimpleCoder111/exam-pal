@@ -269,13 +269,11 @@ const StudentDashboardReal = () => {
                         <p className="text-sm text-muted-foreground">{s.teacherName || '—'}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {s.nextExamDate ? (
+                        {s.nextExamDate && (
                           <Badge variant="outline" className="gap-1">
                             <Calendar className="w-3 h-3" />
                             {format(parseISO(s.nextExamDate), 'MMM d, yyyy')}
                           </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No upcoming exam</span>
                         )}
                         <Link to={`/student/results?subjectId=${s.subjectId}&subjectName=${encodeURIComponent(s.subjectName)}`}>
                           <Button variant="ghost" size="sm" className="h-7 px-2">
