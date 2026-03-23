@@ -42,6 +42,7 @@ export interface GradingDetail {
   studentAnswer: string | null;
   correctAnswer: string;
   score: boolean;
+  scoreEdit: boolean;
   correct: boolean;
 }
 
@@ -51,6 +52,7 @@ export interface GradingDetailsData {
   examName: string;
   classId: string;
   studentId: string;
+  grade: string;
   score: number;
   status: string;
   timeTaken: number;

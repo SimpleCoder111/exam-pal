@@ -31,3 +31,20 @@ export const apiPost = async <T>(endpoint: string, token: string | null, body: u
 
   return response.json();
 };
+
+export const apiPut = async <T>(endpoint: string, token: string | null, body: unknown): Promise<T> => {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  return response.json();
+};
