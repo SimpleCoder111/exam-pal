@@ -82,13 +82,36 @@ const StudentResultsReal = () => {
   const { data: exams } = useStudentExams();
   const [selectedResult, setSelectedResult] = useState<StudentResultItem | null>(null);
 
+  // Build missing exam entries for completed exams with no result
+  const resultExamIds = new Set(allResults.map(r => String(r.examId)));
+  const missingResults: StudentResultItem[] = (exams ?? [])
+    .filter(e => {
+      const isPast = new Date(e.examDate) < new Date();
+      return isPast && !resultExamIds.has(String(e.examId));
+    })
+    .map(e => ({
+      id: -e.examId,
+      examId: String(e.examId),
+      examName: e.examTitle,
+      classId: String(e.classId),
+      studentId: user?.id ?? '',
+      studentName: '',
+      score: 0,
+      grade: 'N/A',
+      status: 'MISSING',
+      timeTaken: 0,
+      gradedAt: '',
+    }));
+
+  const combinedResults = [...allResults, ...missingResults];
+
   // Cross-reference: find examIds belonging to the filtered subject
   const subjectExamIds = filterSubjectId && exams
     ? exams.filter(e => String(e.subjectId) === filterSubjectId).map(e => String(e.examId))
     : null;
   const results = subjectExamIds
-    ? allResults.filter(r => subjectExamIds.includes(String(r.examId)))
-    : allResults;
+    ? combinedResults.filter(r => subjectExamIds.includes(String(r.examId)))
+    : combinedResults;
 
   // Detail view
   const { data: gradingData, isLoading: detailsLoading } = useStudentGradingDetails(
