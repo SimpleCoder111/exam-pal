@@ -42,6 +42,8 @@ const QuestionCard = ({
   onTextAnswerChange,
   onFlagToggle,
 }: QuestionCardProps) => {
+  const isWriting = question.questionType === "WRITING";
+
   return (
     <div className="bg-card rounded-2xl shadow-card p-8 animate-scale-in">
       {/* Question Header */}
@@ -65,90 +67,98 @@ const QuestionCard = ({
         </Button>
       </div>
 
-      {/* Question Text */}
-      <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground mb-8">
-        {question.question}
-      </h2>
-
-      {/* Options / Input */}
-      {question.questionType === "FILL_IN_THE_BLANK" ? (
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Type your answer below
-          </label>
-          <Input
-            value={textAnswer ?? ""}
-            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
-            placeholder="Enter your answer…"
-            className="text-base py-5 rounded-xl border-2 border-border focus:border-primary"
-          />
-          {textAnswer && (
+      {isWriting ? (
+        /* WRITING: side-by-side layout to avoid scrolling */
+        <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-20rem)]">
+          <div className="md:w-1/2 overflow-y-auto pr-2">
+            <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground">
+              {question.question}
+            </h2>
+          </div>
+          <div className="md:w-1/2 flex flex-col gap-2">
+            <label className="text-sm font-medium text-muted-foreground">
+              Write your response below
+            </label>
+            <Textarea
+              value={textAnswer ?? ""}
+              onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+              placeholder="Write your answer here..."
+              className="flex-1 text-base rounded-xl border-2 border-border focus:border-primary resize-none min-h-[200px]"
+            />
             <p className="text-xs text-muted-foreground">
-              Your answer: <span className="font-medium text-foreground">{textAnswer}</span>
+              Word count: <span className="font-medium text-foreground">{(textAnswer ?? '').trim().split(/\s+/).filter(Boolean).length}</span>
             </p>
-          )}
-        </div>
-      ) : question.questionType === "CODING" ? (
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Write your code below
-          </label>
-          <CodeEditor
-            value={textAnswer ?? ""}
-            onChange={(val) => onTextAnswerChange(question.id, val)}
-            placeholder="// Write your code here..."
-            minHeight="200px"
-          />
-        </div>
-      ) : question.questionType === "WRITING" ? (
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-muted-foreground">
-            Write your response below
-          </label>
-          <Textarea
-            value={textAnswer ?? ""}
-            onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
-            placeholder="Write your answer here..."
-            rows={6}
-            className="text-base rounded-xl border-2 border-border focus:border-primary"
-          />
-          {textAnswer && (
-            <p className="text-xs text-muted-foreground">
-              Word count: <span className="font-medium text-foreground">{textAnswer.trim().split(/\s+/).filter(Boolean).length}</span>
-            </p>
-          )}
+          </div>
         </div>
       ) : (
-        <div className="space-y-3">
-          {question.options.map((option, index) => {
-            const isSelected = selectedAnswer === index;
+        <>
+          {/* Question Text */}
+          <h2 className="font-heading text-xl md:text-2xl font-semibold text-foreground mb-8">
+            {question.question}
+          </h2>
 
-            return (
-              <button
-                key={index}
-                onClick={() => onAnswerSelect(question.id, index)}
-                className={`w-full text-left px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
-                  isSelected
-                    ? "border-primary bg-primary/5 text-foreground"
-                    : "border-border hover:border-primary/50 hover:bg-secondary/50 text-foreground"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <span
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+          {/* Options / Input */}
+          {question.questionType === "FILL_IN_THE_BLANK" ? (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-muted-foreground">
+                Type your answer below
+              </label>
+              <Input
+                value={textAnswer ?? ""}
+                onChange={(e) => onTextAnswerChange(question.id, e.target.value)}
+                placeholder="Enter your answer…"
+                className="text-base py-5 rounded-xl border-2 border-border focus:border-primary"
+              />
+              {textAnswer && (
+                <p className="text-xs text-muted-foreground">
+                  Your answer: <span className="font-medium text-foreground">{textAnswer}</span>
+                </p>
+              )}
+            </div>
+          ) : question.questionType === "CODING" ? (
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-muted-foreground">
+                Write your code below
+              </label>
+              <CodeEditor
+                value={textAnswer ?? ""}
+                onChange={(val) => onTextAnswerChange(question.id, val)}
+                placeholder="// Write your code here..."
+                minHeight="200px"
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {question.options.map((option, index) => {
+                const isSelected = selectedAnswer === index;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => onAnswerSelect(question.id, index)}
+                    className={`w-full text-left px-6 py-4 rounded-xl border-2 transition-all duration-200 ${
                       isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground"
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-border hover:border-primary/50 hover:bg-secondary/50 text-foreground"
                     }`}
                   >
-                    {String.fromCharCode(65 + index)}
-                  </span>
-                  <span className="flex-1">{option}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                    <div className="flex items-center gap-4">
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground"
+                        }`}
+                      >
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      <span className="flex-1">{option}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
