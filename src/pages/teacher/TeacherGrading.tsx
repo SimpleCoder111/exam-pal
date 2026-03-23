@@ -688,7 +688,7 @@ const TeacherGrading = () => {
 
                 <DialogFooter className="gap-2">
                   <Button variant="outline" onClick={() => setShowDetailDialog(false)}>Close</Button>
-                  {hasEditableQuestions && (
+                  {gradingDetails && (
                     <Button onClick={handleSaveGrades} disabled={saving}>
                       {saving ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
