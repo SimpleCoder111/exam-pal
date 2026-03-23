@@ -162,19 +162,24 @@ const App = () => (
                   <StudentDashboard />
                 </ProtectedRoute>
               } />
+              <Route path="/student/classes" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentClassesReal />
+                </ProtectedRoute>
+              } />
               <Route path="/student/subjects" element={
                 <ProtectedRoute allowedRoles={['student']}>
-                  <StudentSubjectsReal />
+                  <StudentClassesReal />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/classrooms" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentClassesReal />
                 </ProtectedRoute>
               } />
               <Route path="/student/subjects-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentSubjects />
-                </ProtectedRoute>
-              } />
-              <Route path="/student/classrooms" element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <StudentClassroomsReal />
                 </ProtectedRoute>
               } />
               <Route path="/student/classrooms-mock" element={
