@@ -24,7 +24,6 @@ import { useStudentProfile } from '@/hooks/useStudentProfile';
 import { useStudentSubjects } from '@/hooks/useStudentSubjects';
 import { useStudentResults } from '@/hooks/useStudentResults';
 import { useStudentExams } from '@/hooks/useStudentExams';
-import { useStudentClassrooms } from '@/hooks/useStudentClassrooms';
 import { format, parseISO, isFuture } from 'date-fns';
 
 const formatName = (name?: string | null) => {
