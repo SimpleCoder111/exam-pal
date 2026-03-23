@@ -627,17 +627,23 @@ const TeacherGrading = () => {
                                     Points (max {detail.pointsPossible}):
                                   </label>
                                   <Input
-                                    type="number"
-                                    min={0}
-                                    max={detail.pointsPossible}
-                                    value={gradeInputs[detail.questionId] ?? 0}
-                                    onChange={e => setGradeInputs(prev => ({
-                                      ...prev,
-                                      [detail.questionId]: Math.min(
-                                        detail.pointsPossible,
-                                        Math.max(0, parseInt(e.target.value) || 0)
-                                      ),
-                                    }))}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={gradeInputs[detail.questionId] === undefined ? '' : String(gradeInputs[detail.questionId])}
+                                    onChange={e => {
+                                      const raw = e.target.value.replace(/[^0-9]/g, '');
+                                      if (raw === '') {
+                                        setGradeInputs(prev => ({ ...prev, [detail.questionId]: undefined as any }));
+                                        return;
+                                      }
+                                      const num = Math.min(detail.pointsPossible, Math.max(0, parseInt(raw)));
+                                      setGradeInputs(prev => ({ ...prev, [detail.questionId]: num }));
+                                    }}
+                                    onBlur={() => {
+                                      if (gradeInputs[detail.questionId] === undefined || isNaN(gradeInputs[detail.questionId])) {
+                                        setGradeInputs(prev => ({ ...prev, [detail.questionId]: 0 }));
+                                      }
+                                    }}
                                     className="w-24"
                                   />
                                 </div>
