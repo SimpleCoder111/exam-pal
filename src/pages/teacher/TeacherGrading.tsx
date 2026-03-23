@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { teacherNavItems } from '@/config/teacherNavItems';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,11 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { useTeacherExamResults, type ParsedExamResult, type QuestionGradeDetail } from '@/hooks/useTeacherResults';
+import {
+  useTeacherExamResults,
+  useTeacherGradingDetails,
+  type ExamResultListItem,
+  type GradingDetail,
+} from '@/hooks/useTeacherResults';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiPost } from '@/lib/api';
@@ -51,6 +55,19 @@ const getTypeIcon = (type: string) => {
   return null;
 };
 
+const getDifficultyBadge = (difficulty: string) => {
+  switch (difficulty) {
+    case 'EASY':
+      return <Badge variant="outline" className="text-green-600 border-green-300 dark:text-green-400">Easy</Badge>;
+    case 'MEDIUM':
+      return <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400">Medium</Badge>;
+    case 'HARD':
+      return <Badge variant="outline" className="text-red-600 border-red-300 dark:text-red-400">Hard</Badge>;
+    default:
+      return <Badge variant="outline">{difficulty}</Badge>;
+  }
+};
+
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'GRADED':
@@ -66,7 +83,6 @@ const getStatusBadge = (status: string) => {
 
 const TeacherGrading = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { accessToken } = useAuth();
 
@@ -76,8 +92,14 @@ const TeacherGrading = () => {
   const { data: exams, isLoading: examsLoading } = useTeacherExams();
   const { data: results, isLoading, error } = useTeacherExamResults(examId);
 
-  const [selectedStudent, setSelectedStudent] = useState<ParsedExamResult | null>(null);
+  // Grading detail dialog state
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const { data: gradingDetails, isLoading: detailsLoading } = useTeacherGradingDetails(
+    showDetailDialog ? examId : null,
+    showDetailDialog ? selectedStudentId : null
+  );
+
   const [gradeInputs, setGradeInputs] = useState<Record<number, number>>({});
   const [studentSearch, setStudentSearch] = useState('');
   const [examSearch, setExamSearch] = useState('');
@@ -92,47 +114,37 @@ const TeacherGrading = () => {
     !examSearch || e.examTitle.toLowerCase().includes(examSearch.toLowerCase())
   );
 
-  const openStudentDetail = (result: ParsedExamResult) => {
-    setSelectedStudent(result);
-    // Pre-fill existing points for manual types
-    const inputs: Record<number, number> = {};
-    result.questionDetails.forEach(d => {
-      if (d.questionType === 'CODING' || d.questionType === 'WRITING') {
-        inputs[d.questionId] = d.pointsObtained;
-      }
-    });
-    setGradeInputs(inputs);
+  const openStudentDetail = (result: ExamResultListItem) => {
+    setSelectedStudentId(result.studentId);
+    setGradeInputs({});
+    setAiSuggestions({});
     setShowDetailDialog(true);
   };
 
-  const sortedDetails = (details: QuestionGradeDetail[]) => {
-    return [...details].sort((a, b) => {
-      const ai = QUESTION_TYPE_ORDER.indexOf(a.questionType);
-      const bi = QUESTION_TYPE_ORDER.indexOf(b.questionType);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-    });
-  };
+  // Pre-fill grade inputs when grading details load
+  const currentDetails = gradingDetails?.details || [];
+  const sortedDetails = [...currentDetails].sort((a, b) => {
+    const ai = QUESTION_TYPE_ORDER.indexOf(a.questionType);
+    const bi = QUESTION_TYPE_ORDER.indexOf(b.questionType);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
 
-  const handleAiGrade = useCallback(async (detail: QuestionGradeDetail) => {
+  const handleAiGrade = useCallback(async (detail: GradingDetail) => {
     if (!detail.studentAnswer || !accessToken) return;
-    
+
     setAiLoading(prev => ({ ...prev, [detail.questionId]: true }));
     try {
       interface AiGradeResponse {
         obtainedScore: number;
         totalPossibleScore: number;
         summaryMessage: string;
-        details: Array<{
-          pointsObtained: number;
-          correctAnswer: string;
-        }>;
       }
 
       const res = await apiPost<AiGradeResponse>(
         '/api/v1/ai/grade-code',
         accessToken,
         {
-          problemDesc: `Question (${detail.pointsPossible} points): The student was asked to answer a ${detail.questionType.toLowerCase()} question.`,
+          problemDesc: `Question (${detail.pointsPossible} points): ${detail.questionContent}`,
           code: detail.studentAnswer,
         }
       );
@@ -150,7 +162,7 @@ const TeacherGrading = () => {
         title: 'AI Suggestion Ready',
         description: `Suggested ${clampedScore}/${detail.pointsPossible} points`,
       });
-    } catch (err) {
+    } catch {
       toast({
         title: 'AI Grading Failed',
         description: 'Could not get AI suggestion. Please grade manually.',
@@ -162,10 +174,9 @@ const TeacherGrading = () => {
   }, [accessToken, toast]);
 
   const handleSaveGrades = () => {
-    // TODO: Integrate with grading API when available
     toast({
       title: 'Grades Saved (Local)',
-      description: 'Grading API integration coming soon. Grades will be saved locally for now.',
+      description: 'Grading API integration coming soon.',
     });
     setShowDetailDialog(false);
   };
@@ -176,367 +187,390 @@ const TeacherGrading = () => {
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
       <div className="space-y-6">
-      {!examId ? (
-        /* Exam Selector View */
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <CardTitle>Select an Exam to Grade</CardTitle>
-                <CardDescription>Choose an exam to view student submissions and grade answers</CardDescription>
+        {!examId ? (
+          /* Exam Selector View */
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Select an Exam to Grade</CardTitle>
+                  <CardDescription>Choose an exam to view student submissions and grade answers</CardDescription>
+                </div>
+                <div className="relative w-full md:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search exams..."
+                    value={examSearch}
+                    onChange={e => setExamSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </div>
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search exams..."
-                  value={examSearch}
-                  onChange={e => setExamSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {examsLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
-            ) : !filteredExams?.length ? (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {examSearch ? `No exams matching "${examSearch}"` : 'No exams found.'}
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Exam Title</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredExams.map(exam => (
-                    <TableRow
-                      key={exam.examId || exam.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSearchParams({ examId: String(exam.examId || exam.id), title: exam.examTitle })}
-                    >
-                      <TableCell className="font-medium">{exam.examTitle}</TableCell>
-                      <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{exam.duration} min</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="gap-2">
-                          <Eye className="h-4 w-4" />
-                          View Results
-                        </Button>
-                      </TableCell>
+            </CardHeader>
+            <CardContent>
+              {examsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : !filteredExams?.length ? (
+                <div className="text-center py-12">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    {examSearch ? `No exams matching "${examSearch}"` : 'No exams found.'}
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Exam Title</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Duration</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => { setSearchParams({}); }}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{examTitle}</h1>
-            <p className="text-muted-foreground">View student submissions and grade answers</p>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
-              <div className="text-2xl font-bold">{results?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">Total Submissions</p>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredExams.map(exam => (
+                      <TableRow
+                        key={exam.examId || exam.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSearchParams({ examId: String(exam.examId || exam.id), title: exam.examTitle })}
+                      >
+                        <TableCell className="font-medium">{exam.examTitle}</TableCell>
+                        <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{exam.duration} min</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" className="gap-2">
+                            <Eye className="h-4 w-4" />
+                            View Results
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <Hourglass className="h-6 w-6 mx-auto mb-2 text-amber-500" />
-              <div className="text-2xl font-bold">{pendingCount}</div>
-              <p className="text-xs text-muted-foreground">Pending Review</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <ClipboardCheck className="h-6 w-6 mx-auto mb-2 text-green-500" />
-              <div className="text-2xl font-bold">{gradedCount}</div>
-              <p className="text-xs text-muted-foreground">Graded</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <CheckCircle2 className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <div className="text-2xl font-bold">
-                {results?.length ? Math.round(results.reduce((a, r) => a + r.score, 0) / results.length) : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Avg Score</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Student list */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        ) : (
+          <>
+            {/* Header */}
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => setSearchParams({})}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
               <div>
-                <CardTitle>Student Submissions</CardTitle>
-                <CardDescription>Click on a student to view details and grade</CardDescription>
-              </div>
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search student ID..."
-                  value={studentSearch}
-                  onChange={e => setStudentSearch(e.target.value)}
-                  className="pl-9"
-                />
+                <h1 className="text-3xl font-bold tracking-tight">{examTitle}</h1>
+                <p className="text-muted-foreground">View student submissions and grade answers</p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
-            ) : error ? (
-              <p className="text-center text-destructive py-8">Failed to load results.</p>
-            ) : !filteredResults?.length ? (
-              <p className="text-center text-muted-foreground py-8">
-                {studentSearch ? `No results matching "${studentSearch}"` : 'No submissions yet for this exam.'}
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student ID</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Time Taken</TableHead>
-                    <TableHead>Graded At</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredResults.map(result => {
-                    const manualQuestions = result.questionDetails.filter(
-                      d => d.questionType === 'CODING' || d.questionType === 'WRITING'
-                    );
-                    const pendingManual = manualQuestions.filter(
-                      d => d.correctAnswer === 'Waiting for teacher to review'
-                    );
-                    return (
-                      <TableRow key={result.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openStudentDetail(result)}>
-                        <TableCell className="font-medium">{result.studentId}</TableCell>
-                        <TableCell>{result.score}</TableCell>
-                        <TableCell>{getStatusBadge(result.status)}</TableCell>
-                        <TableCell>{result.timeTaken > 0 ? `${result.timeTaken} min` : '—'}</TableCell>
-                        <TableCell>{new Date(result.gradedAt).toLocaleString()}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end items-center gap-2">
-                            {pendingManual.length > 0 && (
-                              <Badge variant="outline" className="text-xs gap-1">
-                                <Hourglass className="w-3 h-3" />
-                                {pendingManual.length} to grade
-                              </Badge>
-                            )}
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                  <div className="text-2xl font-bold">{results?.length || 0}</div>
+                  <p className="text-xs text-muted-foreground">Total Submissions</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Hourglass className="h-6 w-6 mx-auto mb-2 text-amber-500" />
+                  <div className="text-2xl font-bold">{pendingCount}</div>
+                  <p className="text-xs text-muted-foreground">Pending Review</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <ClipboardCheck className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                  <div className="text-2xl font-bold">{gradedCount}</div>
+                  <p className="text-xs text-muted-foreground">Graded</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <CheckCircle2 className="h-6 w-6 mx-auto mb-2 text-primary" />
+                  <div className="text-2xl font-bold">
+                    {results?.length ? Math.round(results.reduce((a, r) => a + r.score, 0) / results.length) : 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Avg Score</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Student list */}
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Student Submissions</CardTitle>
+                    <CardDescription>Click on a student to view details and grade</CardDescription>
+                  </div>
+                  <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search student ID..."
+                      value={studentSearch}
+                      onChange={e => setStudentSearch(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                  </div>
+                ) : error ? (
+                  <p className="text-center text-destructive py-8">Failed to load results.</p>
+                ) : !filteredResults?.length ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    {studentSearch ? `No results matching "${studentSearch}"` : 'No submissions yet for this exam.'}
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student ID</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Time Taken</TableHead>
+                        <TableHead>Graded At</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredResults.map(result => (
+                        <TableRow
+                          key={result.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => openStudentDetail(result)}
+                        >
+                          <TableCell className="font-medium">{result.studentId}</TableCell>
+                          <TableCell>{result.score}</TableCell>
+                          <TableCell>{getStatusBadge(result.status)}</TableCell>
+                          <TableCell>{result.timeTaken > 0 ? `${result.timeTaken} min` : '—'}</TableCell>
+                          <TableCell>{new Date(result.gradedAt).toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
                             <Button variant="ghost" size="icon">
                               <Eye className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Student Detail / Grading Dialog */}
-        <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                Student: {selectedStudent?.studentId}
-                {selectedStudent && getStatusBadge(selectedStudent.status)}
-              </DialogTitle>
-              <DialogDescription>
-                Score: {selectedStudent?.score} • Questions: {selectedStudent?.questionDetails.length}
-              </DialogDescription>
-            </DialogHeader>
+            {/* Student Detail / Grading Dialog */}
+            <Dialog open={showDetailDialog} onOpenChange={open => {
+              setShowDetailDialog(open);
+              if (!open) setSelectedStudentId(null);
+            }}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    Student: {gradingDetails?.studentId || selectedStudentId}
+                    {gradingDetails && getStatusBadge(gradingDetails.status)}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {gradingDetails
+                      ? `${gradingDetails.examName} • Score: ${gradingDetails.score} • ${gradingDetails.details.length} Questions`
+                      : 'Loading grading details...'}
+                  </DialogDescription>
+                </DialogHeader>
 
-            {selectedStudent && (
-              <div className="space-y-4">
-                {sortedDetails(selectedStudent.questionDetails).map((detail, idx) => {
-                  const isManual = detail.questionType === 'CODING' || detail.questionType === 'WRITING';
-                  const isPending = detail.correctAnswer === 'Waiting for teacher to review';
+                {detailsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full" />)}
+                  </div>
+                ) : gradingDetails ? (
+                  <div className="space-y-4">
+                    {sortedDetails.map((detail, idx) => {
+                      const isManual = detail.questionType === 'CODING' || detail.questionType === 'WRITING';
+                      const isPending = detail.summaryMessage === 'Waiting for teacher to review';
+                      const noAnswer = !detail.studentAnswer;
 
-                  return (
-                    <Card key={detail.questionId} className={isPending ? 'border-amber-500/50' : ''}>
-                      <CardContent className="pt-4 space-y-3">
-                        {/* Question header */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-muted-foreground">Q{idx + 1}</span>
-                            <Badge variant="outline" className="gap-1">
-                              {getTypeIcon(detail.questionType)}
-                              {getTypeLabel(detail.questionType)}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {detail.pointsPossible} pts
-                            </span>
-                          </div>
-                          <div>
-                            {isPending ? (
-                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 gap-1">
-                                <Hourglass className="w-3 h-3" />
-                                Pending Review
-                              </Badge>
-                            ) : detail.correct ? (
-                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Correct
-                              </Badge>
-                            ) : (
-                              <Badge variant="destructive" className="gap-1">
-                                <XCircle className="w-3 h-3" />
-                                Incorrect
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        {/* Student Answer */}
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Student Answer</p>
-                          {detail.studentAnswer ? (
-                            isManual ? (
-                              <pre className="text-sm bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono">
-                                {detail.studentAnswer}
-                              </pre>
-                            ) : (
-                              <p className="text-sm bg-muted p-3 rounded-lg">{detail.studentAnswer}</p>
-                            )
-                          ) : (
-                            <p className="text-sm text-muted-foreground italic">No answer provided</p>
-                          )}
-                        </div>
-
-                        {/* Correct Answer (for auto-graded) */}
-                        {!isManual && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-1">Correct Answer</p>
-                            <p className="text-sm bg-muted p-3 rounded-lg">{detail.correctAnswer}</p>
-                          </div>
-                        )}
-
-                        {/* Grading input for manual types */}
-                        {isManual && isPending && (
-                          <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-semibold flex items-center gap-2">
-                                <PenLine className="w-4 h-4" />
-                                Grade this answer
-                              </p>
-                              {detail.studentAnswer && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="gap-2"
-                                  disabled={aiLoading[detail.questionId]}
-                                  onClick={() => handleAiGrade(detail)}
-                                >
-                                  {aiLoading[detail.questionId] ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Sparkles className="w-4 h-4" />
-                                  )}
-                                  {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
-                                </Button>
-                              )}
+                      return (
+                        <Card key={detail.questionId} className={isPending ? 'border-amber-500/50' : ''}>
+                          <CardContent className="pt-4 space-y-3">
+                            {/* Question header */}
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-muted-foreground">Q{idx + 1}</span>
+                                <Badge variant="outline" className="gap-1">
+                                  {getTypeIcon(detail.questionType)}
+                                  {getTypeLabel(detail.questionType)}
+                                </Badge>
+                                {getDifficultyBadge(detail.questionDifficulty)}
+                                <span className="text-xs text-muted-foreground">
+                                  {detail.pointsPossible} pts
+                                </span>
+                              </div>
+                              <div>
+                                {isPending ? (
+                                  <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 gap-1">
+                                    <Hourglass className="w-3 h-3" />
+                                    Pending Review
+                                  </Badge>
+                                ) : noAnswer ? (
+                                  <Badge variant="secondary" className="gap-1">No Answer</Badge>
+                                ) : detail.correct ? (
+                                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 gap-1">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    Correct
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="destructive" className="gap-1">
+                                    <XCircle className="w-3 h-3" />
+                                    Incorrect
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
 
-                            {/* AI Suggestion feedback */}
-                            {aiSuggestions[detail.questionId] && (
-                              <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg space-y-2">
-                                <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                                  <Sparkles className="w-4 h-4" />
-                                  AI Suggestion: {aiSuggestions[detail.questionId].score}/{detail.pointsPossible} pts
-                                </div>
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                  {aiSuggestions[detail.questionId].message}
-                                </p>
+                            {/* Question content */}
+                            <div className="bg-muted/50 p-3 rounded-lg">
+                              <p className="text-sm font-medium">{detail.questionContent}</p>
+                            </div>
+
+                            <Separator />
+
+                            {/* Summary message */}
+                            {detail.summaryMessage && detail.summaryMessage !== 'Waiting for teacher to review' && (
+                              <div className="text-xs text-muted-foreground italic">
+                                {detail.summaryMessage}
                               </div>
                             )}
 
-                            <div className="flex items-center gap-3">
-                              <label className="text-sm text-muted-foreground whitespace-nowrap">
-                                Points (max {detail.pointsPossible}):
-                              </label>
-                              <Input
-                                type="number"
-                                min={0}
-                                max={detail.pointsPossible}
-                                value={gradeInputs[detail.questionId] ?? 0}
-                                onChange={e => setGradeInputs(prev => ({
-                                  ...prev,
-                                  [detail.questionId]: Math.min(
-                                    detail.pointsPossible,
-                                    Math.max(0, parseInt(e.target.value) || 0)
-                                  ),
-                                }))}
-                                className="w-24"
-                              />
+                            {/* Student Answer */}
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground mb-1">Student Answer</p>
+                              {detail.studentAnswer ? (
+                                isManual ? (
+                                  <pre className="text-sm bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap font-mono">
+                                    {detail.studentAnswer}
+                                  </pre>
+                                ) : (
+                                  <p className="text-sm bg-muted p-3 rounded-lg">{detail.studentAnswer}</p>
+                                )
+                              ) : (
+                                <p className="text-sm text-muted-foreground italic">No answer provided</p>
+                              )}
                             </div>
-                          </div>
-                        )}
 
-                        {/* Already graded manual */}
-                        {isManual && !isPending && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-muted-foreground">Points awarded:</span>
-                            <span className="font-bold">{detail.pointsObtained} / {detail.pointsPossible}</span>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+                            {/* Correct Answer (for auto-graded) */}
+                            {!isManual && detail.correctAnswer && detail.correctAnswer !== 'N/A' && (
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Correct Answer</p>
+                                <p className="text-sm bg-muted p-3 rounded-lg">{detail.correctAnswer}</p>
+                              </div>
+                            )}
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDetailDialog(false)}>Close</Button>
-              {selectedStudent?.questionDetails.some(
-                d => (d.questionType === 'CODING' || d.questionType === 'WRITING') && d.correctAnswer === 'Waiting for teacher to review'
-              ) && (
-                <Button onClick={handleSaveGrades}>
-                  <ClipboardCheck className="mr-2 h-4 w-4" />
-                  Save Grades
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        </>
-      )}
+                            {/* Points display for auto-graded */}
+                            {!isManual && !noAnswer && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">Points:</span>
+                                <span className="font-bold">{detail.pointsObtained} / {detail.pointsPossible}</span>
+                              </div>
+                            )}
+
+                            {/* Grading input for manual types that are pending */}
+                            {isManual && isPending && detail.studentAnswer && (
+                              <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-semibold flex items-center gap-2">
+                                    <PenLine className="w-4 h-4" />
+                                    Grade this answer
+                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                    disabled={aiLoading[detail.questionId]}
+                                    onClick={() => handleAiGrade(detail)}
+                                  >
+                                    {aiLoading[detail.questionId] ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Sparkles className="w-4 h-4" />
+                                    )}
+                                    {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
+                                  </Button>
+                                </div>
+
+                                {/* AI Suggestion feedback */}
+                                {aiSuggestions[detail.questionId] && (
+                                  <div className="bg-primary/5 border border-primary/20 p-3 rounded-lg space-y-2">
+                                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                                      <Sparkles className="w-4 h-4" />
+                                      AI Suggestion: {aiSuggestions[detail.questionId].score}/{detail.pointsPossible} pts
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                      {aiSuggestions[detail.questionId].message}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-3">
+                                  <label className="text-sm text-muted-foreground whitespace-nowrap">
+                                    Points (max {detail.pointsPossible}):
+                                  </label>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={detail.pointsPossible}
+                                    value={gradeInputs[detail.questionId] ?? 0}
+                                    onChange={e => setGradeInputs(prev => ({
+                                      ...prev,
+                                      [detail.questionId]: Math.min(
+                                        detail.pointsPossible,
+                                        Math.max(0, parseInt(e.target.value) || 0)
+                                      ),
+                                    }))}
+                                    className="w-24"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Already graded manual */}
+                            {isManual && !isPending && detail.studentAnswer && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-muted-foreground">Points awarded:</span>
+                                <span className="font-bold">{detail.pointsObtained} / {detail.pointsPossible}</span>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-destructive py-8">Failed to load grading details.</p>
+                )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowDetailDialog(false)}>Close</Button>
+                  {sortedDetails.some(
+                    d => (d.questionType === 'CODING' || d.questionType === 'WRITING') &&
+                         d.summaryMessage === 'Waiting for teacher to review' &&
+                         d.studentAnswer
+                  ) && (
+                    <Button onClick={handleSaveGrades}>
+                      <ClipboardCheck className="mr-2 h-4 w-4" />
+                      Save Grades
+                    </Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
       </div>
     </DashboardLayout>
   );
