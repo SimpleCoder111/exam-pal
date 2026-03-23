@@ -63,7 +63,7 @@ const StudentClassesReal = () => {
                   {profileLoading ? <Skeleton className="h-6 w-48 inline-block" /> : `Welcome, ${profile?.name ?? 'Student'}!`}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  You have {activeClasses.length} active classroom{activeClasses.length !== 1 ? 's' : ''} across {subjects?.length ?? 0} subject{(subjects?.length ?? 0) !== 1 ? 's' : ''}.
+                  You have {subjects?.length ?? 0} active subject{(subjects?.length ?? 0) !== 1 ? 's' : ''}.
                 </p>
               </div>
             </div>
