@@ -61,11 +61,9 @@ const StudentDashboardReal = () => {
   const { data: subjects, isLoading: subjectsLoading } = useStudentSubjects();
   const { data: results, isLoading: resultsLoading } = useStudentResults();
   const { data: exams, isLoading: examsLoading } = useStudentExams();
-  const { data: classrooms, isLoading: classroomsLoading } = useStudentClassrooms();
 
   const resultsArray = Array.isArray(results) ? results : [];
   const examsArray = Array.isArray(exams) ? exams : [];
-  const classroomsArray = Array.isArray(classrooms) ? classrooms : [];
 
   const averageScore = resultsArray.length
     ? Math.round(resultsArray.reduce((sum, r) => sum + (r.score ?? 0), 0) / resultsArray.length)
