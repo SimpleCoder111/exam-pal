@@ -218,33 +218,51 @@ const StudentResultsReal = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {results.map(result => (
-                      <TableRow key={result.id}>
-                        <TableCell className="font-medium">{result.examName}</TableCell>
-                        <TableCell className="text-center font-bold">{result.score}</TableCell>
-                        <TableCell className="text-center">
-                          <span className={`font-bold ${getGradeColor(result.grade)}`}>{result.grade}</span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={result.status === 'GRADED' ? 'default' : 'secondary'} className="gap-1">
-                            {result.status === 'GRADED' ? (
-                              <CheckCircle2 className="w-3 h-3" />
+                    {results.map(result => {
+                      const isMissing = result.status === 'MISSING';
+                      return (
+                        <TableRow key={result.id} className={isMissing ? 'opacity-75' : ''}>
+                          <TableCell className="font-medium">{result.examName}</TableCell>
+                          <TableCell className="text-center font-bold">
+                            {isMissing ? '0' : result.score}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className={`font-bold ${getGradeColor(result.grade)}`}>
+                              {result.grade}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {isMissing ? (
+                              <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400">
+                                <AlertTriangle className="w-3 h-3" />
+                                Missing
+                              </Badge>
                             ) : (
-                              <Hourglass className="w-3 h-3" />
+                              <Badge variant={result.status === 'GRADED' ? 'default' : 'secondary'} className="gap-1">
+                                {result.status === 'GRADED' ? (
+                                  <CheckCircle2 className="w-3 h-3" />
+                                ) : (
+                                  <Hourglass className="w-3 h-3" />
+                                )}
+                                {result.status === 'GRADED' ? 'Graded' : 'Pending'}
+                              </Badge>
                             )}
-                            {result.status === 'GRADED' ? 'Graded' : 'Pending'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-muted-foreground">
-                          {formatTimestamp(result.gradedAt)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button variant="ghost" size="icon" onClick={() => setSelectedResult(result)} title="View details">
-                            <Eye className="h-4 w-4 text-primary" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell className="text-center text-sm text-muted-foreground">
+                            {isMissing ? '—' : formatTimestamp(result.gradedAt)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {isMissing ? (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            ) : (
+                              <Button variant="ghost" size="icon" onClick={() => setSelectedResult(result)} title="View details">
+                                <Eye className="h-4 w-4 text-primary" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
