@@ -287,9 +287,6 @@ const TeacherGrading = () => {
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
 
-  const hasEditableQuestions = sortedDetails.some(
-    d => (d.questionType === 'CODING' || d.questionType === 'WRITING')
-  );
 
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
