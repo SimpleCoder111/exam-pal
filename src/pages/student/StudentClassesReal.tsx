@@ -121,17 +121,15 @@ const StudentClassesReal = () => {
                       </div>
 
                       {/* Next Exam */}
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">Next exam:</span>
-                        {subject.nextExamDate ? (
+                      {subject.nextExamDate && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Next exam:</span>
                           <span className="font-medium text-foreground">
                             {format(parseISO(subject.nextExamDate), 'MMM d, yyyy h:mm a')}
                           </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {/* Classroom Info */}
                       {relatedClassrooms.length > 0 && (
