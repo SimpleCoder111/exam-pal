@@ -451,7 +451,7 @@ const TeacherGrading = () => {
                           <TableCell className="font-medium">{result.studentId}</TableCell>
                           <TableCell>{result.score}</TableCell>
                           <TableCell>{getStatusBadge(result.status)}</TableCell>
-                          <TableCell>{result.timeTaken > 0 ? `${result.timeTaken} min` : '—'}</TableCell>
+                          <TableCell>{formatTimeTaken(result.timeTaken)}</TableCell>
                           <TableCell>{new Date(result.gradedAt).toLocaleString()}</TableCell>
                           <TableCell className="text-right">
                             <Button variant="ghost" size="icon">
