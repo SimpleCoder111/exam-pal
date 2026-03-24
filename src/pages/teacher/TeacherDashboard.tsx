@@ -108,7 +108,7 @@ const TeacherDashboard = () => {
                     <div
                       key={subject.id}
                       className="p-4 border border-border rounded-lg hover:border-primary/50 transition-colors cursor-pointer"
-                      onClick={() => navigate('/teacher/question-bank')}
+onClick={() => navigate('/teacher/questions')}
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-3 h-3 rounded-full bg-primary" />
