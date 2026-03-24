@@ -164,15 +164,18 @@ const TeacherGrading = () => {
       const points: Record<number, number> = {};
       const summaries: Record<number, string> = {};
       const corrects: Record<number, string> = {};
+      const suggestions: Record<number, string> = {};
       gradingDetails.details.forEach(d => {
         points[d.questionId] = d.pointsObtained;
         summaries[d.questionId] = d.summaryMessage || '';
         const isManualType = d.questionType === 'CODING' || d.questionType === 'WRITING';
         corrects[d.questionId] = (isManualType && d.correctAnswer === 'N/A') ? '' : (d.correctAnswer || '');
+        suggestions[d.questionId] = d.suggestionForImprovement || '';
       });
       setGradeInputs(points);
       setSummaryInputs(summaries);
       setCorrectAnswerInputs(corrects);
+      setSuggestionInputs(suggestions);
     }
   }, [gradingDetails]);
 
