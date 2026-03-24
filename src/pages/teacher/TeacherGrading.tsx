@@ -768,8 +768,8 @@ const TeacherGrading = () => {
                                   />
                                 </div>
 
-                                {/* Suggestion for Improvement (WRITING) or Correct Answer (others) */}
-                                {detail.questionType === 'WRITING' ? (
+                                {/* Suggestion for Improvement (WRITING/CODING) or Correct Answer (others) */}
+                                {(detail.questionType === 'WRITING' || detail.questionType === 'CODING') ? (
                                   <div>
                                     <label className="text-sm text-muted-foreground flex items-center gap-1">
                                       <Lightbulb className="w-3.5 h-3.5" />

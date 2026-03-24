@@ -279,7 +279,7 @@ const Results = () => {
                                 Waiting for teacher to review
                               </span>
                             </div>
-                          ) : !detail.correct ? (
+                          ) : !detail.correct && !isManualGradeType ? (
                             <div className="px-4 py-2.5 rounded-lg text-sm border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
                               <span className="text-xs font-medium text-muted-foreground block mb-1">
                                 Correct Answer
@@ -287,6 +287,16 @@ const Results = () => {
                               <span className="text-foreground">{detail.correctAnswer}</span>
                             </div>
                           ) : null}
+
+                          {/* Suggestion for improvement (CODING/WRITING) */}
+                          {isManualGradeType && !isPendingReview && detail.suggestionForImprovement && (
+                            <div className="px-4 py-2.5 rounded-lg text-sm border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+                              <span className="text-xs font-medium text-muted-foreground block mb-1">
+                                💡 Suggestion for Improvement
+                              </span>
+                              <span className="text-foreground">{detail.suggestionForImprovement}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

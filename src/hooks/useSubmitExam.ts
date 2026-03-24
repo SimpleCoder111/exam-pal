@@ -34,6 +34,7 @@ export interface QuestionGradeDetail {
   studentAnswer: string | null;
   correctAnswer: string;
   correct: boolean;
+  suggestionForImprovement?: string;
 }
 
 export interface SubmitExamResult {
