@@ -412,15 +412,15 @@ const TeacherExams = () => {
             <TableBody>
               {filteredQuestions.map((q) => (
                 <TableRow
-                  key={q.questionId}
-                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
-                  onClick={() => handleQuestionToggle(q.questionId)}
+                  key={q.id}
+                  className={selectedQuestionIds.includes(q.id) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
+                  onClick={() => handleQuestionToggle(q.id)}
                 >
                   <TableCell>
                     <input
                       type="checkbox"
-                      checked={selectedQuestionIds.includes(q.questionId)}
-                      onChange={() => handleQuestionToggle(q.questionId)}
+                      checked={selectedQuestionIds.includes(q.id)}
+                      onChange={() => handleQuestionToggle(q.id)}
                       className="rounded"
                     />
                   </TableCell>
