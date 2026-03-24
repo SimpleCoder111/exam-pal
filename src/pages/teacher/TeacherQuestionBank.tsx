@@ -180,61 +180,40 @@ const TeacherQuestionBank = () => {
     setIsDialogOpen(true);
   };
 
-  const buildPayload = (): CreateQuestionPayload | UpdateQuestionPayload => {
+  const buildPayload = (): CreateQuestionPayload => {
     const apiType = localTypeToApi(formData.type);
     const base = {
       subjectId: parseInt(selectedSubjectId),
-      chapterId: parseInt(formData.chapterId),
+      chapterId: parseInt(formData.chapterId) || 0,
       questionType: apiType,
       questionContent: formData.questionText,
       difficulty: localDiffToApi(formData.difficulty),
       createdBy: user?.id ?? '',
+      score: 1,
     };
 
     if (apiType === 'MULTIPLE_CHOICE') {
+      const correctOpt = formData.options.find(o => o.isCorrect);
       return {
         ...base,
-        optionLists: formData.options
-          .filter(o => o.text.trim())
-          .map(o => ({
-            ...(o.optionId ? { optionId: o.optionId } : {}),
-            optionText: o.text,
-            isCorrect: o.isCorrect,
-          })),
+        optionLists: formData.options.filter(o => o.text.trim()).map(o => o.text),
+        correctAnswer: correctOpt?.text ?? '',
       };
     }
 
     if (apiType === 'TRUE_FALSE') {
-      const trueOpt = editingQuestion?.optionLists.find(o => o.optionText.toLowerCase().includes('true'));
-      const falseOpt = editingQuestion?.optionLists.find(o => !o.optionText.toLowerCase().includes('true'));
       return {
         ...base,
-        optionLists: [
-          { ...(trueOpt?.optionId ? { optionId: trueOpt.optionId } : {}), optionText: 'True', isCorrect: formData.correctAnswer === 'true' },
-          { ...(falseOpt?.optionId ? { optionId: falseOpt.optionId } : {}), optionText: 'False', isCorrect: formData.correctAnswer === 'false' },
-        ],
+        optionLists: ['TRUE', 'FALSE'],
+        correctAnswer: formData.correctAnswer === 'true' ? 'TRUE' : 'FALSE',
       };
     }
 
-    // CODING / WRITING
-    if (apiType === 'CODING' || apiType === 'WRITING') {
-      const existingOpt = editingQuestion?.optionLists[0];
-      return {
-        ...base,
-        optionLists: [
-          { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
-          ...(formData.options[0]?.text ? [{ optionText: formData.options[0].text, isCorrect: false }] : []),
-        ],
-      };
-    }
-
-    // FILL_BLANK
-    const existingOpt = editingQuestion?.optionLists[0];
+    // CODING / WRITING / FILL_IN_THE_BLANK
     return {
       ...base,
-      optionLists: [
-        { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
-      ],
+      optionLists: [],
+      correctAnswer: formData.correctAnswer,
     };
   };
 
