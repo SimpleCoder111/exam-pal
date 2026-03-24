@@ -4,32 +4,23 @@ import { apiFetch } from '@/lib/api';
 
 const API_BASE_URL = 'http://localhost:7000';
 
-// --- API Types ---
-
-export interface ApiOption {
-  optionId?: number;
-  optionText: string;
-  isCorrect: boolean;
-}
+// --- API Types (matches actual API response) ---
 
 export interface ApiQuestion {
-  questionId: number;
-  chapterId: number;
-  chapter: string;
-  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_BLANK' | 'CODING' | 'WRITING';
+  id: number;
+  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_THE_BLANK' | 'CODING' | 'WRITING';
   questionContent: string;
+  optionContent: string[];
+  correctAnswer: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   createdBy: string;
-  optionLists: ApiOption[];
+  points: string;
+  createdAt: string;
 }
 
 interface QuestionsApiResponse {
   code: string;
-  data: {
-    questionData: ApiQuestion[];
-    subjectId: number;
-    subjectName: string;
-  };
+  data: ApiQuestion[];
   message: string;
 }
 
@@ -70,16 +61,16 @@ interface MutationResponse {
 export interface CreateQuestionPayload {
   subjectId: number;
   chapterId: number;
-  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_BLANK' | 'CODING' | 'WRITING';
+  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_THE_BLANK' | 'CODING' | 'WRITING';
   questionContent: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   createdBy: string;
-  optionLists: { optionText: string; isCorrect: boolean }[];
+  score: number;
+  correctAnswer: string;
+  optionLists: string[];
 }
 
-export interface UpdateQuestionPayload extends CreateQuestionPayload {
-  optionLists: { optionId?: number; optionText: string; isCorrect: boolean }[];
-}
+export type UpdateQuestionPayload = CreateQuestionPayload;
 
 // --- Hooks ---
 
@@ -145,7 +136,7 @@ export const useUpdateQuestion = () => {
 
   return useMutation({
     mutationFn: async ({ questionId, payload }: { questionId: number; payload: UpdateQuestionPayload }) => {
-      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/question/${questionId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/question/${questionId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
