@@ -152,8 +152,11 @@ const TeacherGrading = () => {
   const [studentSearch, setStudentSearch] = useState('');
   const [examSearch, setExamSearch] = useState('');
   const [aiLoading, setAiLoading] = useState<Record<number, boolean>>({});
-  const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string }>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string; suggestion?: string }>>({});
   const [saving, setSaving] = useState(false);
+  const [rubricSelections, setRubricSelections] = useState<Record<number, string>>({});
+  const [customRubrics, setCustomRubrics] = useState<Record<number, string>>({});
+  const [suggestionInputs, setSuggestionInputs] = useState<Record<number, string>>({});
 
   // Pre-fill inputs when grading details load
   useEffect(() => {
