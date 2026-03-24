@@ -136,12 +136,15 @@ const TeacherQuestionBank = () => {
   }
 
   // Filter questions
-  const filteredQuestions = questions.filter(q => {
-    const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
-    const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
-    return matchesSearch && matchesType && matchesDifficulty;
-  });
+  const filteredQuestions = questions
+    .filter(q => {
+      const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
+      const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
+      const matchesChapter = selectedChapter === 'all' || q.chapterId?.toString() === selectedChapter;
+      return matchesSearch && matchesType && matchesDifficulty && matchesChapter;
+    })
+    .sort((a, b) => (a.chapterOrder ?? 0) - (b.chapterOrder ?? 0));
 
   // Stats from summary API
   const stats = [
