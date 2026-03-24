@@ -42,7 +42,7 @@ type QuestionType = 'multiple_choice' | 'fill_blank' | 'true_false' | 'coding' |
 const apiTypeToLocal = (t: string): QuestionType => {
   if (t === 'MULTIPLE_CHOICE') return 'multiple_choice';
   if (t === 'TRUE_FALSE') return 'true_false';
-  if (t === 'FILL_BLANK') return 'fill_blank';
+  if (t === 'FILL_IN_THE_BLANK') return 'fill_blank';
   if (t === 'CODING') return 'coding';
   if (t === 'WRITING') return 'writing';
   return 'multiple_choice';
@@ -53,7 +53,7 @@ const localTypeToApi = (t: QuestionType) => {
   if (t === 'true_false') return 'TRUE_FALSE' as const;
   if (t === 'coding') return 'CODING' as const;
   if (t === 'writing') return 'WRITING' as const;
-  return 'FILL_BLANK' as const;
+  return 'FILL_IN_THE_BLANK' as const;
 };
 
 const localDiffToApi = (d: string) => d.toUpperCase() as 'EASY' | 'MEDIUM' | 'HARD';
