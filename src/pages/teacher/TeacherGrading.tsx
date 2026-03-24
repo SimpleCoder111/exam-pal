@@ -192,14 +192,28 @@ const TeacherGrading = () => {
         summaryMessage: string;
       }
 
-      const res = await apiPost<AiGradeResponse>(
-        '/api/v1/ai/grade-code',
-        accessToken,
-        {
-          problemDesc: `Question (${detail.pointsPossible} points): ${detail.questionContent}`,
-          code: detail.studentAnswer,
-        }
-      );
+      let res: AiGradeResponse;
+
+      if (detail.questionType === 'WRITING') {
+        res = await apiPost<AiGradeResponse>(
+          '/api/v1/ai/grade-essay',
+          accessToken,
+          {
+            rubric: detail.correctAnswer || 'General Essay Rubric',
+            essayTitle: detail.questionContent,
+            essay: detail.studentAnswer,
+          }
+        );
+      } else {
+        res = await apiPost<AiGradeResponse>(
+          '/api/v1/ai/grade-code',
+          accessToken,
+          {
+            problemDesc: `Question (${detail.pointsPossible} points): ${detail.questionContent}`,
+            code: detail.studentAnswer,
+          }
+        );
+      }
 
       const suggestedScore = Math.round((res.obtainedScore / res.totalPossibleScore) * detail.pointsPossible);
       const clampedScore = Math.min(detail.pointsPossible, Math.max(0, suggestedScore));
