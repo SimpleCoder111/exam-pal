@@ -157,18 +157,14 @@ const TeacherQuestionBank = () => {
     if (question) {
       setEditingQuestion(question);
       setFormData({
-        chapterId: question.chapterId.toString(),
+        chapterId: '',
         type: apiTypeToLocal(question.questionType),
         difficulty: question.difficulty.toLowerCase(),
         questionText: question.questionContent,
-        options: question.optionLists.length > 0
-          ? question.optionLists.map(o => ({ optionId: o.optionId, text: o.optionText, isCorrect: o.isCorrect }))
+        options: question.optionContent.length > 0
+          ? question.optionContent.map(text => ({ text, isCorrect: text === question.correctAnswer }))
           : [...emptyOptions],
-        correctAnswer: question.questionType === 'FILL_BLANK'
-          ? (question.optionLists[0]?.optionText ?? '')
-          : question.questionType === 'TRUE_FALSE'
-            ? (question.optionLists.find(o => o.isCorrect)?.optionText?.toLowerCase().includes('true') ? 'true' : 'false')
-            : '',
+        correctAnswer: question.correctAnswer ?? '',
       });
     } else {
       setEditingQuestion(null);
