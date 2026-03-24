@@ -454,7 +454,7 @@ const TeacherQuestionBank = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <p className="text-sm text-foreground">{q.chapter}</p>
+                            <p className="text-sm text-muted-foreground">—</p>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className={difficultyConfig[diffKey]?.color ?? ''}>
