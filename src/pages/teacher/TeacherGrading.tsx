@@ -272,7 +272,7 @@ const TeacherGrading = () => {
     } finally {
       setAiLoading(prev => ({ ...prev, [detail.questionId]: false }));
     }
-  }, [accessToken, toast]);
+  }, [accessToken, toast, rubricSelections, customRubrics]);
 
   const handleSaveGrades = useCallback(async () => {
     if (!gradingDetails || !accessToken) return;
