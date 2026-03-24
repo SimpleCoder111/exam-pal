@@ -90,7 +90,7 @@ const TeacherExams = () => {
 
   // Fetch questions for manual mode when subject is selected
   const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
-  const allQuestions = questionsData?.questionData || [];
+  const allQuestions = questionsData || [];
   const filteredQuestions = allQuestions.filter(q =>
     !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
     q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
