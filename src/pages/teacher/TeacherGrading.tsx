@@ -652,28 +652,60 @@ const TeacherGrading = () => {
                             {/* Grading input for all question types */}
                             {(
                               <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
                                   <p className="text-sm font-semibold flex items-center gap-2">
                                     <PenLine className="w-4 h-4" />
                                     {isPending ? 'Grade this answer' : 'Edit grade'}
                                   </p>
                                   {isManual && detail.studentAnswer && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="gap-2"
-                                      disabled={aiLoading[detail.questionId]}
-                                      onClick={() => handleAiGrade(detail)}
-                                    >
-                                      {aiLoading[detail.questionId] ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Sparkles className="w-4 h-4" />
+                                    <div className="flex items-center gap-2">
+                                      {detail.questionType === 'WRITING' && (
+                                        <div className="flex items-center gap-2">
+                                          <Select
+                                            value={rubricSelections[detail.questionId] || 'General Essay Rubric'}
+                                            onValueChange={val => setRubricSelections(prev => ({ ...prev, [detail.questionId]: val }))}
+                                          >
+                                            <SelectTrigger className="w-36 h-8 text-xs">
+                                              <SelectValue placeholder="Rubric" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {RUBRIC_OPTIONS.map(r => (
+                                                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
                                       )}
-                                      {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
-                                    </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                        disabled={aiLoading[detail.questionId]}
+                                        onClick={() => handleAiGrade(detail)}
+                                      >
+                                        {aiLoading[detail.questionId] ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Sparkles className="w-4 h-4" />
+                                        )}
+                                        {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
+
+                                {/* Custom rubric input */}
+                                {detail.questionType === 'WRITING' && rubricSelections[detail.questionId] === 'Custom' && (
+                                  <div>
+                                    <label className="text-sm text-muted-foreground">Custom Rubric</label>
+                                    <Input
+                                      placeholder="Enter your custom rubric criteria..."
+                                      value={customRubrics[detail.questionId] ?? ''}
+                                      onChange={e => setCustomRubrics(prev => ({ ...prev, [detail.questionId]: e.target.value }))}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                )}
 
                                 {/* AI Suggestion feedback */}
                                 {isManual && aiSuggestions[detail.questionId] && (
@@ -685,6 +717,14 @@ const TeacherGrading = () => {
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                       {aiSuggestions[detail.questionId].message}
                                     </p>
+                                    {aiSuggestions[detail.questionId].suggestion && (
+                                      <div className="flex items-start gap-2 mt-2 pt-2 border-t border-primary/10">
+                                        <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                          {aiSuggestions[detail.questionId].suggestion}
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
 
@@ -728,19 +768,39 @@ const TeacherGrading = () => {
                                   />
                                 </div>
 
-                                <div>
-                                  <label className="text-sm text-muted-foreground">Correct Answer / Notes</label>
-                                  <Textarea
-                                    placeholder="Provide the correct answer or notes..."
-                                    value={correctAnswerInputs[detail.questionId] ?? ''}
-                                    onChange={e => setCorrectAnswerInputs(prev => ({
-                                      ...prev,
-                                      [detail.questionId]: e.target.value,
-                                    }))}
-                                    className="mt-1"
-                                    rows={2}
-                                  />
-                                </div>
+                                {/* Suggestion for Improvement (WRITING) or Correct Answer (others) */}
+                                {detail.questionType === 'WRITING' ? (
+                                  <div>
+                                    <label className="text-sm text-muted-foreground flex items-center gap-1">
+                                      <Lightbulb className="w-3.5 h-3.5" />
+                                      Suggestion for Improvement
+                                    </label>
+                                    <Textarea
+                                      placeholder="Provide suggestions for how the student can improve..."
+                                      value={suggestionInputs[detail.questionId] ?? ''}
+                                      onChange={e => setSuggestionInputs(prev => ({
+                                        ...prev,
+                                        [detail.questionId]: e.target.value,
+                                      }))}
+                                      className="mt-1"
+                                      rows={3}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <label className="text-sm text-muted-foreground">Correct Answer / Notes</label>
+                                    <Textarea
+                                      placeholder="Provide the correct answer or notes..."
+                                      value={correctAnswerInputs[detail.questionId] ?? ''}
+                                      onChange={e => setCorrectAnswerInputs(prev => ({
+                                        ...prev,
+                                        [detail.questionId]: e.target.value,
+                                      }))}
+                                      className="mt-1"
+                                      rows={2}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             )}
                           </CardContent>
