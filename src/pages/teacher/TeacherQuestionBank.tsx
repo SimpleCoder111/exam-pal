@@ -221,7 +221,7 @@ const TeacherQuestionBank = () => {
     const payload = buildPayload();
     try {
       if (editingQuestion) {
-        await updateMutation.mutateAsync({ questionId: editingQuestion.questionId, payload: payload as UpdateQuestionPayload });
+        await updateMutation.mutateAsync({ questionId: editingQuestion.id, payload: payload as UpdateQuestionPayload });
         toast({ title: 'Question updated successfully' });
       } else {
         await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payload });
