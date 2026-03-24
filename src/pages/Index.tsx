@@ -130,6 +130,21 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Demo Exam Section */}
+      <section id="demo" className="py-20 px-6">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-heading text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              Experience It Yourself
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Take a quick 5-question demo exam and see instant results with detailed feedback
+            </p>
+          </div>
+          <DemoExam />
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section id="about" className="py-20 px-6">
         <div className="container mx-auto">
