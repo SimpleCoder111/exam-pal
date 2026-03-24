@@ -90,7 +90,7 @@ export const useTeacherQuestions = (subjectId: number | null) => {
     queryKey: ['teacherQuestions', subjectId],
     queryFn: () =>
       apiFetch<QuestionsApiResponse>(
-        `/api/v1/teacher/question/${subjectId}/questions`,
+        `/api/v1/teacher/questions/${subjectId}`,
         accessToken
       ),
     enabled: !!subjectId && !!accessToken,
