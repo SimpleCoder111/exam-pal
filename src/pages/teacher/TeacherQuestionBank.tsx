@@ -136,12 +136,15 @@ const TeacherQuestionBank = () => {
   }
 
   // Filter questions
-  const filteredQuestions = questions.filter(q => {
-    const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
-    const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
-    return matchesSearch && matchesType && matchesDifficulty;
-  });
+  const filteredQuestions = questions
+    .filter(q => {
+      const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
+      const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
+      const matchesChapter = selectedChapter === 'all' || q.chapterId?.toString() === selectedChapter;
+      return matchesSearch && matchesType && matchesDifficulty && matchesChapter;
+    })
+    .sort((a, b) => (a.chapterOrder ?? 0) - (b.chapterOrder ?? 0));
 
   // Stats from summary API
   const stats = [
@@ -157,7 +160,7 @@ const TeacherQuestionBank = () => {
     if (question) {
       setEditingQuestion(question);
       setFormData({
-        chapterId: '',
+        chapterId: question.chapterId?.toString() ?? '',
         type: apiTypeToLocal(question.questionType),
         difficulty: question.difficulty.toLowerCase(),
         questionText: question.questionContent,
@@ -454,7 +457,7 @@ const TeacherQuestionBank = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <p className="text-sm text-muted-foreground">—</p>
+                            <p className="text-sm text-muted-foreground">{q.chapterName ?? '—'}</p>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className={difficultyConfig[diffKey]?.color ?? ''}>
