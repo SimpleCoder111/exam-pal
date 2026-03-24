@@ -193,6 +193,9 @@ const TeacherGrading = () => {
     setSummaryInputs({});
     setCorrectAnswerInputs({});
     setAiSuggestions({});
+    setSuggestionInputs({});
+    setRubricSelections({});
+    setCustomRubrics({});
     setShowDetailDialog(true);
   };
 
