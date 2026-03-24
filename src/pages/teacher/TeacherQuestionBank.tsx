@@ -126,7 +126,7 @@ const TeacherQuestionBank = () => {
   const deleteMutation = useDeleteQuestion();
   const importMutation = useImportQuestions();
 
-  const questions = questionsData?.questionData ?? [];
+  const questions = questionsData ?? [];
   const currentSubject = subjects.find(s => s.id.toString() === selectedSubjectId);
   const chapters = currentSubject?.chapterResponseList ?? [];
 
@@ -138,10 +138,9 @@ const TeacherQuestionBank = () => {
   // Filter questions
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesChapter = selectedChapter === 'all' || q.chapterId.toString() === selectedChapter;
     const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
     const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
-    return matchesSearch && matchesChapter && matchesType && matchesDifficulty;
+    return matchesSearch && matchesType && matchesDifficulty;
   });
 
   // Stats from summary API
