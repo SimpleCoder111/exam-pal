@@ -30,52 +30,52 @@ const DEMO_QUESTIONS: DemoQuestion[] = [
   {
     id: 1,
     type: 'MULTIPLE_CHOICE',
-    content: 'Which data structure uses FIFO (First In, First Out) principle?',
-    options: ['Stack', 'Queue', 'Tree', 'Graph'],
-    correctAnswer: 'Queue',
+    content: 'What is the largest planet in our solar system?',
+    options: ['Earth', 'Mars', 'Jupiter', 'Saturn'],
+    correctAnswer: 'Jupiter',
     difficulty: 'EASY',
     points: 10,
-    explanation: 'A Queue follows the FIFO principle where the first element added is the first one to be removed.',
+    explanation: 'Jupiter is the largest planet in our solar system, with a mass more than twice that of all other planets combined.',
   },
   {
     id: 2,
     type: 'TRUE_FALSE',
-    content: 'In Java, the "final" keyword can be used to prevent a class from being inherited.',
+    content: 'The Great Wall of China is visible from space with the naked eye.',
     options: ['TRUE', 'FALSE'],
-    correctAnswer: 'TRUE',
+    correctAnswer: 'FALSE',
     difficulty: 'EASY',
     points: 5,
-    explanation: 'A class declared as "final" cannot be subclassed — no other class can extend it.',
+    explanation: 'This is a common myth. The Great Wall is too narrow to be seen from space without aid, according to astronauts.',
   },
   {
     id: 3,
     type: 'MULTIPLE_CHOICE',
-    content: 'What is the time complexity of binary search on a sorted array?',
-    options: ['O(n)', 'O(log n)', 'O(n log n)', 'O(1)'],
-    correctAnswer: 'O(log n)',
+    content: 'Which element has the chemical symbol "Au"?',
+    options: ['Silver', 'Aluminum', 'Gold', 'Argon'],
+    correctAnswer: 'Gold',
     difficulty: 'MEDIUM',
     points: 15,
-    explanation: 'Binary search halves the search space at each step, resulting in O(log n) time complexity.',
+    explanation: '"Au" comes from the Latin word "Aurum," meaning gold.',
   },
   {
     id: 4,
     type: 'FILL_IN_THE_BLANK',
-    content: 'The design pattern that ensures a class has only one instance is called the _____ pattern.',
+    content: 'The process by which plants convert sunlight into energy is called _____.',
     options: [],
-    correctAnswer: 'Singleton',
+    correctAnswer: 'Photosynthesis',
     difficulty: 'MEDIUM',
     points: 10,
-    explanation: 'The Singleton pattern restricts instantiation of a class to a single object.',
+    explanation: 'Photosynthesis is the process by which green plants use sunlight, water, and CO₂ to produce glucose and oxygen.',
   },
   {
     id: 5,
     type: 'MULTIPLE_CHOICE',
-    content: 'Which sorting algorithm has the best average-case time complexity?',
-    options: ['Bubble Sort', 'Selection Sort', 'Merge Sort', 'Insertion Sort'],
-    correctAnswer: 'Merge Sort',
+    content: 'How many bones are in the adult human body?',
+    options: ['196', '206', '216', '256'],
+    correctAnswer: '206',
     difficulty: 'HARD',
     points: 20,
-    explanation: 'Merge Sort consistently achieves O(n log n) in both average and worst cases, unlike the others which are O(n²).',
+    explanation: 'An adult human body contains 206 bones. Babies are born with around 270, but many fuse together as they grow.',
   },
 ];
 
@@ -147,18 +147,27 @@ const DemoExam = () => {
     const percentage = Math.round((results.score / totalPoints) * 100);
     const grade = percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : percentage >= 60 ? 'D' : 'F';
 
+    const gradeStyles: Record<string, { bg: string; text: string; ring: string; emoji: string; message: string }> = {
+      A: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', ring: 'ring-green-300 dark:ring-green-700', emoji: '🎉', message: 'Outstanding!' },
+      B: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', ring: 'ring-blue-300 dark:ring-blue-700', emoji: '👏', message: 'Great job!' },
+      C: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', ring: 'ring-amber-300 dark:ring-amber-700', emoji: '👍', message: 'Good effort!' },
+      D: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', ring: 'ring-orange-300 dark:ring-orange-700', emoji: '💪', message: 'Keep trying!' },
+      F: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300', ring: 'ring-red-300 dark:ring-red-700', emoji: '📚', message: 'Study more & try again!' },
+    };
+    const gs = gradeStyles[grade];
+
     return (
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Score summary */}
-        <Card>
-          <CardContent className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-              <Trophy className="w-8 h-8 text-primary" />
-            </div>
+        <Card className={cn('overflow-hidden border-2', gs.ring.replace('ring-', 'border-'))}>
+          <CardContent className="p-8 text-center space-y-5">
+            <div className="text-5xl">{gs.emoji}</div>
             <h3 className="font-heading text-2xl font-semibold text-foreground">
               Exam Complete!
             </h3>
-            <div className="flex justify-center gap-8">
+            <p className={cn('text-lg font-medium', gs.text)}>{gs.message}</p>
+
+            <div className="flex justify-center items-end gap-8">
               <div>
                 <p className="text-3xl font-bold text-foreground">{results.score}/{totalPoints}</p>
                 <p className="text-sm text-muted-foreground">Score</p>
@@ -167,15 +176,17 @@ const DemoExam = () => {
                 <p className="text-3xl font-bold text-foreground">{percentage}%</p>
                 <p className="text-sm text-muted-foreground">Percentage</p>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-foreground">{grade}</p>
-                <p className="text-sm text-muted-foreground">Grade</p>
+              <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center ring-2', gs.bg, gs.ring)}>
+                <span className={cn('text-3xl font-bold', gs.text)}>{grade}</span>
               </div>
             </div>
-            <Button variant="outline" onClick={() => { setStarted(false); setSubmitted(false); setAnswers({}); setCurrentIndex(0); }} className="gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Retake Exam
-            </Button>
+
+            <div className="flex justify-center gap-3 pt-2">
+              <Button variant="outline" onClick={() => { setStarted(false); setSubmitted(false); setAnswers({}); setCurrentIndex(0); }} className="gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Retake Exam
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
