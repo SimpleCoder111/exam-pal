@@ -344,7 +344,7 @@ const TeacherGrading = () => {
     } finally {
       setSaving(false);
     }
-  }, [gradingDetails, accessToken, gradeInputs, summaryInputs, correctAnswerInputs, examId, selectedStudentId, queryClient, toast]);
+  }, [gradingDetails, accessToken, gradeInputs, summaryInputs, correctAnswerInputs, suggestionInputs, examId, selectedStudentId, queryClient, toast]);
 
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
