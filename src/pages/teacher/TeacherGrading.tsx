@@ -284,7 +284,8 @@ const TeacherGrading = () => {
         const wasEdited = (
           (gradeInputs[d.questionId] ?? d.pointsObtained) !== d.pointsObtained ||
           (summaryInputs[d.questionId] ?? d.summaryMessage) !== d.summaryMessage ||
-          (correctAnswerInputs[d.questionId] ?? d.correctAnswer) !== d.correctAnswer
+          (correctAnswerInputs[d.questionId] ?? d.correctAnswer) !== d.correctAnswer ||
+          (suggestionInputs[d.questionId] ?? (d.suggestionForImprovement || '')) !== (d.suggestionForImprovement || '')
         );
 
         return {
@@ -295,6 +296,7 @@ const TeacherGrading = () => {
           pointsPossible: d.pointsPossible,
           pointsObtained: gradeInputs[d.questionId] ?? d.pointsObtained,
           summaryMessage: summaryInputs[d.questionId] ?? d.summaryMessage,
+          suggestionForImprovement: suggestionInputs[d.questionId] ?? (d.suggestionForImprovement || ''),
           studentAnswer: d.studentAnswer,
           correctAnswer: correctAnswerInputs[d.questionId] ?? d.correctAnswer,
           scoreEdit: wasEdited || d.scoreEdit,
