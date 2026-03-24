@@ -90,12 +90,11 @@ const TeacherExams = () => {
 
   // Fetch questions for manual mode when subject is selected
   const { data: questionsData, isLoading: questionsLoading } = useTeacherQuestions(formData.subjectId);
-  const allQuestions = questionsData?.questionData || [];
+  const allQuestions = questionsData || [];
   const filteredQuestions = allQuestions.filter(q =>
     !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
     q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase())
   );
 
   const handleCreateExam = () => {
@@ -412,22 +411,22 @@ const TeacherExams = () => {
             <TableBody>
               {filteredQuestions.map((q) => (
                 <TableRow
-                  key={q.questionId}
-                  className={selectedQuestionIds.includes(q.questionId) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
-                  onClick={() => handleQuestionToggle(q.questionId)}
+                  key={q.id}
+                  className={selectedQuestionIds.includes(q.id) ? 'bg-primary/5' : 'cursor-pointer hover:bg-muted/50'}
+                  onClick={() => handleQuestionToggle(q.id)}
                 >
                   <TableCell>
                     <input
                       type="checkbox"
-                      checked={selectedQuestionIds.includes(q.questionId)}
-                      onChange={() => handleQuestionToggle(q.questionId)}
+                      checked={selectedQuestionIds.includes(q.id)}
+                      onChange={() => handleQuestionToggle(q.id)}
                       className="rounded"
                     />
                   </TableCell>
                   <TableCell className="font-medium max-w-[250px] truncate">{q.questionContent || '—'}</TableCell>
                   <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
                   <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{q.chapter || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
               {filteredQuestions.length === 0 && questionSearch && (

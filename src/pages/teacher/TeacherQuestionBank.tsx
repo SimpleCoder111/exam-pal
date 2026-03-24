@@ -42,7 +42,7 @@ type QuestionType = 'multiple_choice' | 'fill_blank' | 'true_false' | 'coding' |
 const apiTypeToLocal = (t: string): QuestionType => {
   if (t === 'MULTIPLE_CHOICE') return 'multiple_choice';
   if (t === 'TRUE_FALSE') return 'true_false';
-  if (t === 'FILL_BLANK') return 'fill_blank';
+  if (t === 'FILL_IN_THE_BLANK') return 'fill_blank';
   if (t === 'CODING') return 'coding';
   if (t === 'WRITING') return 'writing';
   return 'multiple_choice';
@@ -53,7 +53,7 @@ const localTypeToApi = (t: QuestionType) => {
   if (t === 'true_false') return 'TRUE_FALSE' as const;
   if (t === 'coding') return 'CODING' as const;
   if (t === 'writing') return 'WRITING' as const;
-  return 'FILL_BLANK' as const;
+  return 'FILL_IN_THE_BLANK' as const;
 };
 
 const localDiffToApi = (d: string) => d.toUpperCase() as 'EASY' | 'MEDIUM' | 'HARD';
@@ -126,7 +126,7 @@ const TeacherQuestionBank = () => {
   const deleteMutation = useDeleteQuestion();
   const importMutation = useImportQuestions();
 
-  const questions = questionsData?.questionData ?? [];
+  const questions = questionsData ?? [];
   const currentSubject = subjects.find(s => s.id.toString() === selectedSubjectId);
   const chapters = currentSubject?.chapterResponseList ?? [];
 
@@ -138,10 +138,9 @@ const TeacherQuestionBank = () => {
   // Filter questions
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.questionContent.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesChapter = selectedChapter === 'all' || q.chapterId.toString() === selectedChapter;
     const matchesType = selectedType === 'all' || apiTypeToLocal(q.questionType) === selectedType;
     const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty.toLowerCase() === selectedDifficulty;
-    return matchesSearch && matchesChapter && matchesType && matchesDifficulty;
+    return matchesSearch && matchesType && matchesDifficulty;
   });
 
   // Stats from summary API
@@ -158,18 +157,14 @@ const TeacherQuestionBank = () => {
     if (question) {
       setEditingQuestion(question);
       setFormData({
-        chapterId: question.chapterId.toString(),
+        chapterId: '',
         type: apiTypeToLocal(question.questionType),
         difficulty: question.difficulty.toLowerCase(),
         questionText: question.questionContent,
-        options: question.optionLists.length > 0
-          ? question.optionLists.map(o => ({ optionId: o.optionId, text: o.optionText, isCorrect: o.isCorrect }))
+        options: question.optionContent.length > 0
+          ? question.optionContent.map(text => ({ text, isCorrect: text === question.correctAnswer }))
           : [...emptyOptions],
-        correctAnswer: question.questionType === 'FILL_BLANK'
-          ? (question.optionLists[0]?.optionText ?? '')
-          : question.questionType === 'TRUE_FALSE'
-            ? (question.optionLists.find(o => o.isCorrect)?.optionText?.toLowerCase().includes('true') ? 'true' : 'false')
-            : '',
+        correctAnswer: question.correctAnswer ?? '',
       });
     } else {
       setEditingQuestion(null);
@@ -185,61 +180,40 @@ const TeacherQuestionBank = () => {
     setIsDialogOpen(true);
   };
 
-  const buildPayload = (): CreateQuestionPayload | UpdateQuestionPayload => {
+  const buildPayload = (): CreateQuestionPayload => {
     const apiType = localTypeToApi(formData.type);
     const base = {
       subjectId: parseInt(selectedSubjectId),
-      chapterId: parseInt(formData.chapterId),
+      chapterId: parseInt(formData.chapterId) || 0,
       questionType: apiType,
       questionContent: formData.questionText,
       difficulty: localDiffToApi(formData.difficulty),
       createdBy: user?.id ?? '',
+      score: 1,
     };
 
     if (apiType === 'MULTIPLE_CHOICE') {
+      const correctOpt = formData.options.find(o => o.isCorrect);
       return {
         ...base,
-        optionLists: formData.options
-          .filter(o => o.text.trim())
-          .map(o => ({
-            ...(o.optionId ? { optionId: o.optionId } : {}),
-            optionText: o.text,
-            isCorrect: o.isCorrect,
-          })),
+        optionLists: formData.options.filter(o => o.text.trim()).map(o => o.text),
+        correctAnswer: correctOpt?.text ?? '',
       };
     }
 
     if (apiType === 'TRUE_FALSE') {
-      const trueOpt = editingQuestion?.optionLists.find(o => o.optionText.toLowerCase().includes('true'));
-      const falseOpt = editingQuestion?.optionLists.find(o => !o.optionText.toLowerCase().includes('true'));
       return {
         ...base,
-        optionLists: [
-          { ...(trueOpt?.optionId ? { optionId: trueOpt.optionId } : {}), optionText: 'True', isCorrect: formData.correctAnswer === 'true' },
-          { ...(falseOpt?.optionId ? { optionId: falseOpt.optionId } : {}), optionText: 'False', isCorrect: formData.correctAnswer === 'false' },
-        ],
+        optionLists: ['TRUE', 'FALSE'],
+        correctAnswer: formData.correctAnswer === 'true' ? 'TRUE' : 'FALSE',
       };
     }
 
-    // CODING / WRITING
-    if (apiType === 'CODING' || apiType === 'WRITING') {
-      const existingOpt = editingQuestion?.optionLists[0];
-      return {
-        ...base,
-        optionLists: [
-          { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
-          ...(formData.options[0]?.text ? [{ optionText: formData.options[0].text, isCorrect: false }] : []),
-        ],
-      };
-    }
-
-    // FILL_BLANK
-    const existingOpt = editingQuestion?.optionLists[0];
+    // CODING / WRITING / FILL_IN_THE_BLANK
     return {
       ...base,
-      optionLists: [
-        { ...(existingOpt?.optionId ? { optionId: existingOpt.optionId } : {}), optionText: formData.correctAnswer, isCorrect: true },
-      ],
+      optionLists: [],
+      correctAnswer: formData.correctAnswer,
     };
   };
 
@@ -247,7 +221,7 @@ const TeacherQuestionBank = () => {
     const payload = buildPayload();
     try {
       if (editingQuestion) {
-        await updateMutation.mutateAsync({ questionId: editingQuestion.questionId, payload: payload as UpdateQuestionPayload });
+        await updateMutation.mutateAsync({ questionId: editingQuestion.id, payload: payload as UpdateQuestionPayload });
         toast({ title: 'Question updated successfully' });
       } else {
         await createMutation.mutateAsync({ subjectId: parseInt(selectedSubjectId), payload });
@@ -466,7 +440,7 @@ const TeacherQuestionBank = () => {
                       const localType = apiTypeToLocal(q.questionType);
                       const diffKey = q.difficulty.toLowerCase();
                       return (
-                        <TableRow key={q.questionId}>
+                        <TableRow key={q.id}>
                           <TableCell>
                             <p className="font-medium text-foreground line-clamp-2 max-w-md">{q.questionContent}</p>
                             <p className="text-xs text-muted-foreground mt-1">By: {q.createdBy}</p>
@@ -480,7 +454,7 @@ const TeacherQuestionBank = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <p className="text-sm text-foreground">{q.chapter}</p>
+                            <p className="text-sm text-muted-foreground">—</p>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className={difficultyConfig[diffKey]?.color ?? ''}>
@@ -497,7 +471,7 @@ const TeacherQuestionBank = () => {
                                   <Edit2 className="w-4 h-4 mr-2" />Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDeleteQuestion(q.questionId)} className="text-destructive">
+                                <DropdownMenuItem onClick={() => handleDeleteQuestion(q.id)} className="text-destructive">
                                   <Trash2 className="w-4 h-4 mr-2" />Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
