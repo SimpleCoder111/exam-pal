@@ -24,6 +24,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiPost, apiPut } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   ArrowLeft,
   CheckCircle2,
   XCircle,
@@ -38,7 +45,16 @@ import {
   Sparkles,
   Loader2,
   Save,
+  Lightbulb,
 } from 'lucide-react';
+
+const RUBRIC_OPTIONS = [
+  { value: 'IELTS Writing Standard', label: 'IELTS' },
+  { value: 'TOEFL Writing Standard', label: 'TOEFL' },
+  { value: 'Cambridge English Assessment', label: 'Cambridge' },
+  { value: 'General Essay Rubric', label: 'General' },
+  { value: 'Custom', label: 'Custom' },
+];
 
 const formatTimeTaken = (ms: number): string => {
   if (!ms || ms === 0) return '—';
