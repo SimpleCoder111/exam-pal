@@ -160,7 +160,7 @@ const TeacherQuestionBank = () => {
     if (question) {
       setEditingQuestion(question);
       setFormData({
-        chapterId: '',
+        chapterId: question.chapterId?.toString() ?? '',
         type: apiTypeToLocal(question.questionType),
         difficulty: question.difficulty.toLowerCase(),
         questionText: question.questionContent,

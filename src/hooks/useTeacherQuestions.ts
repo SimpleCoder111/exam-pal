@@ -8,6 +8,9 @@ const API_BASE_URL = 'http://localhost:7000';
 
 export interface ApiQuestion {
   id: number;
+  chapterId: number;
+  chapterName: string;
+  chapterOrder: number;
   questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'FILL_IN_THE_BLANK' | 'CODING' | 'WRITING';
   questionContent: string;
   optionContent: string[];
