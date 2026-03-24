@@ -215,16 +215,22 @@ const TeacherGrading = () => {
         obtainedScore: number;
         totalPossibleScore: number;
         summaryMessage: string;
+        suggestionForImprovement?: string;
       }
 
       let res: AiGradeResponse;
 
       if (detail.questionType === 'WRITING') {
+        const selectedRubric = rubricSelections[detail.questionId] || 'General Essay Rubric';
+        const rubric = selectedRubric === 'Custom'
+          ? (customRubrics[detail.questionId] || 'General Essay Rubric')
+          : selectedRubric;
+
         res = await apiPost<AiGradeResponse>(
           '/api/v1/ai/grade-essay',
           accessToken,
           {
-            rubric: detail.correctAnswer || 'General Essay Rubric',
+            rubric,
             essayTitle: detail.questionContent,
             essay: detail.studentAnswer,
           }
@@ -245,10 +251,13 @@ const TeacherGrading = () => {
 
       setAiSuggestions(prev => ({
         ...prev,
-        [detail.questionId]: { score: clampedScore, message: res.summaryMessage },
+        [detail.questionId]: { score: clampedScore, message: res.summaryMessage, suggestion: res.suggestionForImprovement },
       }));
       setGradeInputs(prev => ({ ...prev, [detail.questionId]: clampedScore }));
       setSummaryInputs(prev => ({ ...prev, [detail.questionId]: res.summaryMessage }));
+      if (res.suggestionForImprovement) {
+        setSuggestionInputs(prev => ({ ...prev, [detail.questionId]: res.suggestionForImprovement! }));
+      }
 
       toast({
         title: 'AI Suggestion Ready',
