@@ -94,8 +94,7 @@ const TeacherExams = () => {
   const filteredQuestions = allQuestions.filter(q =>
     !questionSearch || q.questionContent.toLowerCase().includes(questionSearch.toLowerCase()) ||
     q.questionType.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    q.chapter?.toLowerCase().includes(questionSearch.toLowerCase())
+    q.difficulty.toLowerCase().includes(questionSearch.toLowerCase())
   );
 
   const handleCreateExam = () => {
