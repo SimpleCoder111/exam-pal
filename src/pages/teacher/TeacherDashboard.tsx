@@ -5,7 +5,7 @@ import {
   PlusCircle,
   Clock,
   CheckCircle,
-  AlertCircle
+  GraduationCap
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useTeacherClasses } from '@/hooks/useTeacherClassrooms';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useQuestionSummary } from '@/hooks/useTeacherQuestions';
+import { useTeacherStudents } from '@/hooks/useTeacherStudents';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isFuture } from 'date-fns';
 
@@ -26,21 +27,22 @@ const TeacherDashboard = () => {
   const { data: classes, isLoading: classesLoading } = useTeacherClasses();
   const { data: exams, isLoading: examsLoading } = useTeacherExams();
   const { data: summary, isLoading: summaryLoading } = useQuestionSummary();
+  const { data: students, isLoading: studentsLoading } = useTeacherStudents();
 
   const totalQuestions = summary?.totalQuestions ?? 0;
-  const totalStudents = classes?.length ?? 0;
+  const totalStudents = students?.length ?? 0;
   const upcomingExams = exams?.filter(e => {
     try { return isFuture(parseISO(e.examDate)); } catch { return false; }
   }) ?? [];
   const activeExamCount = upcomingExams.length;
 
-  const isLoading = subjectsLoading || classesLoading || examsLoading || summaryLoading;
+  const isLoading = subjectsLoading || classesLoading || examsLoading || summaryLoading || studentsLoading;
 
   const stats = [
     { label: 'Total Questions', value: totalQuestions.toString(), icon: FileText },
     { label: 'Active Exams', value: activeExamCount.toString(), icon: BookOpen },
     { label: 'My Students', value: totalStudents.toString(), icon: Users },
-    { label: 'My Subjects', value: (subjects?.length ?? 0).toString(), icon: AlertCircle },
+    { label: 'My Subjects', value: (subjects?.length ?? 0).toString(), icon: GraduationCap },
   ];
 
   return (
