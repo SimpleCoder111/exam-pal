@@ -461,6 +461,14 @@ const StudentResultDetail = ({ result, gradingData, isLoading, onBack }: Student
                             <span className="text-foreground">{detail.summaryMessage}</span>
                           </div>
                         )}
+
+                        {/* Suggestion for improvement for graded manual questions */}
+                        {isManual && !isPending && detail.suggestionForImprovement && (
+                          <div className="px-4 py-2.5 rounded-lg text-sm border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+                            <span className="text-xs font-medium text-muted-foreground block mb-1">💡 Suggestion for Improvement</span>
+                            <span className="text-foreground">{detail.suggestionForImprovement}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
