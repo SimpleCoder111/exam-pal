@@ -427,7 +427,7 @@ const TeacherExams = () => {
                   <TableCell className="font-medium max-w-[250px] truncate">{q.questionContent || '—'}</TableCell>
                   <TableCell><Badge variant="outline">{q.questionType || '—'}</Badge></TableCell>
                   <TableCell><Badge variant="outline">{q.difficulty || '—'}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{q.chapter || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">—</TableCell>
                 </TableRow>
               ))}
               {filteredQuestions.length === 0 && questionSearch && (
