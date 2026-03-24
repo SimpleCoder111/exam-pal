@@ -471,7 +471,7 @@ const TeacherQuestionBank = () => {
                                   <Edit2 className="w-4 h-4 mr-2" />Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDeleteQuestion(q.questionId)} className="text-destructive">
+                                <DropdownMenuItem onClick={() => handleDeleteQuestion(q.id)} className="text-destructive">
                                   <Trash2 className="w-4 h-4 mr-2" />Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
