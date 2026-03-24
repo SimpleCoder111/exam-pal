@@ -55,7 +55,7 @@ const TeacherDashboard = () => {
             <p className="text-muted-foreground mt-1">Manage your subjects, questions, and exams.</p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={() => navigate('/teacher/question-bank')}>
+            <Button variant="outline" onClick={() => navigate('/teacher/questions')}>
               <FileText className="w-4 h-4 mr-2" />
               Add Question
             </Button>
