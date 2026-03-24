@@ -41,6 +41,7 @@ export interface GradingDetail {
   pointsPossible: number;
   pointsObtained: number;
   summaryMessage: string;
+  suggestionForImprovement?: string;
   studentAnswer: string | null;
   correctAnswer: string;
   score: boolean;

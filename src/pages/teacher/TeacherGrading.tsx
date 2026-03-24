@@ -24,6 +24,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiPost, apiPut } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   ArrowLeft,
   CheckCircle2,
   XCircle,
@@ -38,7 +45,16 @@ import {
   Sparkles,
   Loader2,
   Save,
+  Lightbulb,
 } from 'lucide-react';
+
+const RUBRIC_OPTIONS = [
+  { value: 'IELTS Writing Standard', label: 'IELTS' },
+  { value: 'TOEFL Writing Standard', label: 'TOEFL' },
+  { value: 'Cambridge English Assessment', label: 'Cambridge' },
+  { value: 'General Essay Rubric', label: 'General' },
+  { value: 'Custom', label: 'Custom' },
+];
 
 const formatTimeTaken = (ms: number): string => {
   if (!ms || ms === 0) return '—';
@@ -136,8 +152,11 @@ const TeacherGrading = () => {
   const [studentSearch, setStudentSearch] = useState('');
   const [examSearch, setExamSearch] = useState('');
   const [aiLoading, setAiLoading] = useState<Record<number, boolean>>({});
-  const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string }>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<Record<number, { score: number; message: string; suggestion?: string }>>({});
   const [saving, setSaving] = useState(false);
+  const [rubricSelections, setRubricSelections] = useState<Record<number, string>>({});
+  const [customRubrics, setCustomRubrics] = useState<Record<number, string>>({});
+  const [suggestionInputs, setSuggestionInputs] = useState<Record<number, string>>({});
 
   // Pre-fill inputs when grading details load
   useEffect(() => {
@@ -145,15 +164,18 @@ const TeacherGrading = () => {
       const points: Record<number, number> = {};
       const summaries: Record<number, string> = {};
       const corrects: Record<number, string> = {};
+      const suggestions: Record<number, string> = {};
       gradingDetails.details.forEach(d => {
         points[d.questionId] = d.pointsObtained;
         summaries[d.questionId] = d.summaryMessage || '';
         const isManualType = d.questionType === 'CODING' || d.questionType === 'WRITING';
         corrects[d.questionId] = (isManualType && d.correctAnswer === 'N/A') ? '' : (d.correctAnswer || '');
+        suggestions[d.questionId] = d.suggestionForImprovement || '';
       });
       setGradeInputs(points);
       setSummaryInputs(summaries);
       setCorrectAnswerInputs(corrects);
+      setSuggestionInputs(suggestions);
     }
   }, [gradingDetails]);
 
@@ -171,6 +193,9 @@ const TeacherGrading = () => {
     setSummaryInputs({});
     setCorrectAnswerInputs({});
     setAiSuggestions({});
+    setSuggestionInputs({});
+    setRubricSelections({});
+    setCustomRubrics({});
     setShowDetailDialog(true);
   };
 
@@ -190,16 +215,22 @@ const TeacherGrading = () => {
         obtainedScore: number;
         totalPossibleScore: number;
         summaryMessage: string;
+        suggestionForImprovement?: string;
       }
 
       let res: AiGradeResponse;
 
       if (detail.questionType === 'WRITING') {
+        const selectedRubric = rubricSelections[detail.questionId] || 'General Essay Rubric';
+        const rubric = selectedRubric === 'Custom'
+          ? (customRubrics[detail.questionId] || 'General Essay Rubric')
+          : selectedRubric;
+
         res = await apiPost<AiGradeResponse>(
           '/api/v1/ai/grade-essay',
           accessToken,
           {
-            rubric: detail.correctAnswer || 'General Essay Rubric',
+            rubric,
             essayTitle: detail.questionContent,
             essay: detail.studentAnswer,
           }
@@ -220,10 +251,13 @@ const TeacherGrading = () => {
 
       setAiSuggestions(prev => ({
         ...prev,
-        [detail.questionId]: { score: clampedScore, message: res.summaryMessage },
+        [detail.questionId]: { score: clampedScore, message: res.summaryMessage, suggestion: res.suggestionForImprovement },
       }));
       setGradeInputs(prev => ({ ...prev, [detail.questionId]: clampedScore }));
       setSummaryInputs(prev => ({ ...prev, [detail.questionId]: res.summaryMessage }));
+      if (res.suggestionForImprovement) {
+        setSuggestionInputs(prev => ({ ...prev, [detail.questionId]: res.suggestionForImprovement! }));
+      }
 
       toast({
         title: 'AI Suggestion Ready',
@@ -238,7 +272,7 @@ const TeacherGrading = () => {
     } finally {
       setAiLoading(prev => ({ ...prev, [detail.questionId]: false }));
     }
-  }, [accessToken, toast]);
+  }, [accessToken, toast, rubricSelections, customRubrics]);
 
   const handleSaveGrades = useCallback(async () => {
     if (!gradingDetails || !accessToken) return;
@@ -250,7 +284,8 @@ const TeacherGrading = () => {
         const wasEdited = (
           (gradeInputs[d.questionId] ?? d.pointsObtained) !== d.pointsObtained ||
           (summaryInputs[d.questionId] ?? d.summaryMessage) !== d.summaryMessage ||
-          (correctAnswerInputs[d.questionId] ?? d.correctAnswer) !== d.correctAnswer
+          (correctAnswerInputs[d.questionId] ?? d.correctAnswer) !== d.correctAnswer ||
+          (suggestionInputs[d.questionId] ?? (d.suggestionForImprovement || '')) !== (d.suggestionForImprovement || '')
         );
 
         return {
@@ -261,6 +296,7 @@ const TeacherGrading = () => {
           pointsPossible: d.pointsPossible,
           pointsObtained: gradeInputs[d.questionId] ?? d.pointsObtained,
           summaryMessage: summaryInputs[d.questionId] ?? d.summaryMessage,
+          suggestionForImprovement: suggestionInputs[d.questionId] ?? (d.suggestionForImprovement || ''),
           studentAnswer: d.studentAnswer,
           correctAnswer: correctAnswerInputs[d.questionId] ?? d.correctAnswer,
           scoreEdit: wasEdited || d.scoreEdit,
@@ -308,7 +344,7 @@ const TeacherGrading = () => {
     } finally {
       setSaving(false);
     }
-  }, [gradingDetails, accessToken, gradeInputs, summaryInputs, correctAnswerInputs, examId, selectedStudentId, queryClient, toast]);
+  }, [gradingDetails, accessToken, gradeInputs, summaryInputs, correctAnswerInputs, suggestionInputs, examId, selectedStudentId, queryClient, toast]);
 
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
@@ -616,28 +652,60 @@ const TeacherGrading = () => {
                             {/* Grading input for all question types */}
                             {(
                               <div className="bg-secondary/30 p-4 rounded-lg space-y-3">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
                                   <p className="text-sm font-semibold flex items-center gap-2">
                                     <PenLine className="w-4 h-4" />
                                     {isPending ? 'Grade this answer' : 'Edit grade'}
                                   </p>
                                   {isManual && detail.studentAnswer && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="gap-2"
-                                      disabled={aiLoading[detail.questionId]}
-                                      onClick={() => handleAiGrade(detail)}
-                                    >
-                                      {aiLoading[detail.questionId] ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <Sparkles className="w-4 h-4" />
+                                    <div className="flex items-center gap-2">
+                                      {detail.questionType === 'WRITING' && (
+                                        <div className="flex items-center gap-2">
+                                          <Select
+                                            value={rubricSelections[detail.questionId] || 'General Essay Rubric'}
+                                            onValueChange={val => setRubricSelections(prev => ({ ...prev, [detail.questionId]: val }))}
+                                          >
+                                            <SelectTrigger className="w-36 h-8 text-xs">
+                                              <SelectValue placeholder="Rubric" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {RUBRIC_OPTIONS.map(r => (
+                                                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
                                       )}
-                                      {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
-                                    </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-2"
+                                        disabled={aiLoading[detail.questionId]}
+                                        onClick={() => handleAiGrade(detail)}
+                                      >
+                                        {aiLoading[detail.questionId] ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <Sparkles className="w-4 h-4" />
+                                        )}
+                                        {aiLoading[detail.questionId] ? 'Analyzing...' : 'AI Suggest'}
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
+
+                                {/* Custom rubric input */}
+                                {detail.questionType === 'WRITING' && rubricSelections[detail.questionId] === 'Custom' && (
+                                  <div>
+                                    <label className="text-sm text-muted-foreground">Custom Rubric</label>
+                                    <Input
+                                      placeholder="Enter your custom rubric criteria..."
+                                      value={customRubrics[detail.questionId] ?? ''}
+                                      onChange={e => setCustomRubrics(prev => ({ ...prev, [detail.questionId]: e.target.value }))}
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                )}
 
                                 {/* AI Suggestion feedback */}
                                 {isManual && aiSuggestions[detail.questionId] && (
@@ -649,6 +717,14 @@ const TeacherGrading = () => {
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                       {aiSuggestions[detail.questionId].message}
                                     </p>
+                                    {aiSuggestions[detail.questionId].suggestion && (
+                                      <div className="flex items-start gap-2 mt-2 pt-2 border-t border-primary/10">
+                                        <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                          {aiSuggestions[detail.questionId].suggestion}
+                                        </p>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
 
@@ -692,19 +768,39 @@ const TeacherGrading = () => {
                                   />
                                 </div>
 
-                                <div>
-                                  <label className="text-sm text-muted-foreground">Correct Answer / Notes</label>
-                                  <Textarea
-                                    placeholder="Provide the correct answer or notes..."
-                                    value={correctAnswerInputs[detail.questionId] ?? ''}
-                                    onChange={e => setCorrectAnswerInputs(prev => ({
-                                      ...prev,
-                                      [detail.questionId]: e.target.value,
-                                    }))}
-                                    className="mt-1"
-                                    rows={2}
-                                  />
-                                </div>
+                                {/* Suggestion for Improvement (WRITING) or Correct Answer (others) */}
+                                {detail.questionType === 'WRITING' ? (
+                                  <div>
+                                    <label className="text-sm text-muted-foreground flex items-center gap-1">
+                                      <Lightbulb className="w-3.5 h-3.5" />
+                                      Suggestion for Improvement
+                                    </label>
+                                    <Textarea
+                                      placeholder="Provide suggestions for how the student can improve..."
+                                      value={suggestionInputs[detail.questionId] ?? ''}
+                                      onChange={e => setSuggestionInputs(prev => ({
+                                        ...prev,
+                                        [detail.questionId]: e.target.value,
+                                      }))}
+                                      className="mt-1"
+                                      rows={3}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <label className="text-sm text-muted-foreground">Correct Answer / Notes</label>
+                                    <Textarea
+                                      placeholder="Provide the correct answer or notes..."
+                                      value={correctAnswerInputs[detail.questionId] ?? ''}
+                                      onChange={e => setCorrectAnswerInputs(prev => ({
+                                        ...prev,
+                                        [detail.questionId]: e.target.value,
+                                      }))}
+                                      className="mt-1"
+                                      rows={2}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             )}
                           </CardContent>
