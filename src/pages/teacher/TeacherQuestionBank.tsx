@@ -440,7 +440,7 @@ const TeacherQuestionBank = () => {
                       const localType = apiTypeToLocal(q.questionType);
                       const diffKey = q.difficulty.toLowerCase();
                       return (
-                        <TableRow key={q.questionId}>
+                        <TableRow key={q.id}>
                           <TableCell>
                             <p className="font-medium text-foreground line-clamp-2 max-w-md">{q.questionContent}</p>
                             <p className="text-xs text-muted-foreground mt-1">By: {q.createdBy}</p>
