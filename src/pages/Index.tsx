@@ -1,4 +1,5 @@
 import { BookOpen, Clock, Award, Users, ArrowRight, CheckCircle } from "lucide-react";
+import DemoExam from "@/components/demo/DemoExam";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
