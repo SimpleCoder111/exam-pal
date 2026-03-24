@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -392,27 +392,49 @@ const TeacherGrading = () => {
                       <TableHead>Exam Title</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Duration</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredExams.map(exam => (
-                      <TableRow
-                        key={exam.examId || exam.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSearchParams({ examId: String(exam.examId || exam.id), title: exam.examTitle })}
-                      >
-                        <TableCell className="font-medium">{exam.examTitle}</TableCell>
-                        <TableCell>{new Date(exam.examDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{exam.duration} min</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="gap-2">
-                            <Eye className="h-4 w-4" />
-                            View Results
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {filteredExams.map(exam => {
+                      const examDate = new Date(exam.examDate);
+                      const now = new Date();
+                      const endTime = new Date(examDate.getTime() + (exam.duration || 0) * 60000);
+                      let examStatus: 'upcoming' | 'ongoing' | 'completed';
+                      if (now < examDate) examStatus = 'upcoming';
+                      else if (now <= endTime) examStatus = 'ongoing';
+                      else examStatus = 'completed';
+
+                      return (
+                        <TableRow
+                          key={exam.examId || exam.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setSearchParams({ examId: String(exam.examId || exam.id), title: exam.examTitle })}
+                        >
+                          <TableCell className="font-medium">{exam.examTitle}</TableCell>
+                          <TableCell>{examDate.toLocaleDateString()}</TableCell>
+                          <TableCell>{exam.duration} min</TableCell>
+                          <TableCell>
+                            {examStatus === 'upcoming' && (
+                              <Badge variant="outline" className="border-blue-300 text-blue-600 dark:text-blue-400">Upcoming</Badge>
+                            )}
+                            {examStatus === 'ongoing' && (
+                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">Ongoing</Badge>
+                            )}
+                            {examStatus === 'completed' && (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Completed</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm" className="gap-2">
+                              <Eye className="h-4 w-4" />
+                              View Results
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
