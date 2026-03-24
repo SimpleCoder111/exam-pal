@@ -115,15 +115,9 @@ const TeacherDashboard = () => {
                         <h3 className="font-semibold text-foreground">{subject.name}</h3>
                         <Badge variant="outline" className="ml-auto text-xs">{subject.code}</Badge>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Questions</p>
-                          <p className="font-medium text-foreground">{totalQ}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Chapters</p>
-                          <p className="font-medium text-foreground">{chapters}</p>
-                        </div>
+                      <div className="text-sm">
+                        <p className="text-muted-foreground">Chapters</p>
+                        <p className="font-medium text-foreground">{chapters}</p>
                       </div>
                     </div>
                   );
