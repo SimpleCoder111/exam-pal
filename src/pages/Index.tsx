@@ -72,15 +72,17 @@ const Index = () => {
             Create, manage, and deliver exams seamlessly. Empower your students with a distraction-free testing experience.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <Link to="/exam">
+            <a href="#demo">
               <Button variant="hero" size="xl">
-                Start Demo Exam
+                Try It Now
                 <ArrowRight className="w-5 h-5" />
               </Button>
-            </Link>
-            <Button variant="hero-outline" size="xl">
-              Learn More
-            </Button>
+            </a>
+            <a href="#features">
+              <Button variant="hero-outline" size="xl">
+                Learn More
+              </Button>
+            </a>
           </div>
 
           {/* Stats */}
