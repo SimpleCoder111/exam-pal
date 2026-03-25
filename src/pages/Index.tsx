@@ -157,13 +157,13 @@ const Index = () => {
               <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
                 Join thousands of educators who trust ExamFlow for their assessment needs.
               </p>
-              <Link to="/exam">
+              <Link to="/login">
                 <Button 
                   variant="outline" 
                   size="xl"
                   className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
                 >
-                  Try the Demo
+                  Get Started
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
