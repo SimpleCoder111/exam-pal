@@ -39,6 +39,7 @@ import StudentResults from "./pages/student/StudentResults";
 import StudentResultsReal from "./pages/student/StudentResultsReal";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentSettingsReal from "./pages/student/StudentSettingsReal";
+import StudentLeaderboard from "./pages/student/StudentLeaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -205,6 +206,11 @@ const App = () => (
               <Route path="/student/results-mock" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentResults />
+                </ProtectedRoute>
+              } />
+              <Route path="/student/leaderboard" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentLeaderboard />
                 </ProtectedRoute>
               } />
               <Route path="/student/settings" element={
