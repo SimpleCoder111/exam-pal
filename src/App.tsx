@@ -208,6 +208,11 @@ const App = () => (
                   <StudentResults />
                 </ProtectedRoute>
               } />
+              <Route path="/student/leaderboard" element={
+                <ProtectedRoute allowedRoles={['student']}>
+                  <StudentLeaderboard />
+                </ProtectedRoute>
+              } />
               <Route path="/student/settings" element={
                 <ProtectedRoute allowedRoles={['student']}>
                   <StudentSettingsReal />
