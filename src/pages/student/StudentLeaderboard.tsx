@@ -167,17 +167,30 @@ const StudentLeaderboard = () => {
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
 
-  const { data: subjects, isLoading: subjectsLoading } = useStudentSubjects();
+  const { data: classrooms, isLoading: classroomsLoading } = useStudentClassrooms();
   const { data: exams, isLoading: examsLoading } = useStudentExams();
 
   const { data: examLeaderboard, isLoading: examLbLoading, error: examLbError } = useExamLeaderboard(selectedExamId);
   const { data: subjectLeaderboard, isLoading: subjectLbLoading, error: subjectLbError } = useSubjectLeaderboard(selectedSubjectId);
 
   const examsArray = Array.isArray(exams) ? exams : [];
-  const subjectsArray = Array.isArray(subjects) ? subjects : [];
+  const classroomsArray = Array.isArray(classrooms) ? classrooms : [];
+
+  // Derive unique subjects from classes (which have numeric subjectId)
+  const uniqueSubjects = useMemo(() => {
+    const seen = new Map<number, { subjectId: number; className: string }>();
+    classroomsArray.forEach((c) => {
+      if (!seen.has(c.subjectId)) {
+        // Extract subject name from className (e.g., "Class A - C Programming" → "C Programming")
+        const subjectName = c.className.includes(' - ') ? c.className.split(' - ').slice(1).join(' - ') : c.className;
+        seen.set(c.subjectId, { subjectId: c.subjectId, className: subjectName });
+      }
+    });
+    return Array.from(seen.values());
+  }, [classroomsArray]);
 
   const selectedExam = examsArray.find(e => String(e.examId) === selectedExamId);
-  const selectedSubject = subjectsArray.find(s => String(s.subjectId) === selectedSubjectId);
+  const selectedSubject = uniqueSubjects.find(s => String(s.subjectId) === selectedSubjectId);
 
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
