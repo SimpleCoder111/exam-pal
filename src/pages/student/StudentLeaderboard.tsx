@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Trophy,
   Medal,
@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
-import { useStudentSubjects } from '@/hooks/useStudentSubjects';
+import { useStudentClassrooms } from '@/hooks/useStudentClassrooms';
 import { useStudentExams } from '@/hooks/useStudentExams';
 import { useExamLeaderboard, useSubjectLeaderboard } from '@/hooks/useStudentLeaderboard';
 
@@ -167,17 +167,30 @@ const StudentLeaderboard = () => {
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
 
-  const { data: subjects, isLoading: subjectsLoading } = useStudentSubjects();
+  const { data: classrooms, isLoading: classroomsLoading } = useStudentClassrooms();
   const { data: exams, isLoading: examsLoading } = useStudentExams();
 
   const { data: examLeaderboard, isLoading: examLbLoading, error: examLbError } = useExamLeaderboard(selectedExamId);
   const { data: subjectLeaderboard, isLoading: subjectLbLoading, error: subjectLbError } = useSubjectLeaderboard(selectedSubjectId);
 
   const examsArray = Array.isArray(exams) ? exams : [];
-  const subjectsArray = Array.isArray(subjects) ? subjects : [];
+  const classroomsArray = Array.isArray(classrooms) ? classrooms : [];
+
+  // Derive unique subjects from classes (which have numeric subjectId)
+  const uniqueSubjects = useMemo(() => {
+    const seen = new Map<number, { subjectId: number; className: string }>();
+    classroomsArray.forEach((c) => {
+      if (!seen.has(c.subjectId)) {
+        // Extract subject name from className (e.g., "Class A - C Programming" → "C Programming")
+        const subjectName = c.className.includes(' - ') ? c.className.split(' - ').slice(1).join(' - ') : c.className;
+        seen.set(c.subjectId, { subjectId: c.subjectId, className: subjectName });
+      }
+    });
+    return Array.from(seen.values());
+  }, [classroomsArray]);
 
   const selectedExam = examsArray.find(e => String(e.examId) === selectedExamId);
-  const selectedSubject = subjectsArray.find(s => String(s.subjectId) === selectedSubjectId);
+  const selectedSubject = uniqueSubjects.find(s => String(s.subjectId) === selectedSubjectId);
 
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
@@ -253,9 +266,9 @@ const StudentLeaderboard = () => {
                 <CardDescription>Choose a subject to see your overall ranking across all exams.</CardDescription>
               </CardHeader>
               <CardContent>
-                {subjectsLoading ? (
+                {classroomsLoading ? (
                   <Skeleton className="h-10 w-full" />
-                ) : subjectsArray.length === 0 ? (
+                ) : uniqueSubjects.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No subjects found.</p>
                 ) : (
                   <Select value={selectedSubjectId ?? ''} onValueChange={setSelectedSubjectId}>
@@ -263,9 +276,9 @@ const StudentLeaderboard = () => {
                       <SelectValue placeholder="Select a subject..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjectsArray.map((s) => (
+                      {uniqueSubjects.map((s) => (
                         <SelectItem key={s.subjectId} value={String(s.subjectId)}>
-                          {s.subjectName}
+                          {s.className}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -276,8 +289,7 @@ const StudentLeaderboard = () => {
 
             {selectedSubjectId && (
               <RankCard
-                title={selectedSubject?.subjectName ?? 'Subject'}
-                subtitle={selectedSubject?.teacherName ? `Teacher: ${selectedSubject.teacherName}` : undefined}
+                title={selectedSubject?.className ?? 'Subject'}
                 rank={subjectLeaderboard?.rank}
                 totalScore={subjectLeaderboard?.totalScore}
                 totalParticipants={subjectLeaderboard?.totalParticipants}
