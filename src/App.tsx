@@ -39,6 +39,7 @@ import StudentResults from "./pages/student/StudentResults";
 import StudentResultsReal from "./pages/student/StudentResultsReal";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentSettingsReal from "./pages/student/StudentSettingsReal";
+import StudentLeaderboard from "./pages/student/StudentLeaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
