@@ -46,13 +46,11 @@ const Index = () => {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+            <a href="#demo" className="text-muted-foreground hover:text-foreground transition-colors">Demo</a>
             <a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">About</a>
             <ThemeToggle />
             <Link to="/login">
-              <Button variant="outline" size="sm">Sign In</Button>
-            </Link>
-            <Link to="/exam">
-              <Button size="sm">Try Demo Exam</Button>
+              <Button size="sm">Sign In</Button>
             </Link>
           </div>
         </div>
@@ -74,15 +72,17 @@ const Index = () => {
             Create, manage, and deliver exams seamlessly. Empower your students with a distraction-free testing experience.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <Link to="/exam">
+            <a href="#demo">
               <Button variant="hero" size="xl">
-                Start Demo Exam
+                Try It Now
                 <ArrowRight className="w-5 h-5" />
               </Button>
-            </Link>
-            <Button variant="hero-outline" size="xl">
-              Learn More
-            </Button>
+            </a>
+            <a href="#features">
+              <Button variant="hero-outline" size="xl">
+                Learn More
+              </Button>
+            </a>
           </div>
 
           {/* Stats */}
@@ -157,13 +157,13 @@ const Index = () => {
               <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
                 Join thousands of educators who trust ExamFlow for their assessment needs.
               </p>
-              <Link to="/exam">
+              <Link to="/login">
                 <Button 
                   variant="outline" 
                   size="xl"
                   className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-0"
                 >
-                  Try the Demo
+                  Get Started
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
