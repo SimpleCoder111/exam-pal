@@ -266,9 +266,9 @@ const StudentLeaderboard = () => {
                 <CardDescription>Choose a subject to see your overall ranking across all exams.</CardDescription>
               </CardHeader>
               <CardContent>
-                {subjectsLoading ? (
+                {classroomsLoading ? (
                   <Skeleton className="h-10 w-full" />
-                ) : subjectsArray.length === 0 ? (
+                ) : uniqueSubjects.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No subjects found.</p>
                 ) : (
                   <Select value={selectedSubjectId ?? ''} onValueChange={setSelectedSubjectId}>
@@ -276,9 +276,9 @@ const StudentLeaderboard = () => {
                       <SelectValue placeholder="Select a subject..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {subjectsArray.map((s) => (
+                      {uniqueSubjects.map((s) => (
                         <SelectItem key={s.subjectId} value={String(s.subjectId)}>
-                          {s.subjectName}
+                          {s.className}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -289,8 +289,7 @@ const StudentLeaderboard = () => {
 
             {selectedSubjectId && (
               <RankCard
-                title={selectedSubject?.subjectName ?? 'Subject'}
-                subtitle={selectedSubject?.teacherName ? `Teacher: ${selectedSubject.teacherName}` : undefined}
+                title={selectedSubject?.className ?? 'Subject'}
                 rank={subjectLeaderboard?.rank}
                 totalScore={subjectLeaderboard?.totalScore}
                 totalParticipants={subjectLeaderboard?.totalParticipants}
