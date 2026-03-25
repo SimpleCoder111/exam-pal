@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Progress } from '@/components/ui/progress';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
-import { useStudentSubjects } from '@/hooks/useStudentSubjects';
+import { useStudentClassrooms } from '@/hooks/useStudentClassrooms';
 import { useStudentExams } from '@/hooks/useStudentExams';
 import { useExamLeaderboard, useSubjectLeaderboard } from '@/hooks/useStudentLeaderboard';
 
