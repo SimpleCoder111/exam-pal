@@ -37,7 +37,7 @@ interface TakeExamPayload {
   isDemo: boolean;
 }
 
-const API_BASE_URL = 'http://localhost:7000';
+import { API_BASE_URL } from '@/lib/api';
 
 export const useTakeExam = () => {
   const { accessToken } = useAuth();

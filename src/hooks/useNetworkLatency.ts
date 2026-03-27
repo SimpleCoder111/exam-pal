@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-
-const API_BASE_URL = 'http://localhost:7000';
+import { API_BASE_URL } from '@/lib/api';
 
 interface UseNetworkLatencyOptions {
   enabled: boolean;

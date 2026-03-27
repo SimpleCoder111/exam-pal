@@ -39,7 +39,7 @@ interface SaveProgressResponse {
   message: string;
 }
 
-const API_BASE_URL = 'http://localhost:7000';
+import { API_BASE_URL } from '@/lib/api';
 
 /**
  * Build the save-progress payload from examData and current answers.
