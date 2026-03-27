@@ -40,7 +40,6 @@ interface SaveProgressResponse {
   message: string;
 }
 
-import { API_BASE_URL } from '@/lib/api';
 
 /**
  * Build the save-progress payload from examData and current answers.
