@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from '@/lib/api';
 
 export interface ApiOption {
   optionId: number;
@@ -47,7 +48,7 @@ export const useQuestions = (subjectId: number) => {
         setError(null);
         
         const response = await fetch(
-          `http://localhost:7000/getQuestionBankBySubject?subjectId=${subjectId}`
+          `${API_BASE_URL}/getQuestionBankBySubject?subjectId=${subjectId}`
         );
         
         if (!response.ok) {

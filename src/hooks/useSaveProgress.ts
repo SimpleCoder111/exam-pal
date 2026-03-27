@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/api';
 import type { TakeExamData } from '@/hooks/useTakeExam';
 
 interface SaveProgressQuestion {
@@ -39,7 +40,6 @@ interface SaveProgressResponse {
   message: string;
 }
 
-const API_BASE_URL = 'http://localhost:7000';
 
 /**
  * Build the save-progress payload from examData and current answers.

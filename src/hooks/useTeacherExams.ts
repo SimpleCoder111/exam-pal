@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, API_BASE_URL } from '@/lib/api';
 
 export interface TeacherExam {
   id: number;
@@ -63,7 +63,7 @@ export const useCreateExam = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateExamPayload) => {
-      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/exam`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ export const useUpdateExam = () => {
 
   return useMutation({
     mutationFn: async ({ examId, payload }: { examId: number; payload: UpdateExamPayload }) => {
-      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/exam`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ export const useDeleteExam = () => {
 
   return useMutation({
     mutationFn: async (examId: number) => {
-      const response = await fetch(`http://localhost:7000/api/v1/teacher/exam/${examId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/exam/${examId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

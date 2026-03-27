@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -555,7 +556,7 @@ const AdminClasses = () => {
                     {enrolledStudents.map((student) => (
                       <div key={student.userId} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={student.displayProfileImageUrl?.startsWith('/uploads') ? `http://localhost:7000${student.displayProfileImageUrl}` : undefined} />
+                          <AvatarImage src={student.displayProfileImageUrl?.startsWith('/uploads') ? `${API_BASE_URL}${student.displayProfileImageUrl}` : undefined} />
                           <AvatarFallback className="text-xs">{student.name?.substring(0, 2)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
@@ -641,7 +642,7 @@ const AdminClasses = () => {
                     availableStudents.slice(0, 50).map((student) => (
                       <div key={student.userId} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={student.displayProfileImageUrl?.startsWith('/uploads') ? `http://localhost:7000${student.displayProfileImageUrl}` : undefined} />
+                          <AvatarImage src={student.displayProfileImageUrl?.startsWith('/uploads') ? `${API_BASE_URL}${student.displayProfileImageUrl}` : undefined} />
                           <AvatarFallback className="text-xs">{student.name?.substring(0, 2)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">

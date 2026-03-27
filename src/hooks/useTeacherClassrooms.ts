@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, API_BASE_URL } from '@/lib/api';
 
 export interface TeacherClass {
   classId: number;
@@ -114,7 +114,7 @@ export const useUpdateEnrollment = () => {
 
   return useMutation({
     mutationFn: async ({ classEnrolledId, isApproved }: { classEnrolledId: number; isApproved: boolean }) => {
-      const response = await fetch(`http://localhost:7000/api/v1/teacher/class/enrollment/update_status`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/teacher/class/enrollment/update_status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
