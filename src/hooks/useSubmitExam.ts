@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TakeExamData } from '@/hooks/useTakeExam';
+import { API_BASE_URL } from '@/lib/api';
 
 interface SubmitExamQuestion {
   questionId: number;
@@ -56,7 +57,7 @@ interface SubmitExamResponse {
   message: string;
 }
 
-const API_BASE_URL = 'http://localhost:7000';
+
 
 export const buildSubmitPayload = (
   examData: TakeExamData,
