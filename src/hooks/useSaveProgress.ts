@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { API_BASE_URL } from '@/lib/api';
 import type { TakeExamData } from '@/hooks/useTakeExam';
 
 interface SaveProgressQuestion {

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-
-const API_BASE_URL = 'http://localhost:7000';
+import { API_BASE_URL } from '@/lib/api';
 
 export interface AdminUserRole {
   id: number;

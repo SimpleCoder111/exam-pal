@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_BASE_URL } from '@/lib/api';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { teacherNavItems } from '@/config/teacherNavItems';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -165,7 +166,7 @@ const TeacherStudentsPage = () => {
                               <AvatarImage
                                 src={
                                   student.profileImageUrl
-                                    ? `http://localhost:7000${student.profileImageUrl}`
+                                    ? `${API_BASE_URL}${student.profileImageUrl}`
                                     : undefined
                                 }
                               />
@@ -225,7 +226,7 @@ const TeacherStudentsPage = () => {
                       <AvatarImage
                         src={
                           selectedStudent.profileImageUrl
-                            ? `http://localhost:7000${selectedStudent.profileImageUrl}`
+                            ? `${API_BASE_URL}${selectedStudent.profileImageUrl}`
                             : undefined
                         }
                       />
