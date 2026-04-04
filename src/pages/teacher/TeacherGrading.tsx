@@ -577,7 +577,7 @@ const TeacherGrading = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {aggregatedChapters.map(ch => {
+                    {aggregatedChapters.map((ch, idx) => {
                       const notInExam = ch.total === 0;
                       return (
                         <div
@@ -594,6 +594,7 @@ const TeacherGrading = () => {
                         >
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-muted-foreground mb-0.5">Chapter {idx + 1}</p>
                               <h4 className="font-semibold text-sm text-foreground truncate">{ch.title}</h4>
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 {notInExam ? 'Not in this exam' : `${ch.correct}/${ch.total} questions • ${ch.obtained}/${ch.possible} pts`}
