@@ -313,8 +313,77 @@ const TeacherExams = () => {
     </div>
   );
 
+  // Get chapters for the selected subject
+  const selectedSubjectChapters = formData.subjectId
+    ? subjects?.find(s => s.id === formData.subjectId)?.chapterResponseList
+        ?.filter(ch => ch.active)
+        ?.sort((a, b) => a.orderIndex - b.orderIndex) || []
+    : [];
+
+  const handleChapterToggle = (chapterId: number) => {
+    setAutoConfig(prev => ({
+      ...prev,
+      chapterIds: prev.chapterIds.includes(chapterId)
+        ? prev.chapterIds.filter(id => id !== chapterId)
+        : [...prev.chapterIds, chapterId],
+    }));
+  };
+
+  const handleToggleAllChapters = () => {
+    if (autoConfig.chapterIds.length === selectedSubjectChapters.length) {
+      setAutoConfig(prev => ({ ...prev, chapterIds: [] }));
+    } else {
+      setAutoConfig(prev => ({ ...prev, chapterIds: selectedSubjectChapters.map(ch => ch.id) }));
+    }
+  };
+
   const renderAutoStep2 = () => (
     <div className="space-y-6">
+      {/* Chapter Filter */}
+      {selectedSubjectChapters.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-base font-semibold">Filter by Chapters</Label>
+            <Button variant="ghost" size="sm" onClick={handleToggleAllChapters}>
+              {autoConfig.chapterIds.length === selectedSubjectChapters.length ? 'Deselect All' : 'Select All'}
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Select which chapters to include. Leave empty to include all chapters.
+          </p>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {selectedSubjectChapters.map((ch, idx) => (
+              <label
+                key={ch.id}
+                className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                  autoConfig.chapterIds.includes(ch.id)
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:bg-muted/50'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={autoConfig.chapterIds.includes(ch.id)}
+                  onChange={() => handleChapterToggle(ch.id)}
+                  className="rounded"
+                />
+                <span className="text-sm">
+                  <span className="font-medium text-muted-foreground">Ch {idx + 1}:</span>{' '}
+                  {ch.name}
+                </span>
+                <Badge variant="outline" className="ml-auto text-xs">{ch.questionCount} Q</Badge>
+              </label>
+            ))}
+          </div>
+          {autoConfig.chapterIds.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {autoConfig.chapterIds.length} of {selectedSubjectChapters.length} chapters selected
+            </p>
+          )}
+          <Separator className="mt-4" />
+        </div>
+      )}
+
       <div>
         <Label className="text-base font-semibold">Question Distribution</Label>
         <p className="text-sm text-muted-foreground mb-4">
