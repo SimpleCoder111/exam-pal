@@ -80,15 +80,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (userId: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Check demo credentials first
-    const mockUser = MOCK_USERS[userId.toLowerCase()];
-    if (mockUser && mockUser.password === password) {
-      setUser(mockUser.user);
-      localStorage.setItem('examflow_user', JSON.stringify(mockUser.user));
-      return { success: true };
-    }
+    const normalizedUserId = userId.toLowerCase();
+    const mockUser = MOCK_USERS[normalizedUserId];
 
-    // Try real API
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -119,7 +113,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { success: false, error: data.messages || 'Login failed' };
     } catch (err) {
-      // If API is unreachable and not a demo user
+      if (mockUser && mockUser.password === password) {
+        setUser(mockUser.user);
+        setAccessToken(null);
+        localStorage.setItem('examflow_user', JSON.stringify(mockUser.user));
+        localStorage.removeItem('examflow_token');
+        return { success: true };
+      }
+
       return { success: false, error: 'Server unavailable. Please try demo credentials or check connection.' };
     }
   };

@@ -95,15 +95,18 @@ export const useSaveProgress = () => {
 
   return useMutation({
     mutationFn: async (payload: SaveProgressPayload) => {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      };
+
       console.log('[save-progress] Token present:', !!accessToken);
       console.log('[save-progress] Token preview:', accessToken ? accessToken.substring(0, 30) + '...' : 'NONE');
+      console.log('[save-progress] Authorization header included:', 'Authorization' in headers);
 
       const response = await fetch(`${API_BASE_URL}/api/v1/student/exam/save-progress`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
+        headers,
         body: JSON.stringify(payload),
       });
 
