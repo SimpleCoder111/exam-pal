@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQueries } from '@tanstack/react-query';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { teacherNavItems } from '@/config/teacherNavItems';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
