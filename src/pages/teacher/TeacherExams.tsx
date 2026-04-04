@@ -85,6 +85,7 @@ const TeacherExams = () => {
     easyCount: 5,
     mediumCount: 3,
     hardCount: 2,
+    chapterIds: [],
   });
 
   const [questionSearch, setQuestionSearch] = useState('');
