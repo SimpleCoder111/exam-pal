@@ -629,21 +629,26 @@ const TeacherGrading = () => {
                   </div>
 
                   {/* Summary row */}
-                  <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                  <div className="grid grid-cols-4 gap-3 pt-2 border-t border-border">
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
                       <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.percentage >= 80).length}</div>
+                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total > 0 && c.percentage >= 80).length}</div>
                       <div className="text-xs text-muted-foreground">Strong</div>
                     </div>
                     <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
                       <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.percentage >= 50 && c.percentage < 80).length}</div>
+                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total > 0 && c.percentage >= 50 && c.percentage < 80).length}</div>
                       <div className="text-xs text-muted-foreground">Moderate</div>
                     </div>
                     <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-center">
                       <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.percentage < 50).length}</div>
+                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total > 0 && c.percentage < 50).length}</div>
                       <div className="text-xs text-muted-foreground">Weak</div>
+                    </div>
+                    <div className="bg-muted/30 rounded-lg p-3 text-center">
+                      <Minus className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total === 0).length}</div>
+                      <div className="text-xs text-muted-foreground">Not Tested</div>
                     </div>
                   </div>
                 </CardContent>
