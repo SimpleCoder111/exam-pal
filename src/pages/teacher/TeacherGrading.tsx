@@ -143,6 +143,7 @@ const TeacherGrading = () => {
   const examTitle = searchParams.get('title') || 'Exam Results';
 
   const { data: exams, isLoading: examsLoading } = useTeacherExams();
+  const { data: teacherSubjects } = useTeacherSubjects();
   const { data: results, isLoading, error } = useTeacherExamResults(examId);
 
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
