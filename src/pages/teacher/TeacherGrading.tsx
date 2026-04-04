@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -46,6 +47,10 @@ import {
   Loader2,
   Save,
   Lightbulb,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  BarChart3,
 } from 'lucide-react';
 
 const RUBRIC_OPTIONS = [
@@ -586,6 +591,82 @@ const TeacherGrading = () => {
                   </div>
                 ) : gradingDetails ? (
                   <div className="space-y-4">
+                    {/* Chapter Strength & Weakness Map */}
+                    {(() => {
+                      const chapterMap = new Map<number, { title: string; obtained: number; possible: number }>();
+                      gradingDetails.details.forEach(d => {
+                        const existing = chapterMap.get(d.chapterId);
+                        if (existing) {
+                          existing.obtained += d.pointsObtained;
+                          existing.possible += d.pointsPossible;
+                        } else {
+                          chapterMap.set(d.chapterId, { title: d.chapterTitle, obtained: d.pointsObtained, possible: d.pointsPossible });
+                        }
+                      });
+                      const chapters = Array.from(chapterMap.entries())
+                        .map(([id, ch]) => ({ id, ...ch, percentage: Math.round((ch.obtained / ch.possible) * 100) }))
+                        .sort((a, b) => b.percentage - a.percentage);
+                      const strong = chapters.filter(c => c.percentage >= 80);
+                      const moderate = chapters.filter(c => c.percentage >= 50 && c.percentage < 80);
+                      const weak = chapters.filter(c => c.percentage < 50);
+
+                      return chapters.length > 0 ? (
+                        <Card className="border-primary/20">
+                          <CardContent className="pt-5 space-y-4">
+                            <div className="flex items-center gap-2">
+                              <BarChart3 className="h-5 w-5 text-primary" />
+                              <h3 className="font-semibold text-base">Chapter Performance</h3>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 text-center text-sm">
+                              <div className="rounded-lg bg-green-500/10 p-2">
+                                <div className="text-lg font-bold text-green-600 dark:text-green-400">{strong.length}</div>
+                                <div className="text-xs text-muted-foreground">Strong</div>
+                              </div>
+                              <div className="rounded-lg bg-amber-500/10 p-2">
+                                <div className="text-lg font-bold text-amber-600 dark:text-amber-400">{moderate.length}</div>
+                                <div className="text-xs text-muted-foreground">Moderate</div>
+                              </div>
+                              <div className="rounded-lg bg-red-500/10 p-2">
+                                <div className="text-lg font-bold text-red-600 dark:text-red-400">{weak.length}</div>
+                                <div className="text-xs text-muted-foreground">Weak</div>
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              {chapters.map(ch => (
+                                <div key={ch.id} className="space-y-1">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-2">
+                                      {ch.percentage >= 80 ? (
+                                        <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                      ) : ch.percentage >= 50 ? (
+                                        <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                      ) : (
+                                        <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                      )}
+                                      <span className="font-medium truncate max-w-[200px]">{ch.title}</span>
+                                    </div>
+                                    <span className="text-muted-foreground text-xs">
+                                      {ch.obtained}/{ch.possible} ({ch.percentage}%)
+                                    </span>
+                                  </div>
+                                  <Progress
+                                    value={ch.percentage}
+                                    className={`h-2 ${
+                                      ch.percentage >= 80
+                                        ? '[&>div]:bg-green-500'
+                                        : ch.percentage >= 50
+                                        ? '[&>div]:bg-amber-500'
+                                        : '[&>div]:bg-red-500'
+                                    }`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : null;
+                    })()}
+
                     {sortedDetails.map((detail, idx) => {
                       const isManual = detail.questionType === 'CODING' || detail.questionType === 'WRITING';
                       const isPending = detail.summaryMessage === 'Waiting for teacher to review';
