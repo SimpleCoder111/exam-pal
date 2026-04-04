@@ -587,7 +587,7 @@ const TeacherExams = () => {
                 <p className="font-medium">{selectedQuestionIds.length}</p>
               </div>
             )}
-            {formData.scheduledDate && (
+            {createMode !== 'auto' && formData.scheduledDate && (
               <div>
                 <p className="text-sm text-muted-foreground">Scheduled</p>
                 <p className="font-medium">{formData.scheduledDate} {formData.scheduledTime}</p>
