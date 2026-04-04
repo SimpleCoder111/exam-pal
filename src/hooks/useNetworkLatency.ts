@@ -19,9 +19,11 @@ export const useNetworkLatency = ({ enabled, interval = 15000 }: UseNetworkLaten
     try {
       const start = performance.now();
       await fetch(`${API_BASE_URL}/api/v1/student/exam/save-progress`, {
-        method: 'HEAD',
-        mode: 'no-cors',
+        method: 'POST',
+        mode: 'cors',
         cache: 'no-store',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
       });
       const end = performance.now();
       setLatency(Math.round(end - start));
