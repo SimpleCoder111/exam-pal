@@ -82,11 +82,10 @@ const TeacherExams = () => {
   });
 
   const [autoConfig, setAutoConfig] = useState<AutoBuilderConfig>({
-    mode: 'global',
     easyCount: 5,
     mediumCount: 3,
     hardCount: 2,
-    chapterConfigs: {},
+    chapterIds: [],
   });
 
   const [questionSearch, setQuestionSearch] = useState('');
