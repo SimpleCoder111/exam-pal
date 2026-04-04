@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { API_BASE_URL } from '@/lib/api';
 
 interface UseNetworkLatencyOptions {
   enabled: boolean;
@@ -16,20 +15,12 @@ export const useNetworkLatency = ({ enabled, interval = 15000 }: UseNetworkLaten
       return;
     }
 
-    try {
-      const start = performance.now();
-      await fetch(`${API_BASE_URL}/api/v1/student/exam/save-progress`, {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const end = performance.now();
-      setLatency(Math.round(end - start));
-    } catch {
-      setLatency(null);
-    }
+    const connection = (navigator as Navigator & {
+      connection?: { rtt?: number };
+    }).connection;
+
+    const measuredLatency = connection?.rtt;
+    setLatency(typeof measuredLatency === 'number' && measuredLatency > 0 ? measuredLatency : null);
   }, []);
 
   useEffect(() => {
