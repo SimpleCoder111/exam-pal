@@ -20,6 +20,7 @@ import {
   type GradingDetailsData,
 } from '@/hooks/useTeacherResults';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
+import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiPost, apiPut, apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
