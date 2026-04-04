@@ -225,7 +225,7 @@ const Exam = () => {
     if (!examStarted || !examData) return;
 
     const initialTimeout = setTimeout(serverSaveRef, 10000);
-    const serverInterval = setInterval(serverSaveRef, 30000);
+    const serverInterval = setInterval(serverSaveRef, 60000);
 
     return () => {
       clearTimeout(initialTimeout);
