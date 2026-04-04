@@ -375,8 +375,31 @@ const TeacherGrading = () => {
     })),
   });
 
+  // Find the subject for the current exam to get all chapters
+  const currentExam = useMemo(() => exams?.find(e => (e.examId || e.id) === examId), [exams, examId]);
+  const currentSubject = useMemo(() => {
+    if (!currentExam || !teacherSubjects) return null;
+    return teacherSubjects.find(s => s.id === currentExam.subjectId) || null;
+  }, [currentExam, teacherSubjects]);
+
   const aggregatedChapters = useMemo(() => {
-    const chapterMap = new Map<number, { title: string; obtained: number; possible: number; correct: number; total: number; studentCount: number }>();
+    const chapterMap = new Map<number, { title: string; obtained: number; possible: number; correct: number; total: number; orderIndex: number }>();
+
+    // First, populate from all subject chapters (even those not in the exam)
+    if (currentSubject?.chapterResponseList) {
+      currentSubject.chapterResponseList.forEach(ch => {
+        chapterMap.set(ch.id, {
+          title: ch.name,
+          obtained: 0,
+          possible: 0,
+          correct: 0,
+          total: 0,
+          orderIndex: ch.orderIndex,
+        });
+      });
+    }
+
+    // Then aggregate from grading data
     allGradingQueries.forEach(q => {
       if (q.data?.details) {
         q.data.details.forEach(d => {
@@ -393,7 +416,7 @@ const TeacherGrading = () => {
               possible: d.pointsPossible,
               total: 1,
               correct: d.correct ? 1 : 0,
-              studentCount: 1,
+              orderIndex: 999,
             });
           }
         });
@@ -401,8 +424,8 @@ const TeacherGrading = () => {
     });
     return Array.from(chapterMap.entries())
       .map(([id, ch]) => ({ id, ...ch, percentage: ch.possible > 0 ? Math.round((ch.obtained / ch.possible) * 100) : 0 }))
-      .sort((a, b) => b.percentage - a.percentage);
-  }, [allGradingQueries]);
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+  }, [allGradingQueries, currentSubject]);
 
   const allGradingLoaded = allGradingQueries.length > 0 && allGradingQueries.every(q => !q.isLoading);
 
