@@ -577,47 +577,55 @@ const TeacherGrading = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {aggregatedChapters.map(ch => (
-                      <div
-                        key={ch.id}
-                        className={`rounded-xl border p-4 transition-all ${
-                          ch.percentage >= 80
-                            ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
-                            : ch.percentage >= 50
-                            ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
-                            : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm text-foreground truncate">{ch.title}</h4>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {ch.correct}/{ch.total} questions • {ch.obtained}/{ch.possible} pts
-                            </p>
+                    {aggregatedChapters.map(ch => {
+                      const notInExam = ch.total === 0;
+                      return (
+                        <div
+                          key={ch.id}
+                          className={`rounded-xl border p-4 transition-all ${
+                            notInExam
+                              ? 'border-border bg-muted/30 opacity-60'
+                              : ch.percentage >= 80
+                              ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
+                              : ch.percentage >= 50
+                              ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
+                              : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm text-foreground truncate">{ch.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {notInExam ? 'Not in this exam' : `${ch.correct}/${ch.total} questions • ${ch.obtained}/${ch.possible} pts`}
+                              </p>
+                            </div>
+                            {notInExam ? (
+                              <Minus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            ) : ch.percentage >= 80 ? (
+                              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                            ) : ch.percentage >= 50 ? (
+                              <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                            )}
                           </div>
-                          {ch.percentage >= 80 ? (
-                            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                          ) : ch.percentage >= 50 ? (
-                            <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                          )}
-                        </div>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-lg text-foreground">{ch.percentage}%</span>
-                            <span className={`font-medium ${
-                              ch.percentage >= 80 ? 'text-green-600 dark:text-green-400'
-                                : ch.percentage >= 50 ? 'text-amber-600 dark:text-amber-400'
-                                : 'text-red-600 dark:text-red-400'
-                            }`}>
-                              {ch.percentage >= 80 ? 'Strong' : ch.percentage >= 50 ? 'Moderate' : 'Weak'}
-                            </span>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-lg text-foreground">{notInExam ? '—' : `${ch.percentage}%`}</span>
+                              <span className={`font-medium ${
+                                notInExam ? 'text-muted-foreground'
+                                  : ch.percentage >= 80 ? 'text-green-600 dark:text-green-400'
+                                  : ch.percentage >= 50 ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              }`}>
+                                {notInExam ? 'N/A' : ch.percentage >= 80 ? 'Strong' : ch.percentage >= 50 ? 'Moderate' : 'Weak'}
+                              </span>
+                            </div>
+                            <Progress value={notInExam ? 0 : ch.percentage} className="h-2" />
                           </div>
-                          <Progress value={ch.percentage} className="h-2" />
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Summary row */}
