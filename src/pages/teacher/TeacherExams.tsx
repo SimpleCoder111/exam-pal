@@ -173,7 +173,7 @@ const TeacherExams = () => {
       scheduledDate: '',
       scheduledTime: '',
     });
-    setAutoConfig({ easyCount: 5, mediumCount: 3, hardCount: 2, chapterIds: [] });
+    setAutoConfig({ mode: 'global', easyCount: 5, mediumCount: 3, hardCount: 2, chapterConfigs: {} });
   };
 
   const getStatusBadge = (status: string | null) => {
