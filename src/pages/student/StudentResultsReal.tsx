@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Trophy, Target, BookOpen, TrendingUp, Star, Calendar, Clock, Eye, CheckCircle2, Hourglass, ArrowLeft, Code, PenLine, XCircle, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Trophy, Target, BookOpen, TrendingUp, Star, Calendar, Clock, Eye, CheckCircle2, Hourglass, ArrowLeft, Code, PenLine, XCircle, CheckCircle, AlertTriangle, TrendingDown, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { studentNavItems } from '@/config/studentNavItems';
@@ -374,6 +375,9 @@ const StudentResultDetail = ({ result, gradingData, isLoading, onBack }: Student
         </CardContent>
       </Card>
 
+      {/* Chapter Strength & Weakness Map */}
+      <ChapterStrengthMap details={details} />
+
       {/* Question-by-Question Review */}
       <div>
         <h3 className="font-heading text-xl font-semibold text-foreground mb-4">Answer Review</h3>
@@ -479,6 +483,127 @@ const StudentResultDetail = ({ result, gradingData, isLoading, onBack }: Student
         </div>
       </div>
     </div>
+  );
+};
+
+// --- Chapter Strength & Weakness Map ---
+interface ChapterStat {
+  chapterId: number;
+  chapterTitle: string;
+  correct: number;
+  total: number;
+  pointsObtained: number;
+  pointsPossible: number;
+  percentage: number;
+}
+
+const ChapterStrengthMap = ({ details }: { details: import('@/hooks/useStudentResults').StudentGradingDetail[] }) => {
+  const chapterStats: ChapterStat[] = [];
+
+  details.forEach(d => {
+    const existing = chapterStats.find(c => c.chapterId === d.chapterId);
+    if (existing) {
+      existing.total += 1;
+      existing.pointsPossible += d.pointsPossible;
+      existing.pointsObtained += d.pointsObtained;
+      if (d.correct) existing.correct += 1;
+    } else {
+      chapterStats.push({
+        chapterId: d.chapterId,
+        chapterTitle: d.chapterTitle,
+        correct: d.correct ? 1 : 0,
+        total: 1,
+        pointsObtained: d.pointsObtained,
+        pointsPossible: d.pointsPossible,
+        percentage: 0,
+      });
+    }
+  });
+
+  chapterStats.forEach(c => {
+    c.percentage = c.pointsPossible > 0 ? Math.round((c.pointsObtained / c.pointsPossible) * 100) : 0;
+  });
+
+  chapterStats.sort((a, b) => b.percentage - a.percentage);
+
+  const strengths = chapterStats.filter(c => c.percentage >= 80);
+  const moderate = chapterStats.filter(c => c.percentage >= 50 && c.percentage < 80);
+  const weaknesses = chapterStats.filter(c => c.percentage < 50);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-primary" />
+          Chapter Strength & Weakness
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Chapter cards grid */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {chapterStats.map(ch => (
+            <div
+              key={ch.chapterId}
+              className={`rounded-xl border p-4 transition-all ${
+                ch.percentage >= 80
+                  ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
+                  : ch.percentage >= 50
+                  ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
+                  : 'border-destructive/30 bg-destructive/5'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm text-foreground truncate">{ch.chapterTitle}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {ch.correct}/{ch.total} questions • {ch.pointsObtained}/{ch.pointsPossible} pts
+                  </p>
+                </div>
+                {ch.percentage >= 80 ? (
+                  <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : ch.percentage >= 50 ? (
+                  <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-destructive flex-shrink-0" />
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-lg text-foreground">{ch.percentage}%</span>
+                  <span className={`font-medium ${
+                    ch.percentage >= 80 ? 'text-green-600 dark:text-green-400'
+                      : ch.percentage >= 50 ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-destructive'
+                  }`}>
+                    {ch.percentage >= 80 ? 'Strong' : ch.percentage >= 50 ? 'Moderate' : 'Weak'}
+                  </span>
+                </div>
+                <Progress value={ch.percentage} className="h-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Summary row */}
+        <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 mx-auto mb-1" />
+            <div className="text-lg font-bold text-foreground">{strengths.length}</div>
+            <div className="text-xs text-muted-foreground">Strong</div>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
+            <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
+            <div className="text-lg font-bold text-foreground">{moderate.length}</div>
+            <div className="text-xs text-muted-foreground">Moderate</div>
+          </div>
+          <div className="bg-destructive/10 rounded-lg p-3 text-center">
+            <TrendingDown className="w-4 h-4 text-destructive mx-auto mb-1" />
+            <div className="text-lg font-bold text-foreground">{weaknesses.length}</div>
+            <div className="text-xs text-muted-foreground">Weak</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
