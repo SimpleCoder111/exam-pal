@@ -21,7 +21,7 @@ import {
 } from '@/hooks/useTeacherResults';
 import { useTeacherExams } from '@/hooks/useTeacherExams';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiPost, apiPut } from '@/lib/api';
+import { apiPost, apiPut, apiFetch } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
