@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -196,14 +196,26 @@ const Exam = () => {
     return () => clearInterval(cacheInterval);
   }, [examStarted, answers, flagged, currentQuestion, timeLeft, saveToCache]);
 
-  // Server save every 30s (or sync when coming back online)
-  const serverSaveRef = useCallback(() => {
-    if (!examData) return;
+  // Refs to hold latest values without re-triggering the interval
+  const answersRef = useRef(answers);
+  const textAnswersRef = useRef(textAnswers);
+  const examDataRef = useRef(examData);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { textAnswersRef.current = textAnswers; }, [textAnswers]);
+  useEffect(() => { examDataRef.current = examData; }, [examData]);
 
-    const hasAnswers = Object.keys(answers).length > 0 || Object.keys(textAnswers).length > 0;
+  // Server save function (stable reference — reads from refs)
+  const serverSaveRef = useCallback(() => {
+    const currentExamData = examDataRef.current;
+    const currentAnswers = answersRef.current;
+    const currentTextAnswers = textAnswersRef.current;
+    if (!currentExamData) return;
+
+    const hasAnswers = Object.keys(currentAnswers).length > 0 || Object.keys(currentTextAnswers).length > 0;
 
     if (navigator.onLine) {
-      const payload = buildSaveProgressPayload(examData, answers, textAnswers);
+      const payload = buildSaveProgressPayload(currentExamData, currentAnswers, currentTextAnswers);
+      console.log('[auto-save] Sending save-progress to server...', new Date().toISOString());
       saveProgressMutation.mutate(payload, {
         onSuccess: () => {
           toast.success(
@@ -213,19 +225,22 @@ const Exam = () => {
             { duration: 2500, id: "save-progress" }
           );
         },
-        onError: () => {
+        onError: (err) => {
+          console.error('[auto-save] Save failed:', err);
           toast.warning("⚠️ Server save failed — your answers are safely cached locally", { duration: 3000, id: "save-progress" });
         },
       });
     } else {
       toast.info("📴 You're offline — answers saved locally and will sync when reconnected", { duration: 3000, id: "save-offline" });
     }
-  }, [examData, answers, textAnswers, saveProgressMutation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // First save after 10s, then every 30s
+  // First save after 10s, then every 60s
   useEffect(() => {
     if (!examStarted || !examData) return;
 
+    console.log('[auto-save] Setting up: initial in 10s, then every 60s');
     const initialTimeout = setTimeout(serverSaveRef, 10000);
     const serverInterval = setInterval(serverSaveRef, 60000);
 
