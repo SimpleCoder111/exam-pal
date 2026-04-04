@@ -546,12 +546,25 @@ const TeacherExams = () => {
               <p className="font-medium">{createMode === 'auto' ? 'Auto Builder' : 'Manual Builder'}</p>
             </div>
             {createMode === 'auto' && (
-              <div>
-                <p className="text-sm text-muted-foreground">Questions</p>
-                <p className="font-medium">
-                  {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
-                </p>
-              </div>
+              <>
+                <div>
+                  <p className="text-sm text-muted-foreground">Questions</p>
+                  <p className="font-medium">
+                    {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Chapters</p>
+                  <p className="font-medium">
+                    {autoConfig.chapterIds.length > 0
+                      ? selectedSubjectChapters
+                          .filter(ch => autoConfig.chapterIds.includes(ch.id))
+                          .map(ch => ch.name)
+                          .join(', ')
+                      : 'All chapters'}
+                  </p>
+                </div>
+              </>
             )}
             {createMode === 'manual' && (
               <div>
