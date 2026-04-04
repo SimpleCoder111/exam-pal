@@ -48,11 +48,10 @@ interface ExamFormData {
 }
 
 interface AutoBuilderConfig {
-  mode: 'global' | 'per-chapter';
   easyCount: number;
   mediumCount: number;
   hardCount: number;
-  chapterConfigs: Record<number, { easy: number; medium: number; hard: number }>;
+  chapterIds: number[];
 }
 
 const TeacherExams = () => {
