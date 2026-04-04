@@ -433,7 +433,6 @@ const TeacherExams = () => {
                   <span className="font-medium text-muted-foreground">Ch {idx + 1}:</span>{' '}
                   {ch.name}
                 </span>
-                <Badge variant="outline" className="ml-auto text-xs">{ch.questionCount} Q</Badge>
               </label>
             ))}
           </div>
