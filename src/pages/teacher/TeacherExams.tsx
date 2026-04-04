@@ -675,7 +675,10 @@ const TeacherExams = () => {
   const canProceed = () => {
     if (currentStep === 1) return !!formData.title && !!formData.classId && !!formData.subjectId;
     if (createMode === 'manual' && currentStep === 2) return selectedQuestionIds.length > 0;
-    if (createMode === 'auto' && currentStep === 2) return (autoConfig.easyCount + autoConfig.mediumCount + autoConfig.hardCount) > 0;
+    if (createMode === 'auto' && currentStep === 2) {
+      if (autoConfig.mode === 'per-chapter') return perChapterTotal > 0;
+      return globalTotal > 0;
+    }
     return true;
   };
 
