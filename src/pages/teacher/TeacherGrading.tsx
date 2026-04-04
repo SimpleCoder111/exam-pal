@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -46,6 +47,10 @@ import {
   Loader2,
   Save,
   Lightbulb,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  BarChart3,
 } from 'lucide-react';
 
 const RUBRIC_OPTIONS = [
