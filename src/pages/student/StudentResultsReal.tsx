@@ -375,6 +375,9 @@ const StudentResultDetail = ({ result, gradingData, isLoading, onBack }: Student
         </CardContent>
       </Card>
 
+      {/* Chapter Strength & Weakness Map */}
+      <ChapterStrengthMap details={details} />
+
       {/* Question-by-Question Review */}
       <div>
         <h3 className="font-heading text-xl font-semibold text-foreground mb-4">Answer Review</h3>
