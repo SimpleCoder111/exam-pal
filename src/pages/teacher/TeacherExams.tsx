@@ -51,6 +51,7 @@ interface AutoBuilderConfig {
   easyCount: number;
   mediumCount: number;
   hardCount: number;
+  chapterIds: number[];
 }
 
 const TeacherExams = () => {
