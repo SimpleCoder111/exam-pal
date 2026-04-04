@@ -652,11 +652,20 @@ const TeacherGrading = () => {
                             {/* Chapter rows */}
                             <div className="space-y-1">
                               {chapters.map(ch => {
-                                const color = ch.percentage >= 80 ? 'green' : ch.percentage >= 50 ? 'amber' : 'red';
+                                const iconColorClass = ch.percentage >= 80
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : ch.percentage >= 50
+                                  ? 'text-amber-600 dark:text-amber-400'
+                                  : 'text-red-600 dark:text-red-400';
+                                const progressClass = ch.percentage >= 80
+                                  ? '[&>div]:bg-green-500'
+                                  : ch.percentage >= 50
+                                  ? '[&>div]:bg-amber-500'
+                                  : '[&>div]:bg-red-500';
                                 const Icon = ch.percentage >= 80 ? TrendingUp : ch.percentage >= 50 ? Minus : TrendingDown;
                                 return (
                                   <div key={ch.id} className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                                    <Icon className={`w-4 h-4 shrink-0 text-${color}-600 dark:text-${color}-400`} />
+                                    <Icon className={`w-4 h-4 shrink-0 ${iconColorClass}`} />
                                     <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
                                       {ch.title}
                                     </span>
@@ -664,10 +673,10 @@ const TeacherGrading = () => {
                                       <div className="w-32 hidden sm:block">
                                         <Progress
                                           value={ch.percentage}
-                                          className={`h-2 [&>div]:bg-${color}-500`}
+                                          className={`h-2 ${progressClass}`}
                                         />
                                       </div>
-                                      <span className={`text-xs font-semibold tabular-nums w-20 text-right text-${color}-600 dark:text-${color}-400`}>
+                                      <span className={`text-xs font-semibold tabular-nums w-20 text-right ${iconColorClass}`}>
                                         {ch.obtained}/{ch.possible} ({ch.percentage}%)
                                       </span>
                                     </div>
