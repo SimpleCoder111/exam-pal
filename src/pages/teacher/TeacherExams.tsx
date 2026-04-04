@@ -119,11 +119,19 @@ const TeacherExams = () => {
     };
 
     if (createMode === 'auto') {
-      payload.easyQuestions = autoConfig.easyCount;
-      payload.mediumQuestions = autoConfig.mediumCount;
-      payload.hardQuestions = autoConfig.hardCount;
-      if (autoConfig.chapterIds.length > 0) {
-        payload.chapterIds = autoConfig.chapterIds;
+      if (autoConfig.mode === 'per-chapter') {
+        payload.chapterDistributions = Object.entries(autoConfig.chapterConfigs).map(
+          ([chapterId, cfg]) => ({
+            chapterId: parseInt(chapterId),
+            easyQuestions: cfg.easy,
+            mediumQuestions: cfg.medium,
+            hardQuestions: cfg.hard,
+          })
+        );
+      } else {
+        payload.easyQuestions = autoConfig.easyCount;
+        payload.mediumQuestions = autoConfig.mediumCount;
+        payload.hardQuestions = autoConfig.hardCount;
       }
     } else {
       payload.questionIds = selectedQuestionIds;
