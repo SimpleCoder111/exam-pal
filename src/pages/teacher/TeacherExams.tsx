@@ -433,7 +433,6 @@ const TeacherExams = () => {
                   <span className="font-medium text-muted-foreground">Ch {idx + 1}:</span>{' '}
                   {ch.name}
                 </span>
-                <Badge variant="outline" className="ml-auto text-xs">{ch.questionCount} Q</Badge>
               </label>
             ))}
           </div>
@@ -554,17 +553,32 @@ const TeacherExams = () => {
                     {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Chapters</p>
-                  <p className="font-medium">
-                    {autoConfig.chapterIds.length > 0
-                      ? selectedSubjectChapters
-                          .filter(ch => autoConfig.chapterIds.includes(ch.id))
-                          .map(ch => ch.name)
-                          .join(', ')
-                      : 'All chapters'}
-                  </p>
-                </div>
+                {formData.scheduledDate && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Scheduled</p>
+                    <p className="font-medium">{formData.scheduledDate} {formData.scheduledTime}</p>
+                  </div>
+                )}
+                {autoConfig.chapterIds.length > 0 && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground mb-2">Chapters ({autoConfig.chapterIds.length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedSubjectChapters
+                        .filter(ch => autoConfig.chapterIds.includes(ch.id))
+                        .map((ch, idx) => (
+                          <Badge key={ch.id} variant="secondary" className="text-xs">
+                            Ch {idx + 1}: {ch.name}
+                          </Badge>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {autoConfig.chapterIds.length === 0 && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Chapters</p>
+                    <p className="font-medium">All chapters</p>
+                  </div>
+                )}
               </>
             )}
             {createMode === 'manual' && (
@@ -573,7 +587,7 @@ const TeacherExams = () => {
                 <p className="font-medium">{selectedQuestionIds.length}</p>
               </div>
             )}
-            {formData.scheduledDate && (
+            {createMode !== 'auto' && formData.scheduledDate && (
               <div>
                 <p className="text-sm text-muted-foreground">Scheduled</p>
                 <p className="font-medium">{formData.scheduledDate} {formData.scheduledTime}</p>
