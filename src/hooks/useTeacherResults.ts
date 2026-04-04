@@ -44,6 +44,8 @@ export interface GradingDetail {
   suggestionForImprovement?: string;
   studentAnswer: string | null;
   correctAnswer: string;
+  chapterId: number;
+  chapterTitle: string;
   score: boolean;
   scoreEdit: boolean;
   correct: boolean;

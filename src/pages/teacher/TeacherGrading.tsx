@@ -299,6 +299,8 @@ const TeacherGrading = () => {
           suggestionForImprovement: suggestionInputs[d.questionId] ?? (d.suggestionForImprovement || ''),
           studentAnswer: d.studentAnswer,
           correctAnswer: correctAnswerInputs[d.questionId] ?? d.correctAnswer,
+          chapterId: d.chapterId,
+          chapterTitle: d.chapterTitle,
           scoreEdit: wasEdited || d.scoreEdit,
           correct: d.correct,
           score: d.score,
