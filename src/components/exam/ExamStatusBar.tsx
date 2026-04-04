@@ -110,7 +110,7 @@ const ExamStatusBar = ({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>Auto-save every 30s</span>
+                <span>Auto-save every 60s</span>
               </>
             )}
           </div>

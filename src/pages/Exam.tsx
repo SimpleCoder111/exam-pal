@@ -39,7 +39,7 @@ export interface Question {
   questionType: string;
 }
 
-const MAX_VIOLATIONS = 5;
+const MAX_VIOLATIONS = 3;
 
 const QUESTION_TYPE_ORDER: Record<string, number> = {
   MULTIPLE_CHOICE: 0,
@@ -225,7 +225,7 @@ const Exam = () => {
     if (!examStarted || !examData) return;
 
     const initialTimeout = setTimeout(serverSaveRef, 10000);
-    const serverInterval = setInterval(serverSaveRef, 30000);
+    const serverInterval = setInterval(serverSaveRef, 60000);
 
     return () => {
       clearTimeout(initialTimeout);
