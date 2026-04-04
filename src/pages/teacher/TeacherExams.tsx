@@ -617,21 +617,40 @@ const TeacherExams = () => {
             {createMode === 'auto' && (
               <>
                 <div>
-                  <p className="text-sm text-muted-foreground">Questions</p>
-                  <p className="font-medium">
-                    {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
-                  </p>
+                  <p className="text-sm text-muted-foreground">Distribution Mode</p>
+                  <p className="font-medium">{autoConfig.mode === 'global' ? 'Randomize All' : 'Per Chapter'}</p>
                 </div>
+                {autoConfig.mode === 'global' ? (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Questions</p>
+                    <p className="font-medium">
+                      {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
+                    </p>
+                  </div>
+                ) : (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground mb-1">Per-Chapter Breakdown</p>
+                    <div className="space-y-1">
+                      {selectedSubjectChapters
+                        .filter(ch => {
+                          const cfg = autoConfig.chapterConfigs[ch.id];
+                          return cfg && (cfg.easy + cfg.medium + cfg.hard) > 0;
+                        })
+                        .map((ch, idx) => {
+                          const cfg = autoConfig.chapterConfigs[ch.id];
+                          return (
+                            <p key={ch.id} className="text-sm">
+                              <span className="font-medium">Ch {idx + 1} ({ch.name}):</span>{' '}
+                              {cfg.easy}E / {cfg.medium}M / {cfg.hard}H
+                            </p>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
                 <div>
-                  <p className="text-sm text-muted-foreground">Chapters</p>
-                  <p className="font-medium">
-                    {autoConfig.chapterIds.length > 0
-                      ? selectedSubjectChapters
-                          .filter(ch => autoConfig.chapterIds.includes(ch.id))
-                          .map(ch => ch.name)
-                          .join(', ')
-                      : 'All chapters'}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Total Questions</p>
+                  <p className="font-medium">{autoConfig.mode === 'global' ? globalTotal : perChapterTotal}</p>
                 </div>
               </>
             )}
