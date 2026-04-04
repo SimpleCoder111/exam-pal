@@ -27,6 +27,7 @@ export interface CreateExamPayload {
   easyQuestions?: number;
   mediumQuestions?: number;
   hardQuestions?: number;
+  chapterIds?: number[];
   // MANUAL fields
   questionIds?: number[];
 }
