@@ -356,7 +356,53 @@ const TeacherGrading = () => {
   const pendingCount = results?.filter(r => r.status === 'PENDING_REVIEW').length || 0;
   const gradedCount = results?.filter(r => r.status === 'GRADED').length || 0;
 
+  // Fetch grading details for all graded students to aggregate chapter performance
+  const gradedStudents = useMemo(() => results?.filter(r => r.status === 'GRADED') || [], [results]);
+  const allGradingQueries = useQueries({
+    queries: gradedStudents.map(student => ({
+      queryKey: ['teacherGradingDetails', examId, student.studentId],
+      queryFn: async () => {
+        const res = await apiFetch<{ code: string; data: GradingDetailsData; message: string }>(
+          `/api/v1/teacher/result/grading-details?examId=${examId}&studentId=${student.studentId}`,
+          accessToken
+        );
+        return res.data;
+      },
+      enabled: !!examId && !!accessToken,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
 
+  const aggregatedChapters = useMemo(() => {
+    const chapterMap = new Map<number, { title: string; obtained: number; possible: number; correct: number; total: number; studentCount: number }>();
+    allGradingQueries.forEach(q => {
+      if (q.data?.details) {
+        q.data.details.forEach(d => {
+          const existing = chapterMap.get(d.chapterId);
+          if (existing) {
+            existing.obtained += d.pointsObtained;
+            existing.possible += d.pointsPossible;
+            existing.total += 1;
+            if (d.correct) existing.correct += 1;
+          } else {
+            chapterMap.set(d.chapterId, {
+              title: d.chapterTitle,
+              obtained: d.pointsObtained,
+              possible: d.pointsPossible,
+              total: 1,
+              correct: d.correct ? 1 : 0,
+              studentCount: 1,
+            });
+          }
+        });
+      }
+    });
+    return Array.from(chapterMap.entries())
+      .map(([id, ch]) => ({ id, ...ch, percentage: ch.possible > 0 ? Math.round((ch.obtained / ch.possible) * 100) : 0 }))
+      .sort((a, b) => b.percentage - a.percentage);
+  }, [allGradingQueries]);
+
+  const allGradingLoaded = allGradingQueries.length > 0 && allGradingQueries.every(q => !q.isLoading);
 
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
