@@ -120,6 +120,9 @@ const TeacherExams = () => {
       payload.easyQuestions = autoConfig.easyCount;
       payload.mediumQuestions = autoConfig.mediumCount;
       payload.hardQuestions = autoConfig.hardCount;
+      if (autoConfig.chapterIds.length > 0) {
+        payload.chapterIds = autoConfig.chapterIds;
+      }
     } else {
       payload.questionIds = selectedQuestionIds;
     }
