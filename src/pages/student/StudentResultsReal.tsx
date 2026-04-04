@@ -524,7 +524,7 @@ const ChapterStrengthMap = ({ details }: { details: import('@/hooks/useStudentRe
     c.percentage = c.pointsPossible > 0 ? Math.round((c.pointsObtained / c.pointsPossible) * 100) : 0;
   });
 
-  chapterStats.sort((a, b) => b.percentage - a.percentage);
+  chapterStats.sort((a, b) => a.chapterId - b.chapterId);
 
   const strengths = chapterStats.filter(c => c.percentage >= 80);
   const moderate = chapterStats.filter(c => c.percentage >= 50 && c.percentage < 80);
@@ -541,7 +541,7 @@ const ChapterStrengthMap = ({ details }: { details: import('@/hooks/useStudentRe
       <CardContent className="space-y-6">
         {/* Chapter cards grid */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {chapterStats.map(ch => (
+          {chapterStats.map((ch, idx) => (
             <div
               key={ch.chapterId}
               className={`rounded-xl border p-4 transition-all ${
@@ -554,6 +554,7 @@ const ChapterStrengthMap = ({ details }: { details: import('@/hooks/useStudentRe
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground mb-0.5">Chapter {idx + 1}</p>
                   <h4 className="font-semibold text-sm text-foreground truncate">{ch.chapterTitle}</h4>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {ch.correct}/{ch.total} questions • {ch.pointsObtained}/{ch.pointsPossible} pts
