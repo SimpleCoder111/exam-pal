@@ -95,6 +95,9 @@ export const useSaveProgress = () => {
 
   return useMutation({
     mutationFn: async (payload: SaveProgressPayload) => {
+      console.log('[save-progress] Token present:', !!accessToken);
+      console.log('[save-progress] Token preview:', accessToken ? accessToken.substring(0, 30) + '...' : 'NONE');
+
       const response = await fetch(`${API_BASE_URL}/api/v1/student/exam/save-progress`, {
         method: 'POST',
         headers: {
