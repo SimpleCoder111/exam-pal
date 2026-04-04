@@ -15,6 +15,13 @@ export interface TeacherExam {
   examStatus: string | null;
 }
 
+export interface ChapterDistribution {
+  chapterId: number;
+  easyQuestions: number;
+  mediumQuestions: number;
+  hardQuestions: number;
+}
+
 export interface CreateExamPayload {
   classId: number;
   subjectId: number;
@@ -23,11 +30,12 @@ export interface CreateExamPayload {
   duration: number;
   examPaperType: 'AUTO' | 'MANUAL';
   isDraft: boolean;
-  // AUTO fields
+  // AUTO fields (global — used when no per-chapter distribution)
   easyQuestions?: number;
   mediumQuestions?: number;
   hardQuestions?: number;
-  chapterIds?: number[];
+  // AUTO fields (per-chapter distribution)
+  chapterDistributions?: ChapterDistribution[];
   // MANUAL fields
   questionIds?: number[];
 }
