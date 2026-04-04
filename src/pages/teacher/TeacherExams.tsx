@@ -32,7 +32,7 @@ import {
 import ExamMonitor from '@/components/exam/ExamMonitor';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { useTeacherExams, useCreateExam, useDeleteExam, type CreateExamPayload, type ChapterDistribution } from '@/hooks/useTeacherExams';
+import { useTeacherExams, useCreateExam, useDeleteExam, type CreateExamPayload } from '@/hooks/useTeacherExams';
 import { useTeacherSubjects } from '@/hooks/useTeacherSubjects';
 import { useTeacherClasses } from '@/hooks/useTeacherClassrooms';
 import { useTeacherQuestions } from '@/hooks/useTeacherQuestions';
@@ -48,11 +48,10 @@ interface ExamFormData {
 }
 
 interface AutoBuilderConfig {
-  mode: 'global' | 'per-chapter';
   easyCount: number;
   mediumCount: number;
   hardCount: number;
-  chapterConfigs: Record<number, { easy: number; medium: number; hard: number }>;
+  chapterIds: number[];
 }
 
 const TeacherExams = () => {
@@ -83,11 +82,10 @@ const TeacherExams = () => {
   });
 
   const [autoConfig, setAutoConfig] = useState<AutoBuilderConfig>({
-    mode: 'global',
     easyCount: 5,
     mediumCount: 3,
     hardCount: 2,
-    chapterConfigs: {},
+    chapterIds: [],
   });
 
   const [questionSearch, setQuestionSearch] = useState('');
@@ -119,19 +117,11 @@ const TeacherExams = () => {
     };
 
     if (createMode === 'auto') {
-      if (autoConfig.mode === 'per-chapter') {
-        payload.chapterDistributions = Object.entries(autoConfig.chapterConfigs).map(
-          ([chapterId, cfg]) => ({
-            chapterId: parseInt(chapterId),
-            easyQuestions: cfg.easy,
-            mediumQuestions: cfg.medium,
-            hardQuestions: cfg.hard,
-          })
-        );
-      } else {
-        payload.easyQuestions = autoConfig.easyCount;
-        payload.mediumQuestions = autoConfig.mediumCount;
-        payload.hardQuestions = autoConfig.hardCount;
+      payload.easyQuestions = autoConfig.easyCount;
+      payload.mediumQuestions = autoConfig.mediumCount;
+      payload.hardQuestions = autoConfig.hardCount;
+      if (autoConfig.chapterIds.length > 0) {
+        payload.chapterIds = autoConfig.chapterIds;
       }
     } else {
       payload.questionIds = selectedQuestionIds;
@@ -173,7 +163,7 @@ const TeacherExams = () => {
       scheduledDate: '',
       scheduledTime: '',
     });
-    setAutoConfig({ mode: 'global', easyCount: 5, mediumCount: 3, hardCount: 2, chapterConfigs: {} });
+    setAutoConfig({ easyCount: 5, mediumCount: 3, hardCount: 2, chapterIds: [] });
   };
 
   const getStatusBadge = (status: string | null) => {
@@ -330,186 +320,128 @@ const TeacherExams = () => {
         ?.sort((a, b) => a.orderIndex - b.orderIndex) || []
     : [];
 
-  const handleChapterConfigChange = (chapterId: number, field: 'easy' | 'medium' | 'hard', value: number) => {
+  const handleChapterToggle = (chapterId: number) => {
     setAutoConfig(prev => ({
       ...prev,
-      chapterConfigs: {
-        ...prev.chapterConfigs,
-        [chapterId]: {
-          ...(prev.chapterConfigs[chapterId] || { easy: 0, medium: 0, hard: 0 }),
-          [field]: value,
-        },
-      },
+      chapterIds: prev.chapterIds.includes(chapterId)
+        ? prev.chapterIds.filter(id => id !== chapterId)
+        : [...prev.chapterIds, chapterId],
     }));
   };
 
-  const initAllChapterConfigs = () => {
-    const configs: Record<number, { easy: number; medium: number; hard: number }> = {};
-    selectedSubjectChapters.forEach(ch => {
-      configs[ch.id] = autoConfig.chapterConfigs[ch.id] || { easy: 2, medium: 1, hard: 1 };
-    });
-    setAutoConfig(prev => ({ ...prev, mode: 'per-chapter', chapterConfigs: configs }));
+  const handleToggleAllChapters = () => {
+    if (autoConfig.chapterIds.length === selectedSubjectChapters.length) {
+      setAutoConfig(prev => ({ ...prev, chapterIds: [] }));
+    } else {
+      setAutoConfig(prev => ({ ...prev, chapterIds: selectedSubjectChapters.map(ch => ch.id) }));
+    }
   };
-
-  const perChapterTotal = Object.values(autoConfig.chapterConfigs).reduce(
-    (sum, cfg) => sum + cfg.easy + cfg.medium + cfg.hard, 0
-  );
-
-  const globalTotal = autoConfig.easyCount + autoConfig.mediumCount + autoConfig.hardCount;
 
   const renderAutoStep2 = () => (
     <div className="space-y-6">
-      {/* Mode Toggle */}
-      {selectedSubjectChapters.length > 0 && (
-        <div className="flex gap-2">
-          <Button
-            variant={autoConfig.mode === 'global' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setAutoConfig(prev => ({ ...prev, mode: 'global' }))}
-          >
-            <Shuffle className="mr-2 h-4 w-4" />
-            Randomize All
-          </Button>
-          <Button
-            variant={autoConfig.mode === 'per-chapter' ? 'default' : 'outline'}
-            size="sm"
-            onClick={initAllChapterConfigs}
-          >
-            <BookOpen className="mr-2 h-4 w-4" />
-            Per Chapter
-          </Button>
+      {/* Difficulty Distribution */}
+      <div>
+        <Label className="text-base font-semibold">Question Distribution</Label>
+        <p className="text-sm text-muted-foreground mb-4">
+          Set the total number of questions for each difficulty level
+        </p>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-emerald-500/50 bg-emerald-500/10 dark:bg-emerald-950/40 dark:border-emerald-400/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400">Easy Questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                type="number"
+                value={autoConfig.easyCount}
+                onChange={(e) => setAutoConfig({ ...autoConfig, easyCount: parseInt(e.target.value) || 0 })}
+                min={0}
+                className="text-center text-lg font-bold"
+              />
+            </CardContent>
+          </Card>
+          <Card className="border-amber-500/50 bg-amber-500/10 dark:bg-amber-950/40 dark:border-amber-400/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-amber-700 dark:text-amber-400">Medium Questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                type="number"
+                value={autoConfig.mediumCount}
+                onChange={(e) => setAutoConfig({ ...autoConfig, mediumCount: parseInt(e.target.value) || 0 })}
+                min={0}
+                className="text-center text-lg font-bold"
+              />
+            </CardContent>
+          </Card>
+          <Card className="border-rose-500/50 bg-rose-500/10 dark:bg-rose-950/40 dark:border-rose-400/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-rose-700 dark:text-rose-400">Hard Questions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                type="number"
+                value={autoConfig.hardCount}
+                onChange={(e) => setAutoConfig({ ...autoConfig, hardCount: parseInt(e.target.value) || 0 })}
+                min={0}
+                className="text-center text-lg font-bold"
+              />
+            </CardContent>
+          </Card>
         </div>
-      )}
+        <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
+          <span className="text-sm font-medium">
+            Total Questions: {autoConfig.easyCount + autoConfig.mediumCount + autoConfig.hardCount}
+          </span>
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Shuffle className="h-3 w-3" />
+            Randomized
+          </Badge>
+        </div>
+      </div>
 
-      {autoConfig.mode === 'global' ? (
+      {/* Chapter Filter */}
+      {selectedSubjectChapters.length > 0 && (
         <div>
-          <Label className="text-base font-semibold">Question Distribution</Label>
-          <p className="text-sm text-muted-foreground mb-4">
-            Questions will be randomly selected across all chapters
+          <Separator className="mb-4" />
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-base font-semibold">Include Chapters</Label>
+            <Button variant="ghost" size="sm" onClick={handleToggleAllChapters}>
+              {autoConfig.chapterIds.length === selectedSubjectChapters.length ? 'Deselect All' : 'Select All'}
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Select which chapters to draw questions from. Leave empty to include all chapters.
           </p>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-emerald-500/50 bg-emerald-500/10 dark:bg-emerald-950/40 dark:border-emerald-400/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400">Easy</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Input
-                  type="number"
-                  value={autoConfig.easyCount}
-                  onChange={(e) => setAutoConfig({ ...autoConfig, easyCount: parseInt(e.target.value) || 0 })}
-                  min={0}
-                  className="text-center text-lg font-bold"
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {selectedSubjectChapters.map((ch, idx) => (
+              <label
+                key={ch.id}
+                className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                  autoConfig.chapterIds.includes(ch.id)
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:bg-muted/50'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={autoConfig.chapterIds.includes(ch.id)}
+                  onChange={() => handleChapterToggle(ch.id)}
+                  className="rounded"
                 />
-              </CardContent>
-            </Card>
-            <Card className="border-amber-500/50 bg-amber-500/10 dark:bg-amber-950/40 dark:border-amber-400/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-amber-700 dark:text-amber-400">Medium</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Input
-                  type="number"
-                  value={autoConfig.mediumCount}
-                  onChange={(e) => setAutoConfig({ ...autoConfig, mediumCount: parseInt(e.target.value) || 0 })}
-                  min={0}
-                  className="text-center text-lg font-bold"
-                />
-              </CardContent>
-            </Card>
-            <Card className="border-rose-500/50 bg-rose-500/10 dark:bg-rose-950/40 dark:border-rose-400/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-rose-700 dark:text-rose-400">Hard</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Input
-                  type="number"
-                  value={autoConfig.hardCount}
-                  onChange={(e) => setAutoConfig({ ...autoConfig, hardCount: parseInt(e.target.value) || 0 })}
-                  min={0}
-                  className="text-center text-lg font-bold"
-                />
-              </CardContent>
-            </Card>
+                <span className="text-sm">
+                  <span className="font-medium text-muted-foreground">Ch {idx + 1}:</span>{' '}
+                  {ch.name}
+                </span>
+                <Badge variant="outline" className="ml-auto text-xs">{ch.questionCount} Q</Badge>
+              </label>
+            ))}
           </div>
-          <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-            <span className="text-sm font-medium">Total: {globalTotal} questions</span>
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <Shuffle className="h-3 w-3" />
-              Randomized
-            </Badge>
-          </div>
-        </div>
-      ) : (
-        <div>
-          <Label className="text-base font-semibold">Per-Chapter Distribution</Label>
-          <p className="text-sm text-muted-foreground mb-4">
-            Set question counts per chapter and difficulty
-          </p>
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Chapter</TableHead>
-                  <TableHead className="w-20 text-center text-emerald-700 dark:text-emerald-400">Easy</TableHead>
-                  <TableHead className="w-20 text-center text-amber-700 dark:text-amber-400">Medium</TableHead>
-                  <TableHead className="w-20 text-center text-rose-700 dark:text-rose-400">Hard</TableHead>
-                  <TableHead className="w-20 text-center">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selectedSubjectChapters.map((ch, idx) => {
-                  const cfg = autoConfig.chapterConfigs[ch.id] || { easy: 0, medium: 0, hard: 0 };
-                  const chTotal = cfg.easy + cfg.medium + cfg.hard;
-                  return (
-                    <TableRow key={ch.id}>
-                      <TableCell>
-                        <div>
-                          <span className="text-xs text-muted-foreground">Ch {idx + 1}</span>
-                          <p className="text-sm font-medium leading-tight">{ch.name}</p>
-                          <span className="text-xs text-muted-foreground">{ch.questionCount} available</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={cfg.easy}
-                          onChange={(e) => handleChapterConfigChange(ch.id, 'easy', parseInt(e.target.value) || 0)}
-                          min={0}
-                          className="text-center h-8 text-sm"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={cfg.medium}
-                          onChange={(e) => handleChapterConfigChange(ch.id, 'medium', parseInt(e.target.value) || 0)}
-                          min={0}
-                          className="text-center h-8 text-sm"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={cfg.hard}
-                          onChange={(e) => handleChapterConfigChange(ch.id, 'hard', parseInt(e.target.value) || 0)}
-                          min={0}
-                          className="text-center h-8 text-sm"
-                        />
-                      </TableCell>
-                      <TableCell className="text-center font-semibold text-sm">{chTotal}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="mt-4 p-3 bg-muted rounded-lg flex items-center justify-between">
-            <span className="text-sm font-medium">Total: {perChapterTotal} questions</span>
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3" />
-              Per Chapter
-            </Badge>
-          </div>
+          {autoConfig.chapterIds.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {autoConfig.chapterIds.length} of {selectedSubjectChapters.length} chapters selected
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -617,40 +549,21 @@ const TeacherExams = () => {
             {createMode === 'auto' && (
               <>
                 <div>
-                  <p className="text-sm text-muted-foreground">Distribution Mode</p>
-                  <p className="font-medium">{autoConfig.mode === 'global' ? 'Randomize All' : 'Per Chapter'}</p>
+                  <p className="text-sm text-muted-foreground">Questions</p>
+                  <p className="font-medium">
+                    {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
+                  </p>
                 </div>
-                {autoConfig.mode === 'global' ? (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Questions</p>
-                    <p className="font-medium">
-                      {autoConfig.easyCount} easy, {autoConfig.mediumCount} medium, {autoConfig.hardCount} hard
-                    </p>
-                  </div>
-                ) : (
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground mb-1">Per-Chapter Breakdown</p>
-                    <div className="space-y-1">
-                      {selectedSubjectChapters
-                        .filter(ch => {
-                          const cfg = autoConfig.chapterConfigs[ch.id];
-                          return cfg && (cfg.easy + cfg.medium + cfg.hard) > 0;
-                        })
-                        .map((ch, idx) => {
-                          const cfg = autoConfig.chapterConfigs[ch.id];
-                          return (
-                            <p key={ch.id} className="text-sm">
-                              <span className="font-medium">Ch {idx + 1} ({ch.name}):</span>{' '}
-                              {cfg.easy}E / {cfg.medium}M / {cfg.hard}H
-                            </p>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Questions</p>
-                  <p className="font-medium">{autoConfig.mode === 'global' ? globalTotal : perChapterTotal}</p>
+                  <p className="text-sm text-muted-foreground">Chapters</p>
+                  <p className="font-medium">
+                    {autoConfig.chapterIds.length > 0
+                      ? selectedSubjectChapters
+                          .filter(ch => autoConfig.chapterIds.includes(ch.id))
+                          .map(ch => ch.name)
+                          .join(', ')
+                      : 'All chapters'}
+                  </p>
                 </div>
               </>
             )}
@@ -675,10 +588,7 @@ const TeacherExams = () => {
   const canProceed = () => {
     if (currentStep === 1) return !!formData.title && !!formData.classId && !!formData.subjectId;
     if (createMode === 'manual' && currentStep === 2) return selectedQuestionIds.length > 0;
-    if (createMode === 'auto' && currentStep === 2) {
-      if (autoConfig.mode === 'per-chapter') return perChapterTotal > 0;
-      return globalTotal > 0;
-    }
+    if (createMode === 'auto' && currentStep === 2) return (autoConfig.easyCount + autoConfig.mediumCount + autoConfig.hardCount) > 0;
     return true;
   };
 
