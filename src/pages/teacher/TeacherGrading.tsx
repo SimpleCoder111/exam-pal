@@ -593,14 +593,16 @@ const TeacherGrading = () => {
                   <div className="space-y-4">
                     {/* Chapter Strength & Weakness Map */}
                     {(() => {
-                      const chapterMap = new Map<number, { title: string; obtained: number; possible: number }>();
+                      const chapterMap = new Map<number, { title: string; obtained: number; possible: number; correct: number; total: number }>();
                       gradingDetails.details.forEach(d => {
                         const existing = chapterMap.get(d.chapterId);
                         if (existing) {
                           existing.obtained += d.pointsObtained;
                           existing.possible += d.pointsPossible;
+                          existing.total += 1;
+                          if (d.correct) existing.correct += 1;
                         } else {
-                          chapterMap.set(d.chapterId, { title: d.chapterTitle, obtained: d.pointsObtained, possible: d.pointsPossible });
+                          chapterMap.set(d.chapterId, { title: d.chapterTitle, obtained: d.pointsObtained, possible: d.pointsPossible, total: 1, correct: d.correct ? 1 : 0 });
                         }
                       });
                       const chapters = Array.from(chapterMap.entries())
@@ -609,85 +611,85 @@ const TeacherGrading = () => {
                       const strong = chapters.filter(c => c.percentage >= 80);
                       const moderate = chapters.filter(c => c.percentage >= 50 && c.percentage < 80);
                       const weak = chapters.filter(c => c.percentage < 50);
-                      const totalObtained = chapters.reduce((s, c) => s + c.obtained, 0);
-                      const totalPossible = chapters.reduce((s, c) => s + c.possible, 0);
-                      const overallPct = totalPossible > 0 ? Math.round((totalObtained / totalPossible) * 100) : 0;
 
                       return chapters.length > 0 ? (
-                        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                          {/* Header */}
-                          <div className="px-6 py-4 border-b bg-muted/30">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
-                                  <BarChart3 className="h-5 w-5 text-primary" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-foreground">Chapter Performance</h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    Overall: {totalObtained}/{totalPossible} ({overallPct}%)
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-6 space-y-5">
-                            {/* Summary pills */}
-                            <div className="grid grid-cols-3 gap-3">
-                              <div className="flex flex-col items-center gap-1 rounded-xl border border-green-200 dark:border-green-800/40 bg-green-50 dark:bg-green-950/20 py-3">
-                                <span className="text-2xl font-bold text-green-600 dark:text-green-400">{strong.length}</span>
-                                <span className="text-xs font-medium text-green-700 dark:text-green-300">Strong</span>
-                              </div>
-                              <div className="flex flex-col items-center gap-1 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 py-3">
-                                <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{moderate.length}</span>
-                                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Moderate</span>
-                              </div>
-                              <div className="flex flex-col items-center gap-1 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 py-3">
-                                <span className="text-2xl font-bold text-red-600 dark:text-red-400">{weak.length}</span>
-                                <span className="text-xs font-medium text-red-700 dark:text-red-300">Weak</span>
-                              </div>
-                            </div>
-
-                            {/* Chapter rows */}
-                            <div className="space-y-1">
-                              {chapters.map(ch => {
-                                const iconColorClass = ch.percentage >= 80
-                                  ? 'text-green-600 dark:text-green-400'
-                                  : ch.percentage >= 50
-                                  ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-red-600 dark:text-red-400';
-                                const progressClass = ch.percentage >= 80
-                                  ? '[&>div]:bg-green-500'
-                                  : ch.percentage >= 50
-                                  ? '[&>div]:bg-amber-500'
-                                  : '[&>div]:bg-red-500';
-                                const Icon = ch.percentage >= 80 ? TrendingUp : ch.percentage >= 50 ? Minus : TrendingDown;
-                                return (
-                                  <div key={ch.id} className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                                    <Icon className={`w-4 h-4 shrink-0 ${iconColorClass}`} />
-                                    <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
-                                      {ch.title}
-                                    </span>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                      <div className="w-32 hidden sm:block">
-                                        <Progress
-                                          value={ch.percentage}
-                                          className={`h-2 ${progressClass}`}
-                                        />
-                                      </div>
-                                      <span className={`text-xs font-semibold tabular-nums w-20 text-right ${iconColorClass}`}>
-                                        {ch.obtained}/{ch.possible} ({ch.percentage}%)
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <BarChart3 className="w-5 h-5 text-primary" />
+                              Chapter Strength & Weakness
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            {/* Chapter cards grid */}
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                              {chapters.map(ch => (
+                                <div
+                                  key={ch.id}
+                                  className={`rounded-xl border p-4 transition-all ${
+                                    ch.percentage >= 80
+                                      ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
+                                      : ch.percentage >= 50
+                                      ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
+                                      : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-semibold text-sm text-foreground truncate">{ch.title}</h4>
+                                      <p className="text-xs text-muted-foreground mt-0.5">
+                                        {ch.correct}/{ch.total} questions • {ch.obtained}/{ch.possible} pts
+                                      </p>
+                                    </div>
+                                    {ch.percentage >= 80 ? (
+                                      <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                    ) : ch.percentage >= 50 ? (
+                                      <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                    ) : (
+                                      <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="font-bold text-lg text-foreground">{ch.percentage}%</span>
+                                      <span className={`font-medium ${
+                                        ch.percentage >= 80 ? 'text-green-600 dark:text-green-400'
+                                          : ch.percentage >= 50 ? 'text-amber-600 dark:text-amber-400'
+                                          : 'text-red-600 dark:text-red-400'
+                                      }`}>
+                                        {ch.percentage >= 80 ? 'Strong' : ch.percentage >= 50 ? 'Moderate' : 'Weak'}
                                       </span>
                                     </div>
+                                    <Progress value={ch.percentage} className="h-2" />
                                   </div>
-                                );
-                              })}
+                                </div>
+                              ))}
                             </div>
-                          </div>
-                        </div>
+
+                            {/* Summary row */}
+                            <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border">
+                              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+                                <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-foreground">{strong.length}</div>
+                                <div className="text-xs text-muted-foreground">Strong</div>
+                              </div>
+                              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
+                                <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-foreground">{moderate.length}</div>
+                                <div className="text-xs text-muted-foreground">Moderate</div>
+                              </div>
+                              <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-center">
+                                <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 mx-auto mb-1" />
+                                <div className="text-lg font-bold text-foreground">{weak.length}</div>
+                                <div className="text-xs text-muted-foreground">Weak</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ) : null;
                     })()}
+
+
 
                     {sortedDetails.map((detail, idx) => {
                       const isManual = detail.questionType === 'CODING' || detail.questionType === 'WRITING';
