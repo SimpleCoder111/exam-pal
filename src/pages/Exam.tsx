@@ -23,6 +23,7 @@ import { useExamCache } from "@/hooks/useExamCache";
 import { useNetworkLatency } from "@/hooks/useNetworkLatency";
 import { useSaveProgress, buildSaveProgressPayload } from "@/hooks/useSaveProgress";
 import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
+import { useExamViolation } from "@/hooks/useExamViolation";
 import { toast } from "sonner";
 import type { TakeExamData, TakeExamQuestion } from "@/hooks/useTakeExam";
 
