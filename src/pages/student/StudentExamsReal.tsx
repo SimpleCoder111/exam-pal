@@ -98,10 +98,14 @@ const StudentExamsReal = () => {
     if (!selectedExam || !rulesAccepted || !user?.id) return;
     setIsStarting(true);
     try {
+      const { getClientIpAddress } = await import('@/lib/clientInfo');
+      const ipAddress = await getClientIpAddress();
       const examData = await takeExamMutation.mutateAsync({
         studentId: user.id,
         examId: selectedExam.examId,
         isDemo: true,
+        ipAddress,
+        latency: 'unknown',
       });
       setShowRulesDialog(false);
       navigate('/exam', { state: { examData } });
