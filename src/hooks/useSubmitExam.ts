@@ -25,6 +25,8 @@ interface SubmitExamPayload {
   examDuration: number;
   examSessionId: number;
   questionLists: SubmitExamQuestion[];
+  ipAddress: string;
+  latency: string;
 }
 
 export interface QuestionGradeDetail {
@@ -62,7 +64,9 @@ interface SubmitExamResponse {
 export const buildSubmitPayload = (
   examData: TakeExamData,
   answers: Record<number, number>,
-  textAnswers: Record<number, string> = {}
+  textAnswers: Record<number, string> = {},
+  ipAddress: string = '',
+  latency: string = ''
 ): SubmitExamPayload => {
   const textTypes = ['FILL_IN_THE_BLANK', 'WRITING', 'CODING'];
   const questionLists: SubmitExamQuestion[] = examData.questionLists.map((q) => {
@@ -101,6 +105,8 @@ export const buildSubmitPayload = (
     examDuration: examData.examDuration,
     examSessionId: examData.examSessionId,
     questionLists,
+    ipAddress,
+    latency,
   };
 };
 

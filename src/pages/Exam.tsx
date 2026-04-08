@@ -26,6 +26,7 @@ import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
 import { useExamViolation } from "@/hooks/useExamViolation";
 import { toast } from "sonner";
 import type { TakeExamData, TakeExamQuestion } from "@/hooks/useTakeExam";
+import { getClientIpAddress, getLatencyString } from "@/lib/clientInfo";
 
 // Transformed question type for the exam UI
 export interface Question {
@@ -116,6 +117,7 @@ const Exam = () => {
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [clientIp, setClientIp] = useState('');
 
   // Network latency monitoring
   const latency = useNetworkLatency({ enabled: examStarted, interval: 15000 });
@@ -182,6 +184,11 @@ const Exam = () => {
     },
   });
 
+  // Fetch client IP on mount
+  useEffect(() => {
+    getClientIpAddress().then(setClientIp);
+  }, []);
+
   // Notify if answers were restored from API
   useEffect(() => {
     const hasRestoredAnswers =
@@ -239,7 +246,7 @@ const Exam = () => {
     const hasAnswers = Object.keys(currentAnswers).length > 0 || Object.keys(currentTextAnswers).length > 0;
 
     if (navigator.onLine) {
-      const payload = buildSaveProgressPayload(currentExamData, currentAnswers, currentTextAnswers);
+      const payload = buildSaveProgressPayload(currentExamData, currentAnswers, currentTextAnswers, clientIp, getLatencyString(latency));
       console.log('[auto-save] Sending save-progress to server...', new Date().toISOString());
       saveProgressMutation.mutate(payload, {
         onSuccess: () => {
@@ -329,7 +336,7 @@ const Exam = () => {
   const handleSubmit = useCallback(() => {
     if (!examData) return;
 
-    const payload = buildSubmitPayload(examData, answers, textAnswers);
+    const payload = buildSubmitPayload(examData, answers, textAnswers, clientIp, getLatencyString(latency));
 
     submitExamMutation.mutate(payload, {
       onSuccess: (result) => {
