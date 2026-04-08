@@ -23,6 +23,7 @@ import { useExamCache } from "@/hooks/useExamCache";
 import { useNetworkLatency } from "@/hooks/useNetworkLatency";
 import { useSaveProgress, buildSaveProgressPayload } from "@/hooks/useSaveProgress";
 import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
+import { useExamViolation } from "@/hooks/useExamViolation";
 import { toast } from "sonner";
 import type { TakeExamData, TakeExamQuestion } from "@/hooks/useTakeExam";
 
@@ -137,10 +138,23 @@ const Exam = () => {
   const saveProgressMutation = useSaveProgress();
   // Real submit API
   const submitExamMutation = useSubmitExam();
+  const violationMutation = useExamViolation();
   const isSaving = isCacheSaving || saveProgressMutation.isPending;
   const lastSaved = saveProgressMutation.data?.lastSaved
     ? new Date(saveProgressMutation.data.lastSaved)
     : cacheLastSaved;
+
+  // Map local violation types to backend violation types
+  const mapViolationType = (type: string): string => {
+    switch (type) {
+      case 'tab_switch': return 'Switch Tab';
+      case 'copy_paste': return 'Copy-Paste';
+      case 'minimize': return 'Minimize Window';
+      case 'dev_tools': return 'Developer Tools';
+      case 'resize': return 'Window Resize';
+      default: return type;
+    }
+  };
 
   // Security monitoring
   const { remainingChances } = useExamSecurity({
@@ -149,6 +163,17 @@ const Exam = () => {
     onViolation: (violation, count) => {
       setCurrentViolation(violation);
       toast.error(`Warning ${count}/${MAX_VIOLATIONS + 1}: ${violation.message}`);
+
+      // Report violation to backend
+      if (examData) {
+        violationMutation.mutate({
+          studentId: examData.studentId,
+          examId: examData.examId,
+          violationType: mapViolationType(violation.type),
+          violationCount: count,
+          examSessionId: examData.examSessionId,
+        });
+      }
     },
     onMaxViolations: () => {
       toast.error("Maximum violations reached. Your exam has been flagged for review.");
