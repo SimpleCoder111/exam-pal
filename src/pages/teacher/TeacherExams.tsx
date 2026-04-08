@@ -717,7 +717,7 @@ const TeacherExams = () => {
                               variant="ghost" 
                               size="icon"
                               onClick={() => {
-                                setMonitorExam({ id: exam.id.toString(), title: exam.examTitle });
+                                setMonitorExam({ id: String(exam.examId ?? exam.id), title: exam.examTitle });
                                 setShowMonitor(true);
                               }}
                               title="Monitor Exam"
