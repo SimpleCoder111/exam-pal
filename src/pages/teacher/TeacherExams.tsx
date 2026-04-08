@@ -712,7 +712,7 @@ const TeacherExams = () => {
                       <TableCell>{getStatusBadge(exam.examStatus)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          {(exam.examStatus === 'PUBLISHED' || exam.examStatus === 'ONGOING') && (
+                          {(exam.examStatus === 'PUBLISHED' || exam.examStatus === 'ONGOING' || exam.examStatus === 'UPCOMING') && (
                             <Button 
                               variant="ghost" 
                               size="icon"
