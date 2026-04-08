@@ -26,6 +26,7 @@ import { useSubmitExam, buildSubmitPayload } from "@/hooks/useSubmitExam";
 import { useExamViolation } from "@/hooks/useExamViolation";
 import { toast } from "sonner";
 import type { TakeExamData, TakeExamQuestion } from "@/hooks/useTakeExam";
+import { getClientIpAddress, getLatencyString } from "@/lib/clientInfo";
 
 // Transformed question type for the exam UI
 export interface Question {
@@ -116,6 +117,7 @@ const Exam = () => {
   const [examStarted, setExamStarted] = useState(false);
   const [currentViolation, setCurrentViolation] = useState<SecurityViolation | null>(null);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [clientIp, setClientIp] = useState('');
 
   // Network latency monitoring
   const latency = useNetworkLatency({ enabled: examStarted, interval: 15000 });
