@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import SockJS from 'sockjs-client';
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client, type IMessage } from '@stomp/stompjs';
 import { API_BASE_URL } from '@/lib/api';
 
 export interface ExamEvent {
@@ -42,10 +41,12 @@ export const useExamWebSocket = ({ examId, enabled, onEvent }: UseExamWebSocketO
   useEffect(() => {
     if (!enabled || !examId) return;
 
-    const wsUrl = `${API_BASE_URL}/ws-exam`;
+    // Convert http(s) to ws(s) for SockJS websocket transport
+    const wsBase = API_BASE_URL.replace(/^http/, 'ws');
+    const wsUrl = `${wsBase}/ws-exam/websocket`;
 
     const client = new Client({
-      webSocketFactory: () => new SockJS(wsUrl) as unknown as WebSocket,
+      brokerURL: wsUrl,
       reconnectDelay: 5000,
       heartbeatIncoming: 0,
       heartbeatOutgoing: 0,
