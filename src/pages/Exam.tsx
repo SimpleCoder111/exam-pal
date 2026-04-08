@@ -246,7 +246,7 @@ const Exam = () => {
     const hasAnswers = Object.keys(currentAnswers).length > 0 || Object.keys(currentTextAnswers).length > 0;
 
     if (navigator.onLine) {
-      const payload = buildSaveProgressPayload(currentExamData, currentAnswers, currentTextAnswers);
+      const payload = buildSaveProgressPayload(currentExamData, currentAnswers, currentTextAnswers, clientIp, getLatencyString(latency));
       console.log('[auto-save] Sending save-progress to server...', new Date().toISOString());
       saveProgressMutation.mutate(payload, {
         onSuccess: () => {
@@ -336,7 +336,7 @@ const Exam = () => {
   const handleSubmit = useCallback(() => {
     if (!examData) return;
 
-    const payload = buildSubmitPayload(examData, answers, textAnswers);
+    const payload = buildSubmitPayload(examData, answers, textAnswers, clientIp, getLatencyString(latency));
 
     submitExamMutation.mutate(payload, {
       onSuccess: (result) => {
