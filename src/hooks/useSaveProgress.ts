@@ -25,6 +25,8 @@ interface SaveProgressPayload {
   examDuration: number;
   examSessionId: number;
   questionLists: SaveProgressQuestion[];
+  ipAddress: string;
+  latency: string;
 }
 
 interface SaveProgressResponse {
@@ -48,7 +50,9 @@ interface SaveProgressResponse {
 export const buildSaveProgressPayload = (
   examData: TakeExamData,
   answers: Record<number, number>,
-  textAnswers: Record<number, string> = {}
+  textAnswers: Record<number, string> = {},
+  ipAddress: string = '',
+  latency: string = ''
 ): SaveProgressPayload => {
   const textTypes = ['FILL_IN_THE_BLANK', 'WRITING', 'CODING'];
   const questionLists: SaveProgressQuestion[] = examData.questionLists.map((q) => {
@@ -87,6 +91,8 @@ export const buildSaveProgressPayload = (
     examDuration: examData.examDuration,
     examSessionId: examData.examSessionId,
     questionLists,
+    ipAddress,
+    latency,
   };
 };
 

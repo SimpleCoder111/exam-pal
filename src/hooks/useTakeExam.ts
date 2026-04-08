@@ -35,6 +35,8 @@ interface TakeExamPayload {
   studentId: string;
   examId: number;
   isDemo: boolean;
+  ipAddress: string;
+  latency: string;
 }
 
 import { API_BASE_URL } from '@/lib/api';
