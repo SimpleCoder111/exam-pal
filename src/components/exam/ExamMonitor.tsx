@@ -1,18 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Users,
   Clock,
   AlertTriangle,
   CheckCircle2,
@@ -21,273 +18,29 @@ import {
   Wifi,
   WifiOff,
   Play,
-  Pause,
-  Timer,
   Shield,
   Monitor,
-  MousePointer,
-  Keyboard,
-  Copy,
-  Camera,
-  ExternalLink,
-  Send,
-  RefreshCw,
-  Search,
-  TrendingUp,
   Activity,
-  FileText,
   AlertCircle,
   LogIn,
-  LogOut,
   Ban,
+  Search,
+  RefreshCw,
 } from 'lucide-react';
+import { useExamWebSocket, type ExamEvent } from '@/hooks/useExamWebSocket';
 
-interface ExamSession {
-  id: string;
+interface StudentSession {
   studentId: string;
   studentName: string;
-  studentEmail: string;
-  avatar: string;
-  status: 'not_started' | 'logged_in' | 'in_progress' | 'submitted' | 'auto_submitted' | 'disconnected';
-  loginTime: string | null;
-  startTime: string | null;
-  submitTime: string | null;
-  currentQuestion: number;
-  answeredQuestions: number;
-  totalQuestions: number;
-  timeRemaining: number; // in seconds
-  alertCount: number;
-  lastActivity: string;
-  connectionStatus: 'online' | 'offline' | 'unstable';
-  ipAddress: string;
-  browser: string;
-  autoSubmitReason?: string;
-  activityLog: ActivityLog[];
+  status: string;
+  violationType: string | null;
+  violationCount: number;
+  remainingTime: number;
+  lastEventType: string;
+  lastEventTime: string;
+  message: string | null;
+  eventLog: ExamEvent[];
 }
-
-interface ActivityLog {
-  id: string;
-  timestamp: string;
-  type: 'login' | 'start_exam' | 'answer' | 'navigate' | 'alert' | 'disconnect' | 'reconnect' | 'submit' | 'auto_submit' | 'tab_switch' | 'copy_attempt' | 'screenshot_attempt' | 'focus_lost' | 'focus_gained';
-  description: string;
-  severity: 'info' | 'warning' | 'critical';
-  details?: string;
-}
-
-// Mock exam session data
-const mockExamSessions: ExamSession[] = [
-  {
-    id: 'S001',
-    studentId: 'STU001',
-    studentName: 'Alice Johnson',
-    studentEmail: 'alice@school.edu',
-    avatar: '',
-    status: 'in_progress',
-    loginTime: '2025-01-14T09:00:00',
-    startTime: '2025-01-14T09:02:00',
-    submitTime: null,
-    currentQuestion: 15,
-    answeredQuestions: 14,
-    totalQuestions: 25,
-    timeRemaining: 2400,
-    alertCount: 0,
-    lastActivity: '10 seconds ago',
-    connectionStatus: 'online',
-    ipAddress: '192.168.1.101',
-    browser: 'Chrome 120',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T09:00:00', type: 'login', description: 'Student logged in', severity: 'info' },
-      { id: 'L002', timestamp: '2025-01-14T09:02:00', type: 'start_exam', description: 'Started exam', severity: 'info' },
-      { id: 'L003', timestamp: '2025-01-14T09:05:00', type: 'answer', description: 'Answered question 1', severity: 'info' },
-      { id: 'L004', timestamp: '2025-01-14T09:25:00', type: 'answer', description: 'Answered question 14', severity: 'info' },
-    ],
-  },
-  {
-    id: 'S002',
-    studentId: 'STU002',
-    studentName: 'Bob Smith',
-    studentEmail: 'bob@school.edu',
-    avatar: '',
-    status: 'in_progress',
-    loginTime: '2025-01-14T08:58:00',
-    startTime: '2025-01-14T09:01:00',
-    submitTime: null,
-    currentQuestion: 18,
-    answeredQuestions: 17,
-    totalQuestions: 25,
-    timeRemaining: 1800,
-    alertCount: 2,
-    lastActivity: '1 minute ago',
-    connectionStatus: 'online',
-    ipAddress: '192.168.1.102',
-    browser: 'Firefox 121',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T08:58:00', type: 'login', description: 'Student logged in', severity: 'info' },
-      { id: 'L002', timestamp: '2025-01-14T09:01:00', type: 'start_exam', description: 'Started exam', severity: 'info' },
-      { id: 'L003', timestamp: '2025-01-14T09:15:00', type: 'tab_switch', description: 'Switched to another tab', severity: 'warning', details: 'Browser focus lost for 5 seconds' },
-      { id: 'L004', timestamp: '2025-01-14T09:20:00', type: 'copy_attempt', description: 'Attempted to copy text', severity: 'critical', details: 'Copy action was blocked' },
-    ],
-  },
-  {
-    id: 'S003',
-    studentId: 'STU003',
-    studentName: 'Carol Davis',
-    studentEmail: 'carol@school.edu',
-    avatar: '',
-    status: 'submitted',
-    loginTime: '2025-01-14T08:55:00',
-    startTime: '2025-01-14T09:00:00',
-    submitTime: '2025-01-14T09:45:00',
-    currentQuestion: 25,
-    answeredQuestions: 25,
-    totalQuestions: 25,
-    timeRemaining: 0,
-    alertCount: 0,
-    lastActivity: '15 minutes ago',
-    connectionStatus: 'offline',
-    ipAddress: '192.168.1.103',
-    browser: 'Chrome 120',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T08:55:00', type: 'login', description: 'Student logged in', severity: 'info' },
-      { id: 'L002', timestamp: '2025-01-14T09:00:00', type: 'start_exam', description: 'Started exam', severity: 'info' },
-      { id: 'L003', timestamp: '2025-01-14T09:45:00', type: 'submit', description: 'Submitted exam manually', severity: 'info' },
-    ],
-  },
-  {
-    id: 'S004',
-    studentId: 'STU004',
-    studentName: 'Daniel Lee',
-    studentEmail: 'daniel@school.edu',
-    avatar: '',
-    status: 'auto_submitted',
-    loginTime: '2025-01-14T09:00:00',
-    startTime: '2025-01-14T09:03:00',
-    submitTime: '2025-01-14T10:33:00',
-    currentQuestion: 20,
-    answeredQuestions: 18,
-    totalQuestions: 25,
-    timeRemaining: 0,
-    alertCount: 5,
-    lastActivity: '2 minutes ago',
-    connectionStatus: 'offline',
-    ipAddress: '192.168.1.104',
-    browser: 'Safari 17',
-    autoSubmitReason: 'Time expired - Student ran out of time',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T09:00:00', type: 'login', description: 'Student logged in', severity: 'info' },
-      { id: 'L002', timestamp: '2025-01-14T09:03:00', type: 'start_exam', description: 'Started exam', severity: 'info' },
-      { id: 'L003', timestamp: '2025-01-14T09:30:00', type: 'tab_switch', description: 'Switched to another tab', severity: 'warning', details: 'Browser focus lost for 12 seconds' },
-      { id: 'L004', timestamp: '2025-01-14T09:45:00', type: 'disconnect', description: 'Connection lost', severity: 'warning', details: 'Internet connection interrupted' },
-      { id: 'L005', timestamp: '2025-01-14T09:47:00', type: 'reconnect', description: 'Connection restored', severity: 'info' },
-      { id: 'L006', timestamp: '2025-01-14T10:00:00', type: 'focus_lost', description: 'Window focus lost', severity: 'warning', details: 'Application went to background' },
-      { id: 'L007', timestamp: '2025-01-14T10:15:00', type: 'screenshot_attempt', description: 'Screenshot attempt detected', severity: 'critical', details: 'PrintScreen key pressed' },
-      { id: 'L008', timestamp: '2025-01-14T10:33:00', type: 'auto_submit', description: 'Exam auto-submitted', severity: 'critical', details: 'Time limit exceeded - 90 minutes elapsed' },
-    ],
-  },
-  {
-    id: 'S005',
-    studentId: 'STU005',
-    studentName: 'Emma Wilson',
-    studentEmail: 'emma@school.edu',
-    avatar: '',
-    status: 'logged_in',
-    loginTime: '2025-01-14T09:05:00',
-    startTime: null,
-    submitTime: null,
-    currentQuestion: 0,
-    answeredQuestions: 0,
-    totalQuestions: 25,
-    timeRemaining: 5400,
-    alertCount: 0,
-    lastActivity: '2 minutes ago',
-    connectionStatus: 'online',
-    ipAddress: '192.168.1.105',
-    browser: 'Edge 120',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T09:05:00', type: 'login', description: 'Student logged in', severity: 'info' },
-    ],
-  },
-  {
-    id: 'S006',
-    studentId: 'STU006',
-    studentName: 'Frank Brown',
-    studentEmail: 'frank@school.edu',
-    avatar: '',
-    status: 'disconnected',
-    loginTime: '2025-01-14T09:02:00',
-    startTime: '2025-01-14T09:04:00',
-    submitTime: null,
-    currentQuestion: 8,
-    answeredQuestions: 7,
-    totalQuestions: 25,
-    timeRemaining: 3600,
-    alertCount: 1,
-    lastActivity: '5 minutes ago',
-    connectionStatus: 'offline',
-    ipAddress: '192.168.1.106',
-    browser: 'Chrome 120',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T09:02:00', type: 'login', description: 'Student logged in', severity: 'info' },
-      { id: 'L002', timestamp: '2025-01-14T09:04:00', type: 'start_exam', description: 'Started exam', severity: 'info' },
-      { id: 'L003', timestamp: '2025-01-14T09:15:00', type: 'disconnect', description: 'Connection lost', severity: 'warning', details: 'Internet connection interrupted - awaiting reconnection' },
-    ],
-  },
-  {
-    id: 'S007',
-    studentId: 'STU007',
-    studentName: 'Grace Kim',
-    studentEmail: 'grace@school.edu',
-    avatar: '',
-    status: 'not_started',
-    loginTime: null,
-    startTime: null,
-    submitTime: null,
-    currentQuestion: 0,
-    answeredQuestions: 0,
-    totalQuestions: 25,
-    timeRemaining: 5400,
-    alertCount: 0,
-    lastActivity: 'Never',
-    connectionStatus: 'offline',
-    ipAddress: '-',
-    browser: '-',
-    activityLog: [],
-  },
-  {
-    id: 'S008',
-    studentId: 'STU008',
-    studentName: 'Henry Zhang',
-    studentEmail: 'henry@school.edu',
-    avatar: '',
-    status: 'auto_submitted',
-    loginTime: '2025-01-14T09:01:00',
-    startTime: '2025-01-14T09:02:00',
-    submitTime: '2025-01-14T09:50:00',
-    currentQuestion: 15,
-    answeredQuestions: 12,
-    totalQuestions: 25,
-    timeRemaining: 0,
-    alertCount: 8,
-    lastActivity: '10 minutes ago',
-    connectionStatus: 'offline',
-    ipAddress: '192.168.1.108',
-    browser: 'Chrome 120',
-    autoSubmitReason: 'Exceeded maximum security violations (8 alerts)',
-    activityLog: [
-      { id: 'L001', timestamp: '2025-01-14T09:01:00', type: 'login', description: 'Student logged in', severity: 'info' },
-      { id: 'L002', timestamp: '2025-01-14T09:02:00', type: 'start_exam', description: 'Started exam', severity: 'info' },
-      { id: 'L003', timestamp: '2025-01-14T09:10:00', type: 'tab_switch', description: 'Switched to another tab (1st violation)', severity: 'warning', details: 'Browser focus lost for 8 seconds' },
-      { id: 'L004', timestamp: '2025-01-14T09:15:00', type: 'copy_attempt', description: 'Attempted to copy text (2nd violation)', severity: 'critical', details: 'Ctrl+C pressed - action blocked' },
-      { id: 'L005', timestamp: '2025-01-14T09:20:00', type: 'tab_switch', description: 'Switched to another tab (3rd violation)', severity: 'warning', details: 'Browser focus lost for 15 seconds' },
-      { id: 'L006', timestamp: '2025-01-14T09:25:00', type: 'screenshot_attempt', description: 'Screenshot attempt (4th violation)', severity: 'critical', details: 'PrintScreen key detected' },
-      { id: 'L007', timestamp: '2025-01-14T09:30:00', type: 'focus_lost', description: 'Window minimized (5th violation)', severity: 'warning', details: 'Application went to background for 20 seconds' },
-      { id: 'L008', timestamp: '2025-01-14T09:35:00', type: 'tab_switch', description: 'Switched to another tab (6th violation)', severity: 'warning', details: 'Opened new browser tab' },
-      { id: 'L009', timestamp: '2025-01-14T09:40:00', type: 'copy_attempt', description: 'Right-click context menu (7th violation)', severity: 'critical', details: 'Right-click detected - action blocked' },
-      { id: 'L010', timestamp: '2025-01-14T09:45:00', type: 'tab_switch', description: 'Switched to another tab (8th violation)', severity: 'warning', details: 'Final warning triggered' },
-      { id: 'L011', timestamp: '2025-01-14T09:50:00', type: 'auto_submit', description: 'Exam auto-submitted', severity: 'critical', details: 'Maximum violation limit (8) exceeded. Exam terminated for security reasons.' },
-    ],
-  },
-];
 
 interface ExamMonitorProps {
   examId: string;
@@ -297,278 +50,79 @@ interface ExamMonitorProps {
 }
 
 const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) => {
-  const [sessions, setSessions] = useState<ExamSession[]>(mockExamSessions);
+  const [sessions, setSessions] = useState<Map<string, StudentSession>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSession, setSelectedSession] = useState<ExamSession | null>(null);
+  const [selectedSession, setSelectedSession] = useState<StudentSession | null>(null);
   const [showActivityLog, setShowActivityLog] = useState(false);
-  const [isLive, setIsLive] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const updateIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Simulated real-time events generator
-  const generateRandomEvent = useCallback(() => {
-    const eventTypes: Array<{
-      type: ActivityLog['type'];
-      description: string;
-      severity: ActivityLog['severity'];
-      details?: string;
-    }> = [
-      { type: 'answer', description: 'Answered a question', severity: 'info' },
-      { type: 'navigate', description: 'Navigated to next question', severity: 'info' },
-      { type: 'tab_switch', description: 'Switched to another tab', severity: 'warning', details: 'Browser focus lost momentarily' },
-      { type: 'copy_attempt', description: 'Attempted to copy text', severity: 'critical', details: 'Copy action was blocked' },
-      { type: 'focus_lost', description: 'Window focus lost', severity: 'warning', details: 'Application went to background' },
-      { type: 'disconnect', description: 'Connection interrupted', severity: 'warning', details: 'Network issue detected' },
-      { type: 'reconnect', description: 'Connection restored', severity: 'info' },
-    ];
+  const handleEvent = useCallback((event: ExamEvent) => {
+    setSessions(prev => {
+      const next = new Map(prev);
+      const existing = next.get(event.studentId);
 
-    return eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const session: StudentSession = {
+        studentId: event.studentId,
+        studentName: event.studentName,
+        status: event.status,
+        violationType: event.violationType,
+        violationCount: event.violationCount,
+        remainingTime: event.remainingTime,
+        lastEventType: event.eventType,
+        lastEventTime: event.currentTime,
+        message: event.message,
+        eventLog: [...(existing?.eventLog || []), event],
+      };
+
+      next.set(event.studentId, session);
+      return next;
+    });
+
+    // Toast notifications for important events
+    if (event.eventType === 'JOIN') {
+      toast.info(`${event.studentName} joined the exam`);
+    } else if (event.eventType === 'VIOLATION') {
+      toast.warning(`Alert: ${event.studentName}`, {
+        description: event.violationType || 'Security violation detected',
+      });
+    } else if (event.eventType === 'SUBMIT') {
+      toast.success(`${event.studentName} submitted the exam`);
+    } else if (event.eventType === 'DISCONNECT') {
+      toast.error(`${event.studentName} disconnected`);
+    }
   }, []);
 
-  // Simulate real-time updates
-  useEffect(() => {
-    if (!isOpen || !isLive) return;
-
-    const simulateUpdates = () => {
-      setSessions(prevSessions => {
-        const updatedSessions = prevSessions.map(session => {
-          // Skip completed sessions
-          if (session.status === 'submitted' || session.status === 'auto_submitted') {
-            return session;
-          }
-
-          // Random chance for each active session to have an update
-          const shouldUpdate = Math.random() > 0.7;
-          if (!shouldUpdate) return session;
-
-          let updatedSession = { ...session };
-          const now = new Date().toISOString();
-
-          // Simulate different types of updates based on current status
-          if (session.status === 'not_started' && Math.random() > 0.8) {
-            // Student logs in
-            updatedSession = {
-              ...updatedSession,
-              status: 'logged_in',
-              loginTime: now,
-              connectionStatus: 'online',
-              lastActivity: 'Just now',
-              activityLog: [
-                ...session.activityLog,
-                {
-                  id: `L${Date.now()}`,
-                  timestamp: now,
-                  type: 'login',
-                  description: 'Student logged in',
-                  severity: 'info'
-                }
-              ]
-            };
-            toast.info(`${session.studentName} logged in`, { duration: 3000 });
-          } else if (session.status === 'logged_in' && Math.random() > 0.6) {
-            // Student starts exam
-            updatedSession = {
-              ...updatedSession,
-              status: 'in_progress',
-              startTime: now,
-              currentQuestion: 1,
-              lastActivity: 'Just now',
-              activityLog: [
-                ...session.activityLog,
-                {
-                  id: `L${Date.now()}`,
-                  timestamp: now,
-                  type: 'start_exam',
-                  description: 'Started exam',
-                  severity: 'info'
-                }
-              ]
-            };
-            toast.info(`${session.studentName} started the exam`, { duration: 3000 });
-          } else if (session.status === 'in_progress') {
-            const event = generateRandomEvent();
-            
-            // Update progress
-            const newAnswered = Math.min(session.answeredQuestions + (event.type === 'answer' ? 1 : 0), session.totalQuestions);
-            const newCurrentQ = Math.min(session.currentQuestion + (Math.random() > 0.5 ? 1 : 0), session.totalQuestions);
-            const newTimeRemaining = Math.max(0, session.timeRemaining - Math.floor(Math.random() * 60 + 30));
-            const isViolation = event.severity === 'warning' || event.severity === 'critical';
-            const newAlertCount = session.alertCount + (isViolation ? 1 : 0);
-
-            // Check for auto-submit conditions
-            if (newTimeRemaining === 0 || newAlertCount >= 8) {
-              const reason = newTimeRemaining === 0 
-                ? 'Time expired - Student ran out of time'
-                : 'Exceeded maximum security violations (8 alerts)';
-              
-              updatedSession = {
-                ...updatedSession,
-                status: 'auto_submitted',
-                submitTime: now,
-                timeRemaining: 0,
-                alertCount: newAlertCount,
-                autoSubmitReason: reason,
-                connectionStatus: 'offline',
-                lastActivity: 'Just now',
-                activityLog: [
-                  ...session.activityLog,
-                  {
-                    id: `L${Date.now()}`,
-                    timestamp: now,
-                    type: 'auto_submit',
-                    description: 'Exam auto-submitted',
-                    severity: 'critical',
-                    details: reason
-                  }
-                ]
-              };
-              toast.warning(`${session.studentName}'s exam was auto-submitted`, { 
-                description: reason,
-                duration: 5000 
-              });
-            } else if (newAnswered === session.totalQuestions && Math.random() > 0.5) {
-              // Student submits
-              updatedSession = {
-                ...updatedSession,
-                status: 'submitted',
-                submitTime: now,
-                timeRemaining: newTimeRemaining,
-                answeredQuestions: newAnswered,
-                connectionStatus: 'offline',
-                lastActivity: 'Just now',
-                activityLog: [
-                  ...session.activityLog,
-                  {
-                    id: `L${Date.now()}`,
-                    timestamp: now,
-                    type: 'submit',
-                    description: 'Submitted exam manually',
-                    severity: 'info'
-                  }
-                ]
-              };
-              toast.success(`${session.studentName} submitted the exam`, { duration: 3000 });
-            } else {
-              // Regular update
-              updatedSession = {
-                ...updatedSession,
-                currentQuestion: newCurrentQ,
-                answeredQuestions: newAnswered,
-                timeRemaining: newTimeRemaining,
-                alertCount: newAlertCount,
-                lastActivity: 'Just now',
-                connectionStatus: event.type === 'disconnect' ? 'offline' : event.type === 'reconnect' ? 'online' : session.connectionStatus,
-                activityLog: [
-                  ...session.activityLog,
-                  {
-                    id: `L${Date.now()}`,
-                    timestamp: now,
-                    type: event.type,
-                    description: event.description,
-                    severity: event.severity,
-                    details: event.details
-                  }
-                ]
-              };
-
-              // Show toast for violations
-              if (isViolation) {
-                toast.warning(`Alert: ${session.studentName}`, {
-                  description: event.description,
-                  duration: 4000
-                });
-              }
-            }
-          } else if (session.status === 'disconnected' && Math.random() > 0.7) {
-            // Reconnect
-            updatedSession = {
-              ...updatedSession,
-              status: 'in_progress',
-              connectionStatus: 'online',
-              lastActivity: 'Just now',
-              activityLog: [
-                ...session.activityLog,
-                {
-                  id: `L${Date.now()}`,
-                  timestamp: now,
-                  type: 'reconnect',
-                  description: 'Connection restored',
-                  severity: 'info'
-                }
-              ]
-            };
-            toast.info(`${session.studentName} reconnected`, { duration: 3000 });
-          }
-
-          return updatedSession;
-        });
-
-        return updatedSessions;
-      });
-
-      setLastUpdate(new Date());
-    };
-
-    // Run updates every 3 seconds
-    updateIntervalRef.current = setInterval(simulateUpdates, 3000);
-
-    return () => {
-      if (updateIntervalRef.current) {
-        clearInterval(updateIntervalRef.current);
-      }
-    };
-  }, [isOpen, isLive, generateRandomEvent]);
-
-  // Update lastActivity text periodically
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const updateLastActivity = () => {
-      setSessions(prev => prev.map(session => {
-        if (session.lastActivity === 'Just now') {
-          return { ...session, lastActivity: '10 seconds ago' };
-        } else if (session.lastActivity === '10 seconds ago') {
-          return { ...session, lastActivity: '30 seconds ago' };
-        } else if (session.lastActivity === '30 seconds ago') {
-          return { ...session, lastActivity: '1 minute ago' };
-        }
-        return session;
-      }));
-    };
-
-    const interval = setInterval(updateLastActivity, 10000);
-    return () => clearInterval(interval);
-  }, [isOpen]);
+  const { connected, error } = useExamWebSocket({
+    examId,
+    enabled: isOpen,
+    onEvent: handleEvent,
+  });
 
   // Keep selected session in sync
   useEffect(() => {
     if (selectedSession) {
-      const updated = sessions.find(s => s.id === selectedSession.id);
-      if (updated) {
-        setSelectedSession(updated);
-      }
+      const updated = sessions.get(selectedSession.studentId);
+      if (updated) setSelectedSession(updated);
     }
-  }, [sessions, selectedSession?.id]);
+  }, [sessions, selectedSession?.studentId]);
 
-  const filteredSessions = sessions.filter((session) =>
-    session.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    session.studentEmail.toLowerCase().includes(searchQuery.toLowerCase())
+  const sessionList = Array.from(sessions.values());
+
+  const filteredSessions = sessionList.filter(s =>
+    s.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.studentId.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Calculate statistics
+  // Stats
   const stats = {
-    total: sessions.length,
-    notStarted: sessions.filter(s => s.status === 'not_started').length,
-    loggedIn: sessions.filter(s => s.status === 'logged_in').length,
-    inProgress: sessions.filter(s => s.status === 'in_progress').length,
-    submitted: sessions.filter(s => s.status === 'submitted').length,
-    autoSubmitted: sessions.filter(s => s.status === 'auto_submitted').length,
-    disconnected: sessions.filter(s => s.status === 'disconnected').length,
-    online: sessions.filter(s => s.connectionStatus === 'online').length,
-    totalAlerts: sessions.reduce((sum, s) => sum + s.alertCount, 0),
+    total: sessionList.length,
+    inProgress: sessionList.filter(s => s.status === 'IN_PROGRESS').length,
+    submitted: sessionList.filter(s => s.status === 'SUBMITTED').length,
+    disconnected: sessionList.filter(s => s.status === 'DISCONNECTED').length,
+    totalViolations: sessionList.reduce((sum, s) => sum + s.violationCount, 0),
   };
 
   const formatTime = (seconds: number) => {
+    if (seconds <= 0) return '0m 0s';
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -576,68 +130,46 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
     return `${mins}m ${secs}s`;
   };
 
-  const getStatusBadge = (status: ExamSession['status']) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'not_started':
-        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> Not Started</Badge>;
-      case 'logged_in':
-        return <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 gap-1"><LogIn className="h-3 w-3" /> Logged In</Badge>;
-      case 'in_progress':
+      case 'IN_PROGRESS':
         return <Badge className="bg-green-500/10 text-green-600 border-green-500/20 gap-1"><Play className="h-3 w-3" /> In Progress</Badge>;
-      case 'submitted':
+      case 'SUBMITTED':
         return <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 gap-1"><CheckCircle2 className="h-3 w-3" /> Submitted</Badge>;
-      case 'auto_submitted':
+      case 'AUTO_SUBMITTED':
         return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20 gap-1"><AlertTriangle className="h-3 w-3" /> Auto-Submitted</Badge>;
-      case 'disconnected':
+      case 'DISCONNECTED':
         return <Badge className="bg-red-500/10 text-red-600 border-red-500/20 gap-1"><WifiOff className="h-3 w-3" /> Disconnected</Badge>;
+      default:
+        return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" /> {status}</Badge>;
     }
   };
 
-  const getConnectionBadge = (status: ExamSession['connectionStatus']) => {
-    switch (status) {
-      case 'online':
-        return <Badge variant="outline" className="text-green-600 gap-1"><Wifi className="h-3 w-3" /> Online</Badge>;
-      case 'offline':
-        return <Badge variant="outline" className="text-red-600 gap-1"><WifiOff className="h-3 w-3" /> Offline</Badge>;
-      case 'unstable':
-        return <Badge variant="outline" className="text-yellow-600 gap-1"><Activity className="h-3 w-3" /> Unstable</Badge>;
+  const getEventBadge = (eventType: string) => {
+    switch (eventType) {
+      case 'JOIN':
+        return <Badge variant="outline" className="text-blue-600 gap-1"><LogIn className="h-3 w-3" /> Join</Badge>;
+      case 'REJOIN':
+        return <Badge variant="outline" className="text-blue-600 gap-1"><RefreshCw className="h-3 w-3" /> Rejoin</Badge>;
+      case 'HEARTBEAT':
+        return <Badge variant="outline" className="text-green-600 gap-1"><Activity className="h-3 w-3" /> Heartbeat</Badge>;
+      case 'VIOLATION':
+        return <Badge variant="outline" className="text-red-600 gap-1"><AlertTriangle className="h-3 w-3" /> Violation</Badge>;
+      case 'SUBMIT':
+        return <Badge variant="outline" className="text-purple-600 gap-1"><CheckCircle2 className="h-3 w-3" /> Submit</Badge>;
+      case 'DISCONNECT':
+        return <Badge variant="outline" className="text-red-600 gap-1"><XCircle className="h-3 w-3" /> Disconnect</Badge>;
+      default:
+        return <Badge variant="outline" className="gap-1">{eventType}</Badge>;
     }
   };
 
-  const getSeverityIcon = (severity: ActivityLog['severity']) => {
-    switch (severity) {
-      case 'info':
-        return <CheckCircle2 className="h-4 w-4 text-blue-500" />;
-      case 'warning':
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      case 'critical':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+  const formatEventTime = (isoString: string) => {
+    try {
+      return new Date(isoString).toLocaleTimeString();
+    } catch {
+      return isoString;
     }
-  };
-
-  const getActivityIcon = (type: ActivityLog['type']) => {
-    switch (type) {
-      case 'login': return <LogIn className="h-4 w-4" />;
-      case 'start_exam': return <Play className="h-4 w-4" />;
-      case 'answer': return <FileText className="h-4 w-4" />;
-      case 'navigate': return <MousePointer className="h-4 w-4" />;
-      case 'alert': return <AlertTriangle className="h-4 w-4" />;
-      case 'disconnect': return <WifiOff className="h-4 w-4" />;
-      case 'reconnect': return <Wifi className="h-4 w-4" />;
-      case 'submit': return <Send className="h-4 w-4" />;
-      case 'auto_submit': return <Ban className="h-4 w-4" />;
-      case 'tab_switch': return <ExternalLink className="h-4 w-4" />;
-      case 'copy_attempt': return <Copy className="h-4 w-4" />;
-      case 'screenshot_attempt': return <Camera className="h-4 w-4" />;
-      case 'focus_lost': return <Eye className="h-4 w-4" />;
-      case 'focus_gained': return <Eye className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
-    }
-  };
-
-  const openActivityLog = (session: ExamSession) => {
-    setSelectedSession(session);
-    setShowActivityLog(true);
   };
 
   return (
@@ -649,30 +181,28 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
               <Monitor className="h-5 w-5 text-primary" />
               Exam Monitor: {examTitle}
             </DialogTitle>
-            <DialogDescription>
-              Real-time monitoring of student exam sessions
+            <DialogDescription className="flex items-center gap-2">
+              Real-time monitoring via WebSocket
+              {connected ? (
+                <Badge className="bg-green-500/10 text-green-600 border-green-500/20 gap-1">
+                  <Wifi className="h-3 w-3" /> Connected
+                </Badge>
+              ) : (
+                <Badge className="bg-red-500/10 text-red-600 border-red-500/20 gap-1">
+                  <WifiOff className="h-3 w-3" /> Disconnected
+                </Badge>
+              )}
+              {error && <span className="text-xs text-destructive">{error}</span>}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-hidden flex flex-col gap-4">
-            {/* Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               <Card className="p-3">
                 <div className="text-center">
                   <p className="text-2xl font-bold">{stats.total}</p>
                   <p className="text-xs text-muted-foreground">Total</p>
-                </div>
-              </Card>
-              <Card className="p-3 bg-secondary/50">
-                <div className="text-center">
-                  <p className="text-2xl font-bold">{stats.notStarted}</p>
-                  <p className="text-xs text-muted-foreground">Not Started</p>
-                </div>
-              </Card>
-              <Card className="p-3 bg-blue-500/10">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{stats.loggedIn}</p>
-                  <p className="text-xs text-blue-600">Logged In</p>
                 </div>
               </Card>
               <Card className="p-3 bg-green-500/10">
@@ -687,12 +217,6 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
                   <p className="text-xs text-purple-600">Submitted</p>
                 </div>
               </Card>
-              <Card className="p-3 bg-orange-500/10">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-orange-600">{stats.autoSubmitted}</p>
-                  <p className="text-xs text-orange-600">Auto-Submit</p>
-                </div>
-              </Card>
               <Card className="p-3 bg-red-500/10">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-red-600">{stats.disconnected}</p>
@@ -701,15 +225,15 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
               </Card>
               <Card className="p-3 border-yellow-500/50">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{stats.totalAlerts}</p>
-                  <p className="text-xs text-yellow-600">Total Alerts</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.totalViolations}</p>
+                  <p className="text-xs text-yellow-600">Violations</p>
                 </div>
               </Card>
             </div>
 
-            {/* Search, Live Toggle, and Status */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative flex-1 min-w-[200px]">
+            {/* Search */}
+            <div className="flex gap-2 items-center">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search students..."
@@ -719,116 +243,112 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant={isLive ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsLive(!isLive)}
-                  className={isLive ? "bg-green-600 hover:bg-green-700" : ""}
-                >
-                  <Activity className={`h-4 w-4 mr-2 ${isLive ? 'animate-pulse' : ''}`} />
-                  {isLive ? 'Live' : 'Paused'}
-                </Button>
-                <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Updated: {lastUpdate.toLocaleTimeString()}
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setLastUpdate(new Date())}
-                  title="Force refresh"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
+                <div className={`h-2 w-2 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                <span className="text-xs text-muted-foreground">
+                  {connected ? 'Live' : 'Offline'}
+                </span>
               </div>
             </div>
 
             {/* Sessions Table */}
             <Card className="flex-1 overflow-hidden">
               <ScrollArea className="h-[400px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Connection</TableHead>
-                      <TableHead className="text-center">Progress</TableHead>
-                      <TableHead className="text-center">Time Left</TableHead>
-                      <TableHead className="text-center">Alerts</TableHead>
-                      <TableHead>Last Activity</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSessions.map((session) => (
-                      <TableRow 
-                        key={session.id} 
-                        className={session.alertCount > 3 ? 'bg-red-500/5' : session.status === 'disconnected' ? 'bg-yellow-500/5' : ''}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={session.avatar} />
-                              <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                {session.studentName.split(' ').map(n => n[0]).join('')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-sm">{session.studentName}</p>
-                              <p className="text-xs text-muted-foreground">{session.studentEmail}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(session.status)}</TableCell>
-                        <TableCell>{getConnectionBadge(session.connectionStatus)}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <Progress value={(session.answeredQuestions / session.totalQuestions) * 100} className="w-16 h-2" />
-                            <span className="text-xs text-muted-foreground">
-                              {session.answeredQuestions}/{session.totalQuestions}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className={`text-sm font-medium ${session.timeRemaining < 600 ? 'text-red-600' : ''}`}>
-                            {session.status === 'submitted' || session.status === 'auto_submitted' 
-                              ? '-' 
-                              : formatTime(session.timeRemaining)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {session.alertCount > 0 ? (
-                            <Badge 
-                              variant="outline" 
-                              className={session.alertCount >= 5 ? 'text-red-600 border-red-500' : 'text-yellow-600 border-yellow-500'}
-                            >
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              {session.alertCount}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-green-600">
-                              <Shield className="h-3 w-3 mr-1" />
-                              0
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-xs text-muted-foreground">{session.lastActivity}</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => openActivityLog(session)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View Log
-                          </Button>
-                        </TableCell>
+                {filteredSessions.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                    <Monitor className="h-12 w-12 mb-3 opacity-40" />
+                    <p className="font-medium">
+                      {connected ? 'Waiting for students to join...' : 'Connecting to exam session...'}
+                    </p>
+                    <p className="text-xs mt-1">
+                      {connected
+                        ? 'Student events will appear here in real time'
+                        : 'Attempting to establish WebSocket connection'}
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Last Event</TableHead>
+                        <TableHead className="text-center">Time Left</TableHead>
+                        <TableHead className="text-center">Violations</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSessions.map((session) => (
+                        <TableRow
+                          key={session.studentId}
+                          className={
+                            session.violationCount >= 5
+                              ? 'bg-red-500/5'
+                              : session.status === 'DISCONNECTED'
+                              ? 'bg-yellow-500/5'
+                              : ''
+                          }
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  {session.studentName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-sm">{session.studentName}</p>
+                                <p className="text-xs text-muted-foreground">{session.studentId}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(session.status)}</TableCell>
+                          <TableCell>{getEventBadge(session.lastEventType)}</TableCell>
+                          <TableCell className="text-center">
+                            <span className={`text-sm font-medium ${session.remainingTime > 0 && session.remainingTime < 600 ? 'text-red-600' : ''}`}>
+                              {session.status === 'SUBMITTED' || session.status === 'AUTO_SUBMITTED'
+                                ? '-'
+                                : formatTime(session.remainingTime)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {session.violationCount > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className={session.violationCount >= 5 ? 'text-red-600 border-red-500' : 'text-yellow-600 border-yellow-500'}
+                              >
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                {session.violationCount}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-green-600">
+                                <Shield className="h-3 w-3 mr-1" /> 0
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs text-muted-foreground">
+                              {formatEventTime(session.lastEventTime)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedSession(session);
+                                setShowActivityLog(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-1" /> Log
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </ScrollArea>
             </Card>
           </div>
@@ -844,73 +364,72 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
                 <DialogTitle className="flex items-center gap-3">
                   <Avatar>
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {selectedSession.studentName.split(' ').map(n => n[0]).join('')}
+                      {selectedSession.studentName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <span>{selectedSession.studentName}</span>
-                    <p className="text-sm font-normal text-muted-foreground">{selectedSession.studentEmail}</p>
+                    <p className="text-sm font-normal text-muted-foreground">{selectedSession.studentId}</p>
                   </div>
                 </DialogTitle>
                 <DialogDescription>
-                  Session activity log and details
+                  Event log — {selectedSession.eventLog.length} event(s) received
                 </DialogDescription>
               </DialogHeader>
 
-              <Tabs defaultValue="activity" className="flex-1 overflow-hidden flex flex-col">
+              <Tabs defaultValue="events" className="flex-1 overflow-hidden flex flex-col">
                 <TabsList className="grid grid-cols-2">
-                  <TabsTrigger value="activity">Activity Log</TabsTrigger>
+                  <TabsTrigger value="events">Event Log</TabsTrigger>
                   <TabsTrigger value="details">Session Details</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="activity" className="flex-1 overflow-hidden mt-4">
-                  {selectedSession.status === 'auto_submitted' && selectedSession.autoSubmitReason && (
-                    <Card className="mb-4 border-orange-500/50 bg-orange-500/5">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
-                          <div>
-                            <p className="font-medium text-orange-700">Auto-Submit Reason</p>
-                            <p className="text-sm text-orange-600">{selectedSession.autoSubmitReason}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
+                <TabsContent value="events" className="flex-1 overflow-hidden mt-4">
                   <ScrollArea className="h-[350px] pr-4">
-                    <div className="space-y-3">
-                      {selectedSession.activityLog.length === 0 ? (
+                    <div className="space-y-2">
+                      {selectedSession.eventLog.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                           <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No activity recorded yet</p>
+                          <p>No events recorded yet</p>
                         </div>
                       ) : (
-                        selectedSession.activityLog.map((log, index) => (
-                          <div 
-                            key={log.id} 
+                        [...selectedSession.eventLog].reverse().map((event, index) => (
+                          <div
+                            key={index}
                             className={`flex gap-3 p-3 rounded-lg border ${
-                              log.severity === 'critical' ? 'bg-red-500/5 border-red-500/30' :
-                              log.severity === 'warning' ? 'bg-yellow-500/5 border-yellow-500/30' :
-                              'bg-muted/50 border-border'
+                              event.eventType === 'VIOLATION'
+                                ? 'bg-red-500/5 border-red-500/30'
+                                : event.eventType === 'DISCONNECT'
+                                ? 'bg-yellow-500/5 border-yellow-500/30'
+                                : 'bg-muted/50 border-border'
                             }`}
                           >
-                            <div className="flex flex-col items-center gap-1">
-                              {getSeverityIcon(log.severity)}
-                              {index < selectedSession.activityLog.length - 1 && (
-                                <div className="w-px h-full bg-border" />
+                            <div className="flex-shrink-0 mt-0.5">
+                              {event.eventType === 'VIOLATION' ? (
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                              ) : event.eventType === 'DISCONNECT' ? (
+                                <AlertCircle className="h-4 w-4 text-yellow-500" />
+                              ) : (
+                                <CheckCircle2 className="h-4 w-4 text-blue-500" />
                               )}
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                {getActivityIcon(log.type)}
-                                <span className="font-medium text-sm">{log.description}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                {getEventBadge(event.eventType)}
+                                <span className="text-xs text-muted-foreground">
+                                  {formatEventTime(event.currentTime)}
+                                </span>
                               </div>
-                              {log.details && (
-                                <p className="text-xs text-muted-foreground mb-1">{log.details}</p>
+                              <p className="text-sm">
+                                Status: <span className="font-medium">{event.status}</span>
+                                {event.violationType && (
+                                  <span className="text-red-600"> — {event.violationType}</span>
+                                )}
+                              </p>
+                              {event.message && (
+                                <p className="text-xs text-muted-foreground mt-1">{event.message}</p>
                               )}
                               <p className="text-xs text-muted-foreground">
-                                {new Date(log.timestamp).toLocaleString()}
+                                Violations: {event.violationCount} · Remaining: {formatTime(event.remainingTime)}
                               </p>
                             </div>
                           </div>
@@ -921,81 +440,47 @@ const ExamMonitor = ({ examId, examTitle, isOpen, onClose }: ExamMonitorProps) =
                 </TabsContent>
 
                 <TabsContent value="details" className="mt-4">
-                  <div className="grid gap-4">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Session Information</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Status</p>
-                          <div className="mt-1">{getStatusBadge(selectedSession.status)}</div>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Connection</p>
-                          <div className="mt-1">{getConnectionBadge(selectedSession.connectionStatus)}</div>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Login Time</p>
-                          <p className="font-medium">
-                            {selectedSession.loginTime 
-                              ? new Date(selectedSession.loginTime).toLocaleString()
-                              : 'Not logged in'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Exam Started</p>
-                          <p className="font-medium">
-                            {selectedSession.startTime 
-                              ? new Date(selectedSession.startTime).toLocaleString()
-                              : 'Not started'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Submit Time</p>
-                          <p className="font-medium">
-                            {selectedSession.submitTime 
-                              ? new Date(selectedSession.submitTime).toLocaleString()
-                              : 'Not submitted'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Alert Count</p>
-                          <p className={`font-medium ${selectedSession.alertCount > 3 ? 'text-red-600' : ''}`}>
-                            {selectedSession.alertCount} alerts
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Progress & Technical Info</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Questions Answered</p>
-                          <p className="font-medium">{selectedSession.answeredQuestions} / {selectedSession.totalQuestions}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Current Question</p>
-                          <p className="font-medium">
-                            {selectedSession.currentQuestion > 0 
-                              ? `Question ${selectedSession.currentQuestion}`
-                              : '-'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">IP Address</p>
-                          <p className="font-medium font-mono">{selectedSession.ipAddress}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Browser</p>
-                          <p className="font-medium">{selectedSession.browser}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Session Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Student ID</p>
+                        <p className="font-medium font-mono">{selectedSession.studentId}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Status</p>
+                        <div className="mt-1">{getStatusBadge(selectedSession.status)}</div>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Remaining Time</p>
+                        <p className="font-medium">{formatTime(selectedSession.remainingTime)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Violation Count</p>
+                        <p className={`font-medium ${selectedSession.violationCount > 3 ? 'text-red-600' : ''}`}>
+                          {selectedSession.violationCount}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Last Violation Type</p>
+                        <p className="font-medium">{selectedSession.violationType || 'None'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Last Event</p>
+                        <div className="mt-1">{getEventBadge(selectedSession.lastEventType)}</div>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Last Updated</p>
+                        <p className="font-medium">{formatEventTime(selectedSession.lastEventTime)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Total Events</p>
+                        <p className="font-medium">{selectedSession.eventLog.length}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
             </>
