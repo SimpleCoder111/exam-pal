@@ -184,6 +184,11 @@ const Exam = () => {
     },
   });
 
+  // Fetch client IP on mount
+  useEffect(() => {
+    getClientIpAddress().then(setClientIp);
+  }, []);
+
   // Notify if answers were restored from API
   useEffect(() => {
     const hasRestoredAnswers =
