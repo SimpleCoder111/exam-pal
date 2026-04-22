@@ -69,7 +69,7 @@ const Login = () => {
             <div className="w-14 h-14 rounded-xl bg-primary-foreground/20 backdrop-blur-sm flex items-center justify-center">
               <BookOpen className="w-8 h-8 text-primary-foreground" />
             </div>
-            <span className="font-heading text-3xl font-semibold text-primary-foreground">ExamFlow</span>
+            <span className="font-heading text-3xl font-semibold text-primary-foreground">ExamPal</span>
           </div>
           <h1 className="font-heading text-4xl lg:text-5xl font-semibold text-primary-foreground mb-6 leading-tight">
             Welcome to the Modern Examination Platform
@@ -89,7 +89,7 @@ const Login = () => {
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="font-heading text-2xl font-semibold text-foreground">ExamFlow</span>
+            <span className="font-heading text-2xl font-semibold text-foreground">ExamPal</span>
           </div>
 
           <div className="text-center mb-8">

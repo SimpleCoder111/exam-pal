@@ -112,7 +112,7 @@ const Results = () => {
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <Target className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-heading text-xl font-semibold text-foreground">ExamFlow</span>
+            <span className="font-heading text-xl font-semibold text-foreground">ExamPal</span>
           </Link>
         </div>
       </header>

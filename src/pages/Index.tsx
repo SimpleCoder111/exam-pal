@@ -42,7 +42,7 @@ const Index = () => {
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-heading text-xl font-semibold text-foreground">ExamFlow</span>
+            <span className="font-heading text-xl font-semibold text-foreground">ExamPal</span>
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
@@ -155,7 +155,7 @@ const Index = () => {
                 Ready to Transform Your Exams?
               </h2>
               <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-                Join thousands of educators who trust ExamFlow for their assessment needs.
+                Join thousands of educators who trust ExamPal for their assessment needs.
               </p>
               <Link to="/login">
                 <Button 
@@ -179,10 +179,10 @@ const Index = () => {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-heading text-lg font-semibold text-foreground">ExamFlow</span>
+            <span className="font-heading text-lg font-semibold text-foreground">ExamPal</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2024 ExamFlow. All rights reserved.
+            © 2024 ExamPal. All rights reserved.
           </p>
         </div>
       </footer>
