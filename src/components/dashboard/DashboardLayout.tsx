@@ -64,7 +64,7 @@ const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => 
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-heading text-lg font-semibold">ExamFlow</span>
+            <span className="font-heading text-lg font-semibold">ExamPal</span>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
@@ -94,7 +94,7 @@ const DashboardLayout = ({ children, navItems, role }: DashboardLayoutProps) => 
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-heading text-xl font-semibold">ExamFlow</span>
+              <span className="font-heading text-xl font-semibold">ExamPal</span>
             </div>
             <div className="flex items-center gap-1">
               <LanguageSwitcher />

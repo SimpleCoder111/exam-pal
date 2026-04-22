@@ -199,7 +199,7 @@ const studyRecommendations = [
       { name: "Periodic Table Trends", masteryLevel: 60, questionsWrong: 4 },
     ],
     resources: [
-      { type: "video", title: "Organic Chemistry Fundamentals", duration: "25 min", provider: "ExamFlow Academy" },
+      { type: "video", title: "Organic Chemistry Fundamentals", duration: "25 min", provider: "ExamPal Academy" },
       { type: "practice", title: "Balancing Equations Practice Set", questions: 30, provider: "Question Bank" },
       { type: "article", title: "Understanding Periodic Trends", readTime: "10 min", provider: "Study Guide" },
     ],
@@ -218,7 +218,7 @@ const studyRecommendations = [
       { name: "Graph Algorithms", masteryLevel: 70, questionsWrong: 3 },
     ],
     resources: [
-      { type: "video", title: "Binary Trees Explained", duration: "20 min", provider: "ExamFlow Academy" },
+      { type: "video", title: "Binary Trees Explained", duration: "20 min", provider: "ExamPal Academy" },
       { type: "practice", title: "Dynamic Programming Challenges", questions: 25, provider: "Question Bank" },
       { type: "article", title: "Graph Traversal Techniques", readTime: "15 min", provider: "Study Guide" },
     ],
@@ -236,7 +236,7 @@ const studyRecommendations = [
       { name: "Differential Equations", masteryLevel: 72, questionsWrong: 4 },
     ],
     resources: [
-      { type: "video", title: "Advanced Integration Methods", duration: "30 min", provider: "ExamFlow Academy" },
+      { type: "video", title: "Advanced Integration Methods", duration: "30 min", provider: "ExamPal Academy" },
       { type: "practice", title: "Differential Equations Drill", questions: 20, provider: "Question Bank" },
     ],
     suggestedStudyTime: "1 hour/week",
