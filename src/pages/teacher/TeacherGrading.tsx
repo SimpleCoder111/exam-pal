@@ -572,7 +572,9 @@ const TeacherGrading = () => {
                     Class Strength Map
                   </h2>
                   <p className="text-muted-foreground">
-                    Average chapter performance across {gradedStudents.length} graded student{gradedStudents.length !== 1 ? 's' : ''}
+                    {gradedStudents.length === 0
+                      ? "No students graded yet — chapters from this subject are listed below"
+                      : `Average chapter performance across ${gradedStudents.length} graded student${gradedStudents.length !== 1 ? 's' : ''}`}
                   </p>
                 </div>
 
