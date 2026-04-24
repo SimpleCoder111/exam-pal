@@ -563,97 +563,119 @@ const TeacherGrading = () => {
               </Card>
             </div>
 
-            {/* Chapter Average Performance Across All Students */}
+            {/* Class Average Strength Map — aligned with student StrengthMap style */}
             {allGradingLoaded && aggregatedChapters.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-primary" />
-                    Chapter Average Performance
-                  </CardTitle>
-                  <CardDescription>
-                    Aggregated chapter scores across all {gradedStudents.length} graded student{gradedStudents.length !== 1 ? 's' : ''}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {aggregatedChapters.map((ch, idx) => {
-                      const notInExam = ch.total === 0;
-                      return (
-                        <div
-                          key={ch.id}
-                          className={`rounded-xl border p-4 transition-all ${
-                            notInExam
-                              ? 'border-border bg-muted/30 opacity-60'
-                              : ch.percentage >= 80
-                              ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
-                              : ch.percentage >= 50
-                              ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20'
-                              : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-muted-foreground mb-0.5">Chapter {idx + 1}</p>
-                              <h4 className="font-semibold text-sm text-foreground truncate">{ch.title}</h4>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {notInExam ? 'Not in this exam' : `${ch.correct}/${ch.total} questions • ${ch.obtained}/${ch.possible} pts`}
-                              </p>
-                            </div>
-                            {notInExam ? (
-                              <Minus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                            ) : ch.percentage >= 80 ? (
-                              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                            ) : ch.percentage >= 50 ? (
-                              <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                            ) : (
-                              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-                            )}
+              <div className="bg-card rounded-2xl shadow-elevated p-8 animate-scale-in">
+                <div className="mb-8">
+                  <h2 className="font-heading text-2xl font-semibold text-foreground mb-2">
+                    Class Strength Map
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Average chapter performance across {gradedStudents.length} graded student{gradedStudents.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {aggregatedChapters.map((ch, idx) => {
+                    const notInExam = ch.total === 0;
+                    const cardColor = notInExam
+                      ? "bg-muted/30 text-muted-foreground border-border opacity-70"
+                      : ch.percentage >= 80
+                      ? "bg-green-500/10 text-green-700 border-green-500/20"
+                      : ch.percentage >= 50
+                      ? "bg-yellow-500/10 text-yellow-700 border-yellow-500/20"
+                      : "bg-red-500/10 text-red-700 border-red-500/20";
+                    const trendIcon = notInExam ? (
+                      <Minus className="w-5 h-5 text-muted-foreground" />
+                    ) : ch.percentage >= 80 ? (
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    ) : ch.percentage >= 50 ? (
+                      <Minus className="w-5 h-5 text-yellow-600" />
+                    ) : (
+                      <TrendingDown className="w-5 h-5 text-red-600" />
+                    );
+                    const label = notInExam
+                      ? "Not Tested"
+                      : ch.percentage >= 80
+                      ? "Strong"
+                      : ch.percentage >= 50
+                      ? "Moderate"
+                      : "Weak";
+
+                    return (
+                      <div
+                        key={ch.id}
+                        className={`rounded-xl p-6 border-2 transition-all hover:shadow-md ${cardColor}`}
+                      >
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium opacity-75 mb-0.5">Chapter {idx + 1}</p>
+                            <h3 className="font-semibold text-sm truncate pr-2">
+                              {ch.title}
+                            </h3>
+                            <p className="text-xs opacity-75 mt-1">
+                              {notInExam
+                                ? "Not in this exam"
+                                : `${ch.correct} of ${ch.total} • ${ch.obtained}/${ch.possible} pts`}
+                            </p>
                           </div>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-bold text-lg text-foreground">{notInExam ? '—' : `${ch.percentage}%`}</span>
-                              <span className={`font-medium ${
-                                notInExam ? 'text-muted-foreground'
-                                  : ch.percentage >= 80 ? 'text-green-600 dark:text-green-400'
-                                  : ch.percentage >= 50 ? 'text-amber-600 dark:text-amber-400'
-                                  : 'text-red-600 dark:text-red-400'
-                              }`}>
-                                {notInExam ? 'N/A' : ch.percentage >= 80 ? 'Strong' : ch.percentage >= 50 ? 'Moderate' : 'Weak'}
-                              </span>
-                            </div>
-                            <Progress value={notInExam ? 0 : ch.percentage} className="h-2" />
+                          {trendIcon}
+                        </div>
+
+                        {/* Percentage */}
+                        <div className="text-center mb-4">
+                          <div className="font-heading text-3xl font-bold">
+                            {notInExam ? "—" : `${ch.percentage}%`}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
 
-                  {/* Summary row */}
-                  <div className="grid grid-cols-4 gap-3 pt-2 border-t border-border">
-                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
-                      <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total > 0 && c.percentage >= 80).length}</div>
-                      <div className="text-xs text-muted-foreground">Strong</div>
+                        {/* Progress */}
+                        <div className="space-y-2">
+                          <Progress value={notInExam ? 0 : ch.percentage} className="h-2" />
+                          <div className="flex justify-between text-xs">
+                            <span>Class Avg</span>
+                            <span className="opacity-75">{label}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Summary Statistics */}
+                <div className="mt-8 pt-8 border-t border-border">
+                  <h3 className="font-semibold text-foreground mb-4">Summary</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-muted/30 rounded-lg p-4 text-center">
+                      <div className="font-heading text-2xl font-bold text-foreground">
+                        {aggregatedChapters.length}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Total Chapters
+                      </div>
                     </div>
-                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 text-center">
-                      <Minus className="w-4 h-4 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total > 0 && c.percentage >= 50 && c.percentage < 80).length}</div>
-                      <div className="text-xs text-muted-foreground">Moderate</div>
+                    <div className="bg-green-500/10 rounded-lg p-4 text-center">
+                      <div className="font-heading text-2xl font-bold text-green-600">
+                        {aggregatedChapters.filter(c => c.total > 0 && c.percentage >= 80).length}
+                      </div>
+                      <div className="text-xs text-green-700 mt-1">Strong Topics</div>
                     </div>
-                    <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-center">
-                      <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total > 0 && c.percentage < 50).length}</div>
-                      <div className="text-xs text-muted-foreground">Weak</div>
+                    <div className="bg-yellow-500/10 rounded-lg p-4 text-center">
+                      <div className="font-heading text-2xl font-bold text-yellow-600">
+                        {aggregatedChapters.filter(c => c.total > 0 && c.percentage >= 50 && c.percentage < 80).length}
+                      </div>
+                      <div className="text-xs text-yellow-700 mt-1">Moderate Topics</div>
                     </div>
-                    <div className="bg-muted/30 rounded-lg p-3 text-center">
-                      <Minus className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-                      <div className="text-lg font-bold text-foreground">{aggregatedChapters.filter(c => c.total === 0).length}</div>
-                      <div className="text-xs text-muted-foreground">Not Tested</div>
+                    <div className="bg-red-500/10 rounded-lg p-4 text-center">
+                      <div className="font-heading text-2xl font-bold text-red-600">
+                        {aggregatedChapters.filter(c => c.total > 0 && c.percentage < 50).length}
+                      </div>
+                      <div className="text-xs text-red-700 mt-1">Areas to Improve</div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             <Card>
