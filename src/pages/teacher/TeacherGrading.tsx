@@ -427,7 +427,8 @@ const TeacherGrading = () => {
       .sort((a, b) => a.orderIndex - b.orderIndex);
   }, [allGradingQueries, currentSubject]);
 
-  const allGradingLoaded = allGradingQueries.length > 0 && allGradingQueries.every(q => !q.isLoading);
+  // Loaded when there are no graded students (nothing to fetch) OR all per-student fetches resolved
+  const allGradingLoaded = allGradingQueries.length === 0 || allGradingQueries.every(q => !q.isLoading);
 
   return (
     <DashboardLayout navItems={teacherNavItems} role="teacher">
