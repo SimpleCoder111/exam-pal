@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeaderBanner from '@/components/student/PageHeaderBanner';
+import classesBanner from '@/assets/student/classes.png';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentSubjects } from '@/hooks/useStudentSubjects';
 import { useStudentClassrooms } from '@/hooks/useStudentClassrooms';
@@ -33,23 +35,23 @@ const StudentClassesReal = () => {
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">My Classes</h1>
-            <p className="text-muted-foreground">Your enrolled subjects, classrooms, and schedules</p>
-          </div>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="px-3 py-1">
-              <BookOpen className="w-3.5 h-3.5 mr-1" />
-              {isLoading ? '…' : (subjects?.length ?? 0)} Subjects
-            </Badge>
-            <Badge variant="outline" className="px-3 py-1">
-              <Users className="w-3.5 h-3.5 mr-1" />
-              {isLoading ? '…' : classroomsArray.length} Classrooms
-            </Badge>
-          </div>
-        </div>
+        <PageHeaderBanner
+          image={classesBanner}
+          title="My Classes"
+          subtitle="Your enrolled subjects, classrooms, and schedules"
+          actions={
+            <div className="flex gap-2">
+              <Badge variant="outline" className="px-3 py-1">
+                <BookOpen className="w-3.5 h-3.5 mr-1" />
+                {isLoading ? '…' : (subjects?.length ?? 0)} Subjects
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1">
+                <Users className="w-3.5 h-3.5 mr-1" />
+                {isLoading ? '…' : classroomsArray.length} Classrooms
+              </Badge>
+            </div>
+          }
+        />
 
         {/* Motivation Banner */}
         <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">

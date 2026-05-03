@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeaderBanner from '@/components/student/PageHeaderBanner';
+import resultsBanner from '@/assets/student/results.png';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentResults, useStudentGradingDetails, type StudentResultItem } from '@/hooks/useStudentResults';
 import { useStudentExams } from '@/hooks/useStudentExams';
@@ -145,10 +147,11 @@ const StudentResultsReal = () => {
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-8">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-foreground">My Results</h1>
-          <p className="text-muted-foreground mt-1">Track your exam performance and progress</p>
-        </div>
+        <PageHeaderBanner
+          image={resultsBanner}
+          title="My Results"
+          subtitle="Track your exam performance and progress"
+        />
 
         {filterSubjectName && (
           <div className="flex items-center gap-2">
