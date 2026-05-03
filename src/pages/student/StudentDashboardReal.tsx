@@ -18,6 +18,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeaderBanner from '@/components/student/PageHeaderBanner';
+import dashboardBanner from '@/assets/student/dashboard.png';
 import { Link } from 'react-router-dom';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentProfile } from '@/hooks/useStudentProfile';
@@ -98,18 +100,13 @@ const StudentDashboardReal = () => {
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            {profileLoading ? (
-              <Skeleton className="h-9 w-64 mb-2" />
-            ) : (
-              <h1 className="font-heading text-3xl font-semibold text-foreground">
-                Welcome Back, {formatName(profile?.name)}!
-              </h1>
-            )}
-            <p className="text-muted-foreground mt-1">Here's your learning progress and upcoming activities.</p>
-          </div>
+        <PageHeaderBanner
+          image={dashboardBanner}
+          title={profileLoading ? 'Welcome Back!' : `Welcome Back, ${formatName(profile?.name)}!`}
+          subtitle="Here's your learning progress and upcoming activities."
+        />
+        {/* Header Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4 -mt-2">
           <div className="flex gap-2">
             <Link to="/student/exams">
               <Button variant="outline" className="gap-2">

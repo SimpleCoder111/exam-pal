@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeaderBanner from '@/components/student/PageHeaderBanner';
+import settingsBanner from '@/assets/student/settings.png';
 import { studentNavItems } from '@/config/studentNavItems';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,10 +57,11 @@ const StudentSettingsReal = () => {
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-1">Manage your account preferences and settings</p>
-        </div>
+        <PageHeaderBanner
+          image={settingsBanner}
+          title="Settings"
+          subtitle="Manage your account preferences and settings"
+        />
 
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid h-auto gap-2 bg-transparent p-0">

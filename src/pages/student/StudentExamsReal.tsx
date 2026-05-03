@@ -19,6 +19,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeaderBanner from '@/components/student/PageHeaderBanner';
+import examsBanner from '@/assets/student/exams.png';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentExams, StudentExam } from '@/hooks/useStudentExams';
 
@@ -119,10 +121,11 @@ const StudentExamsReal = () => {
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-foreground mb-2">My Exams</h1>
-          <p className="text-muted-foreground">View and take your scheduled examinations</p>
-        </div>
+        <PageHeaderBanner
+          image={examsBanner}
+          title="My Exams"
+          subtitle="View and take your scheduled examinations"
+        />
 
         {filterSubjectName && (
           <div className="flex items-center gap-2">
