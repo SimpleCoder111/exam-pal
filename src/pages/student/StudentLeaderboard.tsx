@@ -17,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import PageHeaderBanner from '@/components/student/PageHeaderBanner';
+import leaderboardBanner from '@/assets/student/leaderboard.png';
 import { studentNavItems } from '@/config/studentNavItems';
 import { useStudentClassrooms } from '@/hooks/useStudentClassrooms';
 import { useStudentExams } from '@/hooks/useStudentExams';
@@ -195,14 +197,11 @@ const StudentLeaderboard = () => {
   return (
     <DashboardLayout navItems={studentNavItems} role="student">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="font-heading text-3xl font-semibold text-foreground flex items-center gap-3">
-            <Trophy className="w-8 h-8 text-primary" />
-            Leaderboard
-          </h1>
-          <p className="text-muted-foreground mt-1">See how you rank among your peers.</p>
-        </div>
+        <PageHeaderBanner
+          image={leaderboardBanner}
+          title="Leaderboard"
+          subtitle="See how you rank among your peers."
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full max-w-md grid-cols-2">
